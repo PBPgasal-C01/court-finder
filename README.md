@@ -29,7 +29,7 @@ Blum ada
 
 ## 🎨 Link Design
 
-Blum ada
+https://www.figma.com/files/team/1524494717202079809/project/458189772/TK-PBP?fuid=1524494714553143203
 
 ## 📋 Daftar Modul (Draft)
 
@@ -37,7 +37,6 @@ Blum ada
 
 - Registrasi/login (email, Google, atau social login)
 - Profil user (nama, foto, preferensi main indoor/outdoor)
-- Sistem level/achievement opsional (bisa dipakai buat gamifikasi)
 
 ### 🗺️ Court Finder (Map & Filter)
 
@@ -46,34 +45,47 @@ Blum ada
 - Status lapangan (aktif/ada orang main atau kosong)
 - Integrasi GPS agar user bisa langsung navigasi
 
-### 📍 Court Info & Specs
+### 📍 Manage Court
 
-- Detail lapangan (alamat, tipe lapangan, jam buka, harga sewa)
-- Foto/video lapangan (dari pengelola atau user)
-- Fasilitas tambahan (toilet, parkir, kantin)
+- (Pengelola Court) Update detail lapangan: alamat, tipe, jam buka, harga sewa
+- (Pengelola Court) Upload foto resmi / perbarui status (contohnya tutup sementara)
+- (User) Kirim foto kondisi terbaru (masuk Media Sharing)
+- Disini juga ada informasi-infromasi seperti fasilitas dan contact person dari si pengelola jika ada
 
 ### ⭐ Review & Rating
 
 - User bisa kasih rating (bintang) dan review
 - Komentar terbuka untuk pengalaman main
-- Sorting court by rating/popularity
+- Sorting court by rating/popularity views/review
 
 ### 📸 Media Sharing
 
-- Upload foto/video kondisi lapangan terbaru (ini kayaknya foto aja)
+- Upload foto kondisi lapangan terbaru
+- Fitur "Latest Update" menampilkan unggahan terbaru per lapangan untuk cek kondisi sekarang
 - Tagging lokasi supaya konten terhubung ke court tertentu
 
 ### 🏀 Game Scheduler (Cari Teman Main)
 
 - Buat event ("Need 2 more players", "3v3 at 5 PM")
-- Join game yang sudah dibuat orang lain
+- Join game yang sudah dibuat orang lain (opsional dlu)
 - Reminder & notifikasi untuk event
+- Event bisa bertipe Public (muncul di list) atau Private (akses via link invite atau mungkin kayak password yang dibuat usernya sendiri gitu) (dipikirin dlu gmn caranya)
+- Integrasi Google Calendar / export .ics (opsional dlu)
 
 ### 🚨 Complain & Report System
 
-- User bisa melaporkan masalah (ring rusak, lampu mati, lantai licin)
-- Notifikasi ke pengelola (kalau ada official account)
-- Status laporan (ditinjau, diperbaiki)
+- (User) Laporkan masalah (ring rusak, lampu mati, lantai licin)
+- (Pengelola Court) Respon & update status bila terkait lapangan mereka
+- (Admin) Moderasi
+- Status laporan: ditinjau,diproses,selesai
+
+### ⭐ Favorit & Notifikasi
+
+- User bisa menandai (favorite) lapangan untuk cepat diakses
+- Notifikasi in-app saat:
+  - Ada review baru di lapangan favorit
+  - Event publik baru dibuat di lapangan favorit (opsional)
+  - Ada update status (misal: lapangan ditutup sementara)
 
 ## 📊 Link Sumber Dataset
 
@@ -95,11 +107,24 @@ Blum ada
 - Bisa report masalah lapangan
 - Bisa update profil dan preferensi (Maybe?)
 
-### ⚡ Admin (pengelola aplikasi)
+### 🏢 Pengelola Court
 
 - Semua fitur registered user
-- Manage database lapangan (tambah, edit, hapus)
-- Verifikasi dan moderasi konten user
-- Handle complain dan report dari user
-- Monitor aktivitas dan statistik aplikasi
-- Manage user (kek ban gitu)
+- Membuat lapangan (ini harusnya bisa langsung atau gak butuh verifikasi dari admin)
+- Update info lapangan: jam buka, harga sewa, fasilitas, status sementara (misal: maintenance / hujan)
+- Upload media resmi (foto kondisi standar)
+- Respon report yang terkait lapangan mereka (ubah status / beri catatan)
+- Buat event resmi (turnamen / open court)
+
+### ⚡ Admin
+
+- Semua fitur registered user
+- Verifikasi pembuatan lapangan oleh Pengelola Court (jika memang nanti kita buatnya harus verifikasi pembuatan lapangan)
+- Moderasi konten (review, media, event) & take down jika perlu
+- Override / edit data lapangan (jika ada abuse atau perbaikan data)
+- Kelola seluruh report
+- Manage user (Bisa hapus akun dan ban maybe)
+- Analytics Dashboard: metrik seperti:
+  - Jumlah user baru & aktif
+  - Lapangan paling populer (berdasarkan view/ review)
+  - Masalah (report) yang paling sering muncul
