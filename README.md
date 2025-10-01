@@ -33,59 +33,48 @@ https://www.figma.com/files/team/1524494717202079809/project/458189772/TK-PBP?fu
 
 ## 📋 Daftar Modul (Draft)
 
-### 🔐 Autentikasi
+### 🔐 Autentikasi - Alfino
 
-- Registrasi/login (email, Google, atau social login)
-- Profil user (nama, foto, preferensi main indoor/outdoor)
+Registrasi/login (email, Google, atau social login)
+Profil user (nama, foto, preferensi main indoor/outdoor)
 
-### 🗺️ Court Finder (Map & Filter)
+### 🗺️ Court Finder (Map & Filter) - Maira
 
-- Map interaktif untuk mencari lapangan terdekat
-- Filter (indoor/outdoor, gratis/berbayar, lantai beton/parquet, dll.)
-- Status lapangan (aktif/ada orang main atau kosong)
-- Integrasi GPS agar user bisa langsung navigasi
+Map interaktif untuk mencari lapangan terdekat
+Filter (indoor/outdoor, gratis/berbayar, lantai beton/parquet, dll.)
+Status lapangan (aktif/ada orang main atau kosong)
+Integrasi GPS agar user bisa langsung navigasi
+User bisa menandai (favorite) lapangan untuk cepat diakses (opsional)
+Sorting court by rating/popularity views/review
 
-### 📍 Manage Court
+### 📍 Manage Court - Raida
 
-- (Pengelola Court) Update detail lapangan: alamat, tipe, jam buka, harga sewa
-- (Pengelola Court) Upload foto resmi / perbarui status (contohnya tutup sementara)
-- (User) Kirim foto kondisi terbaru (masuk Media Sharing)
-- Disini juga ada informasi-infromasi seperti fasilitas dan contact person dari si pengelola jika ada
+(Admin) Update detail lapangan: alamat, tipe, jam buka, harga sewa
+(Admin) Upload foto resmi / perbarui status (contohnya tutup sementara)
+Disini juga ada informasi-infromasi seperti fasilitas dan contact person dari si pengelola jika ada
+User bisa kasih rating (bintang) dan review
+Komentar terbuka untuk pengalaman main
 
-### ⭐ Review & Rating
+### 📒 Blog - Tristan
 
-- User bisa kasih rating (bintang) dan review
-- Komentar terbuka untuk pengalaman main
-- Sorting court by rating/popularity views/review
+(user pembuat) membuat , mengedit dan mengedit artikel blognya sendiri yang bisa dibaca
+(user pelihat) bisa di like dan dilihat viewsnya dan creator
+(user) bisa menshare pake link
+(admin) delete artikel semuanya tanpa terbatas
 
-### 📸 Media Sharing
+### 🏀 Game Scheduler (Cari Teman Main) - Jihan
 
-- Upload foto kondisi lapangan terbaru
-- Fitur "Latest Update" menampilkan unggahan terbaru per lapangan untuk cek kondisi sekarang
-- Tagging lokasi supaya konten terhubung ke court tertentu
+Buat event ("Need 2 more players", "3v3 at 5 PM")
+Join game yang sudah dibuat orang lain (opsional dlu)
+Reminder & notifikasi untuk event
+Event bisa bertipe Public (muncul di list) atau Private (akses via link invite atau mungkin kayak password yang dibuat usernya sendiri gitu) (ada forms.py kalau private)
+Integrasi Google Calendar / export .ics
 
-### 🏀 Game Scheduler (Cari Teman Main)
+### 🚨 Complain & Report System - Zhafira
 
-- Buat event ("Need 2 more players", "3v3 at 5 PM")
-- Join game yang sudah dibuat orang lain (opsional dlu)
-- Reminder & notifikasi untuk event
-- Event bisa bertipe Public (muncul di list) atau Private (akses via link invite atau mungkin kayak password yang dibuat usernya sendiri gitu) (dipikirin dlu gmn caranya)
-- Integrasi Google Calendar / export .ics (opsional dlu)
-
-### 🚨 Complain & Report System
-
-- (User) Laporkan masalah (ring rusak, lampu mati, lantai licin)
-- (Pengelola Court) Respon & update status bila terkait lapangan mereka
-- (Admin) Moderasi
-- Status laporan: ditinjau,diproses,selesai
-
-### ⭐ Favorit & Notifikasi
-
-- User bisa menandai (favorite) lapangan untuk cepat diakses
-- Notifikasi in-app saat:
-  - Ada review baru di lapangan favorit
-  - Event publik baru dibuat di lapangan favorit (opsional)
-  - Ada update status (misal: lapangan ditutup sementara)
+(User) Laporkan masalah (ring rusak, lampu mati, lantai licin)
+(admin) Respon & update status bila terkait lapangan mereka
+Status laporan: ditinjau,diproses,selesai
 
 ## 📊 Link Sumber Dataset
 
@@ -107,24 +96,31 @@ Blum ada
 - Bisa report masalah lapangan
 - Bisa update profil dan preferensi (Maybe?)
 
-### 🏢 Pengelola Court
-
-- Semua fitur registered user
-- Membuat lapangan (ini harusnya bisa langsung atau gak butuh verifikasi dari admin)
-- Update info lapangan: jam buka, harga sewa, fasilitas, status sementara (misal: maintenance / hujan)
-- Upload media resmi (foto kondisi standar)
-- Respon report yang terkait lapangan mereka (ubah status / beri catatan)
-- Buat event resmi (turnamen / open court)
-
 ### ⚡ Admin
 
 - Semua fitur registered user
-- Verifikasi pembuatan lapangan oleh Pengelola Court (jika memang nanti kita buatnya harus verifikasi pembuatan lapangan)
-- Moderasi konten (review, media, event) & take down jika perlu
-- Override / edit data lapangan (jika ada abuse atau perbaikan data)
-- Kelola seluruh report
+- Admin dari manage court (bisa buat edit dana delete)
+- Respon report yang terkait lapangan mereka (ubah status / beri catatan)
+- Kelola dan respons seluruh report
 - Manage user (Bisa hapus akun dan ban maybe)
-- Analytics Dashboard: metrik seperti:
-  - Jumlah user baru & aktif
-  - Lapangan paling populer (berdasarkan view/ review)
-  - Masalah (report) yang paling sering muncul
+
+## Role
+
+### PJ Figma
+
+- Raida
+
+- Maira
+
+### QA (Unit test)
+
+- Zhafira
+
+### PM
+
+- Jihan
+
+### PJ Developer
+
+- alfino
+- Tristan
