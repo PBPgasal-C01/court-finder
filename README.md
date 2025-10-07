@@ -10,18 +10,18 @@
 
 ## 📝 Deskripsi
 
-**Court Finder** adalah aplikasi yang dapat membantu pemain basket menemukan lapangan terdekat secara real-time. Selain menampilkan lokasi, aplikasi juga memberikan informasi detail tentang kondisi lapangan (indoor/outdoor, gratis/berbayar, material lantai), status aktivitas (ada orang main atau kosong), serta memungkinkan pengguna untuk menjadwalkan permainan, memberi ulasan, dan melaporkan masalah.
+**Court Finder** adalah aplikasi yang membantu masyarakat umum menemukan dan memantau ketersediaan fasilitas/lapangan olahraga terdekat secara real-time, menjawab kesulitan pemain kasual maupun komunitas yang sering harus datang langsung atau bergantung pada informasi tercecer di internet maupun grup chat. Selain menampilkan lokasi, aplikasi juga memberikan detail kondisi lapangan (indoor/outdoor, gratis/berbayar, material lantai,dll), status aktivitas (ada orang main atau kosong), serta memungkinkan pengguna menjadwalkan permainan, memberi ulasan, menulis artikel blog, dan melaporkan masalah lapangan jika ada.
 
 ## 👥 Data Kelompok
 
-| NPM        | Nama                     | Role              |
-| ---------- | ------------------------ | ----------------- |
-| 2406495451 | Zhafira Uzma             | PJ QA (Unit test) |
-| 2406495445 | Raida Khoyyara           | PJ Figma          |
-| 2406408086 | Maira Azma Shaliha       | PJ Figma          |
-| 2406437565 | Jihan Andita Kresnaputri | PJ PM             |
-| 2406405304 | Alfino Ahmad Feriza      | PJ Developer      |
-| 2406358472 | Tristan Rasheed Satria   | PJ Developer      |
+| NPM        | Nama                     | Role              | Modul                       |
+| ---------- | ------------------------ | ----------------- | --------------------------- |
+| 2406495451 | Zhafira Uzma             | PJ QA (Unit test) | Complain & Report System    |
+| 2406495445 | Raida Khoyyara           | PJ Figma          | Manage Court                |
+| 2406408086 | Maira Azma Shaliha       | PJ Figma          | Court finder (map & filter) |
+| 2406437565 | Jihan Andita Kresnaputri | PJ PM             | Game Scheduler              |
+| 2406405304 | Alfino Ahmad Feriza      | PJ Developer      | Autentikasi                 |
+| 2406358472 | Tristan Rasheed Satria   | PJ Developer      | Blog                        |
 
 ## 🔗 Link PWS
 
@@ -31,7 +31,13 @@ https://tristan-rasheed-court-finder.pbp.cs.ui.ac.id/
 
 https://www.figma.com/files/team/1524494717202079809/project/458189772/TK-PBP?fuid=1524494714553143203
 
-# 📋 Daftar Modul (Draft)
+## 📊 Link Sumber Dataset
+
+https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/edit?tab=t.0
+
+---
+
+# 📋 Daftar Modul
 
 ## 1. Modul Autentikasi (Alfino) 🔐
 
@@ -45,7 +51,7 @@ https://www.figma.com/files/team/1524494717202079809/project/458189772/TK-PBP?fu
 
 ## 2. Modul Court Finder (Map & Filter) (Maira) 🗺️
 
-- **Fitur Court Finder:** Menyediakan map interaktif untuk mencari lapangan, dilengkapi filter, status lapangan, navigasi GPS, favorit, dan sorting.
+- **Fitur Court Finder:** Menyediakan map interaktif untuk mencari lapangan, dilengkapi filter,favorit, dan sorting.
 
 |                | Guest                                   | Registered User                                                | Admin                         |
 | -------------- | --------------------------------------- | -------------------------------------------------------------- | ----------------------------- |
@@ -55,11 +61,11 @@ https://www.figma.com/files/team/1524494717202079809/project/458189772/TK-PBP?fu
 
 ## 3. Modul Manage Court (Raida) 📍
 
-- **CRUD Court:** Mengelola informasi detail lapangan (alamat, tipe, jam buka, harga, foto, fasilitas, kontak), serta review dan komentar.
+- **CRUD Court:** Mengelola informasi detail lapangan (alamat, tipe, status, harga, foto, fasilitas, kontak), serta review dan komentar.
 
-|                | Guest                            | Registered User                             | Admin                                                                           |
-| -------------- | -------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------- |
-| Peran Pengguna | Dapat melihat rating dan review. | Dapat memberi rating, review, dan komentar. | Dapat menambah, mengedit, dan menghapus data lapangan serta memperbarui status. |
+|                | Guest                            | Registered User                             | Admin                                                                                            |
+| -------------- | -------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Peran Pengguna | Dapat melihat rating dan review. | Dapat memberi rating, review, dan komentar. | Dapat menambah, mengedit, dan menghapus data lapangan serta memperbarui status/detail/deskripsi. |
 
 ---
 
@@ -93,7 +99,7 @@ https://www.figma.com/files/team/1524494717202079809/project/458189772/TK-PBP?fu
 
 ---
 
-# 👤 Jenis Pengguna Website (Tentatif)
+# 👤 Jenis Pengguna Website
 
 ### 🌐 Guest (tanpa login)
 
@@ -115,7 +121,3 @@ https://www.figma.com/files/team/1524494717202079809/project/458189772/TK-PBP?fu
 - Kelola data lapangan (buat, edit, hapus)
 - Respon report (ubah status/beri catatan)
 - Kelola user (hapus akun, ban)
-
-## 📊 Link Sumber Dataset
-
-Blum ada
