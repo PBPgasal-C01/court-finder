@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load socialaccount static %}
+
+{% block meta %}
+<title>Login | CourtFinder</title>
+{% endblock meta %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col md:flex-row">
+  <!-- Left image section (hidden on mobile) -->
+  <div class="hidden md:flex w-1/2 bg-[#698C6A] justify-center items-center">
+    <!-- Replace with your own static image -->
+    <img src="{% static 'images/court-bg.jpg' %}" alt="Basketball Court"
+         class="object-cover w-full h-full opacity-90">
+  </div>
+
+  <!-- Right login form -->
+  <div class="flex w-full md:w-1/2 justify-center items-center bg-[#F2F6F6] p-6 md:p-12 lg:p-16">
+    <div class="w-full max-w-xl bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+      <h1 class="text-4xl font-semibold text-[#2F593F] text-center mb-8 tracking-wide">Login</h1>
+
+      {% if form.non_field_errors %}
+        <div class="text-sm text-red-600 mb-4">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <form method="post" action="{% url 'autentikasi:login' %}" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Email -->
+        <div>
+          <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-[#2F593F] mb-1">
+            Email
+          </label>
+          <input
+            type="email"
+            name="{{ form.username.html_name }}"
+            id="{{ form.username.id_for_label }}"
+            value="{{ form.username.value|default:'' }}"
+            class="w-full border border-gray-300 rounded-lg p-3.5 md:p-4 text-gray-800 text-base md:text-lg
+                   focus:outline-none focus:ring-2 focus:ring-[#698C6A]"
+            required
+          >
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-[#2F593F] mb-1">
+            Password
+          </label>
+          <input
+            type="password"
+            name="{{ form.password.html_name }}"
+            id="{{ form.password.id_for_label }}"
+            class="w-full border border-gray-300 rounded-lg p-3.5 md:p-4 text-gray-800 text-base md:text-lg
+                   focus:outline-none focus:ring-2 focus:ring-[#698C6A]"
+            required
+          >
+        </div>
+
+        <!-- Primary Button -->
+        <button type="submit"
+                class="w-full py-3.5 md:py-4 bg-[#2F593F] text-white text-lg font-semibold rounded-xl
+                       hover:bg-[#244d36] transition">
+          Login
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="flex items-center my-8">
+        <div class="flex-1 h-px bg-gray-200"></div>
+        <span class="px-3 text-gray-500 text-sm">or</span>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+
+      <!-- Google Login -->
+      <a href="{% provider_login_url 'google' process='login' %}"
+         class="w-full inline-flex items-center justify-center gap-3 border border-gray-300 rounded-xl
+                py-3.5 md:py-4 hover:bg-gray-50 transition text-base">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"
+             class="w-6 h-6">
+        <span class="font-medium text-[#2F593F]">Login with Google</span>
+      </a>
+
+      <!-- Sign Up -->
+      <p class="mt-8 text-center text-sm text-gray-600">
+        Don’t have an account?
+        <a href="{% url 'autentikasi:register' %}" class="text-[#79A6B9] font-semibold hover:underline">Sign Up</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+
