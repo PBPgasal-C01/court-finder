@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+{% endblock %}
+
+{% block content %}
+  {% include 'navbar.html' %}
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Search and (optional) New Post -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center gap-3">
+      <form method="get" action="" class="flex-1">
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+            <!-- search icon -->
+              <i class="fa-solid fa-magnifying-glass w-5 h-5"></i>
+          </span>
+          <input id="q" name="q" type="search" autocomplete="off" value="{{ q }}" placeholder="Search blog by title..." aria-label="Search blog by title"
+                 class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#79A6B9]" />
+        </div>
+      </form>
+      {% if is_admin %}
+        <a href="{% url 'blog:create' %}"
+           class="inline-flex items-center justify-center gap-2 bg-[#698C6A] text-white text-sm font-semibold px-4 py-2 rounded-md shadow hover:bg-[#55735a] sm:whitespace-nowrap">
+          <!-- plus icon -->
+            <i class="fa-solid fa-plus text-base leading-none relative top-px"></i>
+          New Post
+        </a>
+      {% endif %}
+    </div>
+
+    {% if messages %}
+      <div class="space-y-2 mb-6">
+        {% for message in messages %}
+          <div class="px-4 py-3 rounded-md text-sm {{ message.tags|default:'info' }} bg-green-50 text-green-800">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Cards Grid -->
+    <div id="cards-container">
+      {% include 'blog/partials/cards.html' %}
+    </div>
+  </main>
+  <script>
+    // AJAX search
+    (function(){
+      const form = document.querySelector('form[method="get"]');
+      const input = document.getElementById('q');
+      const container = document.getElementById('cards-container');
+      if(!input || !container) return;
+
+      // prevent full page reload on Enter
+      if (form) form.addEventListener('submit', (e) => e.preventDefault());
+
+      let handle;
+      let controller = null;
+  const baseUrl = globalThis.location.pathname;
+
+      const fetchCards = async (queryRaw) => {
+        const query = (queryRaw || '').trim();
+
+        // cancel any in-flight request to avoid older result overriding newer one
+        if (controller) controller.abort();
+        controller = new AbortController();
+        const signal = controller.signal;
+
+        // build fresh params so we dont keep stale ones 
+        const params = new URLSearchParams();
+        if (query) params.set('q', query);
+        params.set('partial', '1');
+
+        const url = `${baseUrl}?${params.toString()}`;
+
+        // keep address bar in sync without reloading
+  const historyParams = new URLSearchParams(globalThis.location.search);
+        if (query) historyParams.set('q', query); else historyParams.delete('q');
+  const historyUrl = `${baseUrl}${historyParams.toString() ? '?' + historyParams.toString() : ''}`;
+  globalThis.history.replaceState(null, '', historyUrl);
+
+        try {
+          const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal });
+          if (res.ok) {
+            container.innerHTML = await res.text();
+          }
+        } catch (err) {
+          // ignore abort errors, surface others for visibility in dev tools
+          if (!(err && err.name === 'AbortError')) {
+            console.warn('Search update failed:', err);
+          }
+        }
+      };
+
+      const onInput = (e) => {
+        clearTimeout(handle);
+        handle = setTimeout(() => fetchCards(e.target.value), 250);
+      };
+      input.addEventListener('input', onInput);
+    })();
+  </script>
+{% endblock %}

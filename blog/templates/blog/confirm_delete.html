@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+  <title>Delete Blog - Blog</title>
+{% endblock %}
+
+{% block content %}
+  {% include 'navbar.html' %}
+
+  <section class="max-w-3xl mx-auto px-6 py-12">
+    <div class="bg-white rounded-[22px] shadow-xl ring-1 ring-gray-200 overflow-hidden">
+      <!-- Header -->
+      <div class="flex items-center justify-center gap-4 px-8 py-6">
+        <!-- Warning icon -->
+        <i class="fa-solid fa-triangle-exclamation text-red-800 text-5xl"></i>
+        <h1 class="text-3xl font-extrabold tracking-wide text-[#7A3A2E]">DELETE BLOG</h1>
+      </div>
+      <div class="h-px bg-gray-200"></div>
+
+      <!-- Body -->
+      <div class="px-8 py-8">
+        <p class="text-2xl leading-relaxed text-gray-800">
+          Are you sure you want to <span class="text-[#9B4D3A] font-semibold">to delete</span> blog
+          “<span class="font-semibold">{{ post.title }}</span>”? This action cannot be undone.
+        </p>
+
+        <form method="post" class="mt-10 flex items-center justify-between" id="delete-form">
+          {% csrf_token %}
+          <a href="{{ post.get_absolute_url }}"
+             class="inline-flex items-center justify-center px-8 py-3 rounded-full border-2 border-[#698C6A] text-[#2F593F] font-extrabold bg-white hover:bg-[#F3F6F4]">
+            CANCEL
+          </a>
+          <button type="submit"
+                  class="inline-flex items-center justify-center px-8 py-3 rounded-full border-2 border-[#C1725D] text-[#7A3A2E] font-extrabold bg-[#EAC0B5] hover:bg-[#e3b0a3]">
+            DELETE
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+  <script>
+    (function(){
+      const form = document.getElementById('delete-form');
+      if (!form) return;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = new FormData(form);
+        const res = await fetch(location.href, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: data });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.ok && json.redirect) { location.assign(json.redirect); return; }
+        }
+        form.submit();
+      });
+    })();
+  </script>
+{% endblock %}
