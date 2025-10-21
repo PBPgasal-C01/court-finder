@@ -51,8 +51,22 @@ def post_list(request):
 def post_detail(request, pk: int):
 	post = get_object_or_404(BlogPost, pk=pk)
 	is_admin_flag = is_admin(request.user)
-	others = BlogPost.objects.exclude(pk=pk)[:5]
-	return render(request, 'detail.html', {'post': post, 'is_admin': is_admin_flag, 'others': others})
+	# Base: exclude current post
+	others_qs = BlogPost.objects.exclude(pk=pk)
+	# exclude favourited post (if user authenticated)
+	if request.user.is_authenticated:
+		fav_ids = Favorite.objects.filter(user=request.user).values_list('post_id', flat=True)
+		others_qs = others_qs.exclude(pk__in=fav_ids)
+	others = others_qs[:5]
+	is_favorited = False
+	if request.user.is_authenticated:
+		is_favorited = Favorite.objects.filter(user=request.user, post=post).exists()
+	return render(request, 'detail.html', {
+		'post': post,
+		'is_admin': is_admin_flag,
+		'others': others,
+		'is_favorited': is_favorited,
+	})
 
 
 @login_required

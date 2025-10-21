@@ -43,6 +43,9 @@
       </div>
     </article>
   {% empty %}
-    <p class="text-gray-500">No posts found.</p>
+    <div class="col-span-full flex flex-col items-center justify-center text-center py-12">
+      <img src="{% static 'images/cflogo2.png' %}" alt="No posts" class="w-28 h-28 object-contain mb-4 opacity-80" />
+      <p class="text-gray-500 font-medium">No posts found</p>
+    </div>
   {% endfor %}
 </div>
