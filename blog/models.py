@@ -36,3 +36,16 @@ class BlogPost(models.Model):
         parts = self.content.split()
         short = " ".join(parts[:words])
         return short + ("…" if len(parts) > words else "")
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='blog_favorites')
+    post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'post')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user_id} ❤ {self.post_id}"

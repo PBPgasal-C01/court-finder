@@ -7,8 +7,8 @@
 {% block content %}
   {% include 'navbar.html' %}
 
-  <main class="max-w-7xl mx-auto px-6 py-8">
-    <!-- Search and (optional) New Post -->
+  <main class="max-w-7xl mx-auto px-6 py-8" data-show-favs="{{ show_favs|yesno:"true,false" }}" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
+    <!-- Search, Favourites Toggle, and (optional) New Post -->
     <div class="mb-8 flex flex-col sm:flex-row sm:items-center gap-3">
       <form method="get" action="" class="flex-1">
         <div class="relative">
@@ -20,6 +20,22 @@
                  class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#79A6B9]" />
         </div>
       </form>
+
+      <!-- Favourites toggle -->
+      <div class="flex items-center gap-2">
+        <button id="btn-favs" type="button"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 shadow-sm bg-white hover:bg-gray-50 text-sm"
+        >
+          <i class="fa-regular fa-heart"></i>
+          <span>My Favorites</span>
+        </button>
+        <button id="btn-all" type="button"
+                class="hidden inline-flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 shadow-sm bg-white hover:bg-gray-50 text-sm"
+        >
+          <i class="fa-solid fa-list"></i>
+          <span>Back to all</span>
+        </button>
+      </div>
       {% if is_admin %}
         <a href="{% url 'blog:create' %}"
            class="inline-flex items-center justify-center gap-2 bg-[#698C6A] text-white text-sm font-semibold px-4 py-2 rounded-md shadow hover:bg-[#55735a] sm:whitespace-nowrap">
@@ -51,6 +67,11 @@
       const form = document.querySelector('form[method="get"]');
       const input = document.getElementById('q');
       const container = document.getElementById('cards-container');
+      const btnFavs = document.getElementById('btn-favs');
+      const btnAll = document.getElementById('btn-all');
+      // Read initial favorites flag from the main[data-show-favs] attribute so the JS file remains valid
+  const mainEl = document.querySelector('main');
+  let showFavs = !!(mainEl && mainEl.dataset.showFavs === 'true');
       if(!input || !container) return;
 
       // prevent full page reload on Enter
@@ -68,16 +89,18 @@
         controller = new AbortController();
         const signal = controller.signal;
 
-        // build fresh params so we dont keep stale ones 
+    // build fresh params so we dont keep stale ones 
         const params = new URLSearchParams();
         if (query) params.set('q', query);
         params.set('partial', '1');
+    if (showFavs) params.set('favs', '1');
 
         const url = `${baseUrl}?${params.toString()}`;
 
         // keep address bar in sync without reloading
   const historyParams = new URLSearchParams(globalThis.location.search);
         if (query) historyParams.set('q', query); else historyParams.delete('q');
+    if (showFavs) historyParams.set('favs', '1'); else historyParams.delete('favs');
   const historyUrl = `${baseUrl}${historyParams.toString() ? '?' + historyParams.toString() : ''}`;
   globalThis.history.replaceState(null, '', historyUrl);
 
@@ -99,6 +122,69 @@
         handle = setTimeout(() => fetchCards(e.target.value), 250);
       };
       input.addEventListener('input', onInput);
+
+      // Toggle favorites view
+      const updateToggleButtons = () => {
+        if (showFavs) {
+          btnFavs.classList.add('hidden');
+          btnAll.classList.remove('hidden');
+        } else {
+          btnFavs.classList.remove('hidden');
+          btnAll.classList.add('hidden');
+        }
+      };
+      updateToggleButtons();
+      btnFavs.addEventListener('click', () => { showFavs = true; updateToggleButtons(); fetchCards(input.value); });
+      btnAll.addEventListener('click', () => { showFavs = false; updateToggleButtons(); fetchCards(input.value); });
+    })();
+  </script>
+
+  <script>
+    // Delegated handler for favorite toggling on cards
+    (function(){
+      function getCookie(name){
+        const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return m ? m.pop() : '';
+      }
+      const loginUrl = "{% url 'autentikasi:login' %}";
+      const mainEl = document.querySelector('main');
+      document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.cf-fav-btn');
+        if (!btn) return;
+        const postId = btn.getAttribute('data-post-id');
+        if (!postId) return;
+
+        // If not authenticated, send to login
+        const isAuthenticated = mainEl && mainEl.dataset.isAuthenticated === 'true';
+        if (!isAuthenticated) {
+          globalThis.location.assign(loginUrl);
+          return;
+        }
+
+        const url = `{% url 'blog:toggle_favorite' 0 %}`.replace('/0/', `/${postId}/`);
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRFToken': getCookie('csrftoken'),
+            }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const icon = btn.querySelector('i');
+            if (data.favorited) {
+              icon.classList.remove('fa-regular', 'text-gray-700');
+              icon.classList.add('fa-solid', 'text-red-600');
+            } else {
+              icon.classList.remove('fa-solid', 'text-red-600');
+              icon.classList.add('fa-regular', 'text-gray-700');
+            }
+          }
+        } catch (err) {
+          console.warn('Toggle favorite failed:', err);
+        }
+      });
     })();
   </script>
 {% endblock %}

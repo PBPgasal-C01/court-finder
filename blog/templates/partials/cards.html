@@ -1,9 +1,21 @@
+{% load static %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
   {% for post in posts %}
     <article class="rounded-xl overflow-hidden shadow-md bg-white ring-1 ring-gray-100 hover:shadow-lg transition">
       <div class="relative">
         <img src="{{ post.thumbnail_url|default:'https://images.unsplash.com/photo-1563978932-0b8139231cb1?q=80&w=1200&auto=format&fit=crop' }}" alt="cover"
              class="h-44 w-full object-cover" />
+        <!-- Favorite button -->
+        <button type="button"
+                class="cf-fav-btn absolute top-2 right-2 rounded-full bg-white/90 hover:bg-white p-2 shadow"
+                data-post-id="{{ post.id }}"
+                title="Toggle favorite">
+          {% if fav_post_ids and post.id in fav_post_ids %}
+            <i class="fa-solid fa-heart text-red-600"></i>
+          {% else %}
+            <i class="fa-regular fa-heart text-gray-700"></i>
+          {% endif %}
+        </button>
       </div>
 
       <div class="p-5">
