@@ -10,34 +10,34 @@ from .models import BlogPost
 
 
 def post_list(request):
-    q = request.GET.get('q', '').strip()
-    posts = BlogPost.objects.all()
+	q = request.GET.get('q', '').strip()
+	posts = BlogPost.objects.all()
 
-    # hanya cari di title
-    if q:
-        posts = posts.filter(title__icontains=q)
+	# hanya cari di title
+	if q:
+		posts = posts.filter(title__icontains=q)
 
-    is_admin_flag = is_admin(request.user)
+	is_admin_flag = is_admin(request.user)
 
-    # jika AJAX (partial)
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('partial'):
-        return render(request, 'blog/partials/cards.html', {
-            'posts': posts,
-            'is_admin': is_admin_flag
-        })
+	# jika AJAX (partial)
+	if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('partial'):
+		return render(request, 'partials/cards.html', {
+			'posts': posts,
+			'is_admin': is_admin_flag
+		})
 
-    return render(request, 'blog/list.html', {
-        'posts': posts,
-        'q': q,
-        'is_admin': is_admin_flag
-    })
+	return render(request, 'list.html', {
+		'posts': posts,
+		'q': q,
+		'is_admin': is_admin_flag
+	})
 
 
 def post_detail(request, pk: int):
 	post = get_object_or_404(BlogPost, pk=pk)
 	is_admin_flag = is_admin(request.user)
 	others = BlogPost.objects.exclude(pk=pk)[:5]
-	return render(request, 'blog/detail.html', {'post': post, 'is_admin': is_admin_flag, 'others': others})
+	return render(request, 'detail.html', {'post': post, 'is_admin': is_admin_flag, 'others': others})
 
 
 class BlogPostForm(forms.ModelForm):
@@ -53,7 +53,7 @@ class BlogPostForm(forms.ModelForm):
 
 
 def is_admin(user):
-	return getattr(user, 'is_admin', lambda: False)() if user.is_authenticated else False
+    return getattr(user, 'is_admin', lambda: False)() if user.is_authenticated else False
 
 
 @login_required
@@ -78,7 +78,7 @@ def post_create(request):
 				return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 	else:
 		form = BlogPostForm(initial={"author": "Admin"})
-	return render(request, 'blog/form.html', {'form': form, 'action': 'Create'})
+	return render(request, 'form.html', {'form': form, 'action': 'Create'})
 
 
 @login_required
@@ -102,7 +102,7 @@ def post_update(request, pk: int):
 				return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 	else:
 		form = BlogPostForm(instance=post)
-	return render(request, 'blog/form.html', {'form': form, 'action': 'Update'})
+	return render(request, 'form.html', {'form': form, 'action': 'Update'})
 
 
 @login_required
@@ -115,4 +115,4 @@ def post_delete(request, pk: int):
 		if request.headers.get('x-requested-with') == 'XMLHttpRequest':
 			return JsonResponse({'ok': True, 'redirect': reverse('blog:list')})
 		return redirect('blog:list')
-	return render(request, 'blog/confirm_delete.html', {'post': post})
+	return render(request, 'confirm_delete.html', {'post': post})
