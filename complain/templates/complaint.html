@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load static %}
+{% include 'toast.html' %}
+{% block meta %}
+<title>Complain and Report - CourtFinder</title>
+{% endblock meta %}
+
+{% block content %}
+<div class="flex flex-col min-h-screen">
+    {% include "navbar.html" %}
+
+    <main class="grid md:grid-cols-2 flex-1 w-full">
+        
+        <div class="w-full md:col-span-1 bg-[#DFF6DF] py-10 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-md mx-auto">
+                {% if messages and request.method == 'POST' %}
+                    <div class="mb-6">
+                    {% for message in messages %}
+                        <div class="rounded-md p-4 {% if message.tags == 'success' %}bg-green-100 border border-green-300{% else %}bg-red-100 border border-red-300{% endif %}">
+                            <p class="text-sm font-medium {% if message.tags == 'success' %}text-green-800{% else %}text-red-800{% endif %}">
+                                {{ message }}
+                            </p>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+
+                <h2 class="text-2xl font-bold tracking-tight text-brand-green mb-6 uppercase text-center">
+                    SISTEM LAPORAN
+                </h2>
+
+                <div class="bg-white shadow-lg rounded-lg p-6 border border-gray-200">
+                    <h4 class="text-left text-lg font-semibold text-brand-green mb-4 flex items-center gap-2">
+                        <img src="{% static 'images/pen.png' %}" alt="Pen icon" class="h-5 w-5">
+                        BUAT LAPORAN BARU
+                    </h4>
+
+                    <form action="{% url 'complain:show_complain' %}" method="post" enctype="multipart/form-data" class="space-y-4">
+                        {% csrf_token %}
+                        <div>
+                            <label for="{{ form.court_name.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Court Name</label>
+                            {{ form.court_name.errors }}
+                            <input type="text" 
+                                   name="{{ form.court_name.name }}" 
+                                   id="{{ form.court_name.id_for_label }}"
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A]">
+                        </div>
+                        <div>
+                            <label for="{{ form.masalah.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Judul Masalah</label>
+                            {{ form.masalah.errors }}
+                            <input type="text" 
+                                   name="{{ form.masalah.name }}" 
+                                   id="{{ form.masalah.id_for_label }}"
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A]">
+                        </div>
+                        <div>
+                            <label for="{{ form.deskripsi.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Deskripsi</label>
+                            {{ form.deskripsi.errors }}
+                            <textarea name="{{ form.deskripsi.name }}" 
+                                      id="{{ form.deskripsi.id_for_label }}"
+                                      rows="4"
+                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A]"></textarea>
+                        </div>
+                        <div>
+                            <label for="{{ form.foto.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Upload Foto</label>
+                            {{ form.foto.errors }}
+                            <input type="file" 
+                                   name="{{ form.foto.name }}" 
+                                   id="{{ form.foto.id_for_label }}"
+                                   class="mt-1 block w-full text-sm text-gray-500 border border-gray-300 rounded-md
+                                          file:mr-4 file:py-2 file:px-4
+                                          file:rounded-l-md file:border-0
+                                          file:text-sm file:font-semibold
+                                          file:bg-gray-100 file:text-gray-700
+                                          hover:file:bg-gray-200">
+                        </div>
+
+                        <div class="flex justify-between gap-3 pt-4">
+                            <button type="submit" class="rounded-md border border-green-600 bg-white py-2 px-4 text-sm font-medium text-green-700 shadow-sm hover:bg-green-50">
+                                SAVE
+                            </button>
+                            <button type="reset" class="rounded-md border border-red-600 bg-white py-2 px-4 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50">
+                                CANCEL
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div> 
+        </div>
+
+        <div class="w-full md:col-span-1 bg-white py-10 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-2xl mx-auto">
+                {% if messages and request.method == 'GET' %}
+                    <div class="mb-6">
+                    {% for message in messages %}
+                        <div class="rounded-md p-4 {% if message.tags == 'success' %}bg-green-100 border border-green-300{% else %}bg-red-100 border border-red-300{% endif %}">
+                            <p class="text-sm font-medium {% if message.tags == 'success' %}text-green-800{% else %}text-red-800{% endif %}">
+                                {{ message }}
+                            </p>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+
+                <h2 class="text-2xl font-bold tracking-tight text-brand-green mb-6 uppercase text-center">
+                    RIWAYAT LAPORAN SAYA
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% if complains %}
+                        {% for complain in complains %}
+                            
+                            <article class="w-full max-w-xs mx-auto rounded-lg border border-gray-200 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+
+                                <div class="p-2 bg-gray-50">
+                                  <h3 class="text-lg font-bold text-brand-green text-center uppercase tracking-wide truncate" title="{{ complain.court_name }} - {{ complain.masalah }}">
+                                      {{ complain.court_name }} - {{ complain.masalah }}
+                                  </h3>
+                                </div>
+                                <hr class="border-gray-200">
+                              
+                                <div class="relative">
+                                  {% if complain.foto %}
+                                      <img src="{{ complain.foto.url }}" alt="Foto Laporan: {{ complain.masalah }}" class="w-full h-32 object-cover">
+                                  {% else %}
+                                      <div class="w-full h-32 bg-gray-200 flex items-center justify-center">
+                                          <span class="text-gray-500">Tidak ada foto</span>
+                                      </div>
+                                  {% endif %}
+                                </div> 
+                                
+                                <div class="p-3 space-y-1 text-md">
+                                  <div class="flex">
+                                      <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Court Name</span>
+                                      <span class="text-brand-green">: {{ complain.court_name }}</span>
+                                  </div>
+                                  
+                                  <div class="flex">
+                                      <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Deskripsi</span>
+                                      <span class="text-brand-green">: {{ complain.masalah }}</span>
+                                  </div>
+                                  
+                                  <div class="flex items-center">
+                                      <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Status</span>
+                                      <span class="text-gray-900 mr-2">:</span> {# <- Tanda ':' ini warnanya masih abu2 #}
+                                      
+                                      {# --- PERUBAHAN UTAMA ADA DI SINI --- #}
+                                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold
+                                            {% if complain.status == 'SELESAI' %}
+                                                border border-green-500 bg-green-100 text-green-700
+                                            {% elif complain.status == 'DIPROSES' %}
+                                                border border-orange-500 bg-orange-100 text-orange-600
+                                            {% elif complain.status == 'DITINJAU' %}
+                                                border border-yellow-500 bg-yellow-100 text-yellow-700
+                                            {% endif %}
+                                      ">
+                                          {{ complain.status }}
+                                      </span>
+                                      {# --- AKHIR PERUBAHAN STATUS --- #}
+                                  </div>
+                              
+                                  {% if complain.status == 'DITINJAU' %}
+                                  <div class="flex justify-end pt-2"> <form method="POST" action="{% url 'complain:delete_complain' complain.id %}" onsubmit="return confirm('Yakin ingin menghapus laporan ini?');">
+                                          {% csrf_token %}
+                                          <button type="submit" class="text-red-600 hover:text-red-700 text-sm font-medium transition-colors">
+                                              Hapus Laporan
+                                          </button>
+                                      </form>
+                                  </div>
+                                  {% endif %}
+                                </div>
+                              
+                            </article>
+                            
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-600 col-span-2">Anda belum membuat laporan apapun.</p>
+                    {% endif %}
+                </div>
+            </div> 
+        </div>
+    </main>
+</div> 
+{% endblock content %}

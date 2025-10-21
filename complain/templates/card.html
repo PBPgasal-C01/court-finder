@@ -1,0 +1,59 @@
+{% load static %}
+<article class="w-full max-w-xs rounded-lg border border-gray-200 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+
+  <div class="p-2 bg-gray-50">
+    <h3 class="text-lg font-bold text-brand-green text-center uppercase tracking-wide truncate" title="{{ complain.court_name }} - {{ complain.masalah }}">
+        {{ complain.court_name }} - {{ complain.masalah }}
+    </h3>
+  </div>
+  <hr class="border-gray-200">
+
+  <div class="relative">
+    {% if complain.foto %}
+        <img src="{{ complain.foto.url }}" alt="Foto Laporan: {{ complain.masalah }}" class="w-full h-32 object-cover">
+    {% else %}
+        <div class="w-full h-32 bg-gray-200 flex items-center justify-center">
+            <span class="text-gray-500">Tidak ada foto</span>
+        </div>
+    {% endif %}
+  </div>
+
+  <div class="p-3 space-y-1 text-md">
+    <div class="flex">
+        <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Court Name</span>
+        <span class="text-gray-900">: {{ complain.court_name }}</span>
+    </div>
+
+    <div class="flex">
+        <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Deskripsi</span>
+        <span class="text-gray-900">: {{ complain.masalah }}</span>
+    </div>
+
+    <div class="flex items-center">
+        <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Status</span>
+        <span class="text-gray-900 mr-2">:</span>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold
+              {% if complain.status == 'SELESAI' %}
+                  border border-green-500 bg-green-100 text-green-700
+              {% elif complain.status == 'DIPROSES' %}
+                  border border-orange-500 bg-orange-100 text-orange-600
+              {% elif complain.status == 'DITINJAU' %}
+                  border border-yellow-500 bg-yellow-100 text-yellow-700
+              {% endif %}
+        ">
+            {{ complain.status }}
+        </span>
+    </div>
+
+    {% if complain.status == 'DITINJAU' %}
+    <div class="flex justify-end pt-2"> <form method="POST" action="{% url 'complain:delete_complain' complain.id %}" onsubmit="return confirm('Yakin ingin menghapus laporan ini?');">
+            {% csrf_token %}
+            <button type="submit" class="text-red-600 hover:text-red-700 text-sm font-medium transition-colors">
+                Hapus Laporan
+            </button>
+        </form>
+    </div>
+    {% endif %}
+  </div>
+
+</article>
