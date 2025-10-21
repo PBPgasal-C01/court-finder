@@ -1,9 +1,21 @@
+{% load static %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
   {% for post in posts %}
     <article class="rounded-xl overflow-hidden shadow-md bg-white ring-1 ring-gray-100 hover:shadow-lg transition">
       <div class="relative">
         <img src="{{ post.thumbnail_url|default:'https://images.unsplash.com/photo-1563978932-0b8139231cb1?q=80&w=1200&auto=format&fit=crop' }}" alt="cover"
              class="h-44 w-full object-cover" />
+        <!-- Favorite button -->
+        <button type="button"
+                class="cf-fav-btn absolute top-2 right-2 rounded-full bg-white/90 hover:bg-white p-2 shadow"
+                data-post-id="{{ post.id }}"
+                title="Toggle favorite">
+          {% if fav_post_ids and post.id in fav_post_ids %}
+            <i class="fa-solid fa-heart text-red-600"></i>
+          {% else %}
+            <i class="fa-regular fa-heart text-gray-700"></i>
+          {% endif %}
+        </button>
       </div>
 
       <div class="p-5">
@@ -31,6 +43,9 @@
       </div>
     </article>
   {% empty %}
-    <p class="text-gray-500">No posts found.</p>
+    <div class="col-span-full flex flex-col items-center justify-center text-center py-12">
+      <img src="{% static 'images/cflogo2.png' %}" alt="No posts" class="w-28 h-28 object-contain mb-4 opacity-80" />
+      <p class="text-gray-500 font-medium">No posts found</p>
+    </div>
   {% endfor %}
 </div>

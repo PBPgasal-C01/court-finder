@@ -27,8 +27,19 @@
             {% endif %}
           </div>
         </div>
-        <!-- Kanan: share (and admin actions) -->
-        <div class="flex items-center gap-4">
+        <!-- Kanan: favorite + share (and admin actions) -->
+        <div class="flex items-center gap-4" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
+          <!-- Favorite toggle button -->
+          <button type="button" id="favBtn" title="Favorite"
+                  class="text-gray-500 hover:text-red-600"
+                  data-post-id="{{ post.id }}"
+                  data-favorited="{{ is_favorited|yesno:'true,false' }}">
+            {% if is_favorited %}
+              <i class="fa-solid fa-heart text-red-600 text-base"></i>
+            {% else %}
+              <i class="fa-regular fa-heart text-gray-700 text-base"></i>
+            {% endif %}
+          </button>
           <button type="button" id="shareBtn" title="Share" class="text-gray-500 hover:text-gray-700">
             <i class="fa-solid fa-share-nodes text-gray-500 text-base"></i>
           </button>
@@ -141,6 +152,50 @@
         } catch (error_) {
           console.warn('Gagal menjalankan fallback share:', error_);
         }
+      }
+    });
+  })();
+  </script>
+
+  <script>
+  // Favorite toggle on detail
+  (function(){
+    function getCookie(name){
+      const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return m ? m.pop() : '';
+    }
+    const favBtn = document.getElementById('favBtn');
+    if (!favBtn) return;
+    const container = favBtn.closest('[data-is-authenticated]');
+    const isAuthenticated = container && container.dataset.isAuthenticated === 'true';
+    const loginUrl = "{% url 'autentikasi:login' %}";
+
+    favBtn.addEventListener('click', async () => {
+      const postId = favBtn.getAttribute('data-post-id');
+      if (!postId) return;
+      if (!isAuthenticated) { globalThis.location.assign(loginUrl); return; }
+      const url = `{% url 'blog:toggle_favorite' 0 %}`.replace('/0/', `/${postId}/`);
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken'),
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const icon = favBtn.querySelector('i');
+          if (data.favorited) {
+            icon.classList.remove('fa-regular', 'text-gray-700');
+            icon.classList.add('fa-solid', 'text-red-600');
+          } else {
+            icon.classList.remove('fa-solid', 'text-red-600');
+            icon.classList.add('fa-regular', 'text-gray-700');
+          }
+        }
+      } catch (err) {
+        console.warn('Toggle favorite failed:', err);
       }
     });
   })();

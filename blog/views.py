@@ -6,16 +6,28 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.urls import reverse
 
-from .models import BlogPost
+from .models import BlogPost, Favorite
 
 
 def post_list(request):
 	q = request.GET.get('q', '').strip()
+	show_favs = request.GET.get('favs') in ('1', 'true', 'True')
 	posts = BlogPost.objects.all()
 
 	# hanya cari di title
 	if q:
 		posts = posts.filter(title__icontains=q)
+
+	# Favorite state for current user
+	fav_post_ids = set()
+	if request.user.is_authenticated:
+		fav_post_ids = set(
+			Favorite.objects.filter(user=request.user).values_list('post_id', flat=True)
+		)
+
+	if show_favs:
+		# filter to favorites only
+		posts = posts.filter(pk__in=fav_post_ids or [-1])
 
 	is_admin_flag = is_admin(request.user)
 
@@ -23,21 +35,51 @@ def post_list(request):
 	if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('partial'):
 		return render(request, 'partials/cards.html', {
 			'posts': posts,
-			'is_admin': is_admin_flag
+			'is_admin': is_admin_flag,
+			'fav_post_ids': fav_post_ids,
 		})
 
 	return render(request, 'list.html', {
 		'posts': posts,
 		'q': q,
-		'is_admin': is_admin_flag
+		'is_admin': is_admin_flag,
+		'show_favs': show_favs,
+		'fav_post_ids': fav_post_ids,
 	})
 
 
 def post_detail(request, pk: int):
 	post = get_object_or_404(BlogPost, pk=pk)
 	is_admin_flag = is_admin(request.user)
-	others = BlogPost.objects.exclude(pk=pk)[:5]
-	return render(request, 'detail.html', {'post': post, 'is_admin': is_admin_flag, 'others': others})
+	# Base: exclude current post
+	others_qs = BlogPost.objects.exclude(pk=pk)
+	# exclude favourited post (if user authenticated)
+	if request.user.is_authenticated:
+		fav_ids = Favorite.objects.filter(user=request.user).values_list('post_id', flat=True)
+		others_qs = others_qs.exclude(pk__in=fav_ids)
+	others = others_qs[:5]
+	is_favorited = False
+	if request.user.is_authenticated:
+		is_favorited = Favorite.objects.filter(user=request.user, post=post).exists()
+	return render(request, 'detail.html', {
+		'post': post,
+		'is_admin': is_admin_flag,
+		'others': others,
+		'is_favorited': is_favorited,
+	})
+
+
+@login_required
+def toggle_favorite(request, pk: int):
+	if request.method != 'POST':
+		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
+	post = get_object_or_404(BlogPost, pk=pk)
+	fav, created = Favorite.objects.get_or_create(user=request.user, post=post)
+	if not created:
+		fav.delete()
+		return JsonResponse({'ok': True, 'favorited': False})
+	else:
+		return JsonResponse({'ok': True, 'favorited': True})
 
 
 class BlogPostForm(forms.ModelForm):
