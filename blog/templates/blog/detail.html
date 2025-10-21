@@ -29,7 +29,7 @@
         </div>
         <!-- Kanan: share (and admin actions) -->
         <div class="flex items-center gap-4">
-          <button type="button" title="Share" class="text-gray-500 hover:text-gray-700">
+          <button type="button" id="shareBtn" title="Share" class="text-gray-500 hover:text-gray-700">
             <i class="fa-solid fa-share-nodes text-gray-500 text-base"></i>
           </button>
         </div>
@@ -80,4 +80,69 @@
       </div>
     </aside>
   </section>
+  <script>
+  // Web Share API with fallback ke clipboard/prompt
+  (function(){
+    const btn = document.getElementById('shareBtn');
+    if (!btn) return;
+
+    async function copyToClipboard(text) {
+      // Try Clipboard API yang baru pertama
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (error_) {
+        console.warn('Clipboard API gagal, mencoba fallback:', error_);
+        // Fallback ke execCommand approach
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'absolute';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          ta.remove();
+          return ok;
+        } catch (error__) {
+          console.warn('Legacy clipboard fallback gagal:', error__);
+          return false;
+        }
+      }
+    }
+
+    btn.addEventListener('click', async () => {
+      const shareData = {
+        title: "{{ post.title|escapejs }}",
+        text: "Baca artikel blog ini",
+        url: globalThis.location.href
+      };
+
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (err) {
+          // Ignore user cancellation; attempt fallback on other errors
+          if (err && err.name === 'AbortError') return;
+          // else continue to fallback
+        }
+      }
+
+      // Fallback to copy link to clipboard, then final fallback to prompt
+      const copied = await copyToClipboard(shareData.url);
+      if (copied) {
+        alert('Link disalin ke clipboard');
+      } else {
+        try {
+          // Last resort
+          prompt('Salin tautan ini:', shareData.url);
+        } catch (error_) {
+          console.warn('Gagal menjalankan fallback share:', error_);
+        }
+      }
+    });
+  })();
+  </script>
 {% endblock %}
