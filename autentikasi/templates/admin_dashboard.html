@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block meta %}<title>Manage Users | CourtFinder</title>{% endblock meta %}
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="min-h-screen bg-[#F2F6F6] text-[#2F593F] flex flex-col items-center py-12 px-4">
+  <div class="w-full max-w-6xl bg-white shadow-lg rounded-2xl p-8">
+    <h1 class="text-2xl font-semibold text-[#2F593F] mb-6 text-center">Manage Users</h1>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full border border-gray-200 rounded-lg text-sm text-left">
+        <thead class="bg-[#698C6A] text-white uppercase">
+          <tr>
+            <th class="px-6 py-3">Name</th>
+            <th class="px-6 py-3">Email</th>
+            <th class="px-6 py-3">Joined</th>
+            <th class="px-6 py-3 text-center">Status</th>
+            <th class="px-6 py-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr class="border-b hover:bg-[#F2F6F6] transition">
+            <td class="px-6 py-3 font-medium">{{ u.username|default:"-" }}</td>
+            <td class="px-6 py-3">{{ u.email }}</td>
+            <td class="px-6 py-3">{{ u.date_joined|date:"d M Y" }}</td>
+            <td class="px-6 py-3 text-center">
+              {% if u.is_active %}
+                <span class="bg-green-100 text-green-700 text-xs px-2.5 py-1 rounded-full">Active</span>
+              {% else %}
+                <span class="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full">Banned</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-3 text-center space-x-2">
+              {% if u != user %}
+                <button onclick="toggleBan('{{ u.id }}')"
+                        class="px-3 py-1.5 rounded-lg text-sm font-semibold text-white transition
+                               {% if u.is_active %}bg-[#C1725D] hover:bg-[#a45c4b]{% else %}bg-[#79A6B9] hover:bg-[#5b8ca0]{% endif %}">
+                  {% if u.is_active %}Ban{% else %}Unban{% endif %}
+                </button>
+                <button onclick="deleteUser('{{ u.id }}')"
+                        class="px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition">
+                  Delete
+                </button>
+              {% else %}
+                <span class="text-gray-400 text-sm italic">You</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+async function toggleBan(id) {
+  const res = await fetch(`/auth/admin-dashboard/ban/${id}/`);
+  const data = await res.json();
+  if (data.status === 'success') location.reload();
+  else alert(data.message || 'Error toggling ban');
+}
+
+async function deleteUser(id) {
+  if (!confirm("Are you sure you want to delete this user?")) return;
+  const res = await fetch(`/auth/admin-dashboard/delete/${id}/`);
+  const data = await res.json();
+  if (data.status === 'success') location.reload();
+  else alert(data.message || 'Error deleting user');
+}
+</script>
+
+{% endblock content %}
+
