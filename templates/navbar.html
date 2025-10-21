@@ -8,7 +8,7 @@
     <div class="hidden md:flex items-center space-x-8 text-sm font-semibold">
       <a href="#" class="hover:text-gray-200 transition">Court</a>
       <a href="#" class="hover:text-gray-200 transition">Event</a>
-      <a href="#" class="hover:text-gray-200 transition">Blog</a>
+      <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
       <a href="#" class="hover:text-gray-200 transition">Contact</a>
     </div>
 
@@ -83,7 +83,7 @@
     <div class="flex flex-col items-center py-2 space-y-2">
       <a href="#" class="hover:text-gray-200 transition">Court</a>
       <a href="#" class="hover:text-gray-200 transition">Event</a>
-      <a href="#" class="hover:text-gray-200 transition">Blog</a>
+      <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
       <a href="#" class="hover:text-gray-200 transition">Contact</a>
 
       {% if user.is_authenticated %}
