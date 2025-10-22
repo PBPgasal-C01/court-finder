@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load static %}
+{% block meta %}<title>Profil Pengguna</title>{% endblock meta %}
+
+{% block content %}
+{% include 'navbar.html' %}
+
+<div class="min-h-screen bg-[#F2F6F6] text-[#2F593F] flex flex-col items-center py-12 px-4">
+  <div class="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row gap-10">
+    <!-- Left panel -->
+    <div class="w-full md:w-1/3 flex flex-col items-center border-r border-gray-200 pr-6">
+      <div class="relative">
+        {% if user.photo %}
+          <img id="profilePhoto"
+              src="{{ user.photo.url }}"
+              class="w-36 h-36 rounded-full object-cover border-4"
+              style="border-color:#698C6A" alt="Foto Profil">
+        {% else %}
+          <img id="profilePhoto"
+              src="https://via.placeholder.com/150"
+              class="w-36 h-36 rounded-full object-cover border-4"
+              style="border-color:#698C6A" alt="Foto Profil">
+        {% endif %}
+      </div>
+      <h2 class="mt-5 text-xl font-semibold">{{ user.username }}</h2>
+      <p class="text-sm text-gray-600">{{ user.email }}</p>
+
+      <button id="openModalBtn"
+              class="mt-6 px-5 py-2 rounded-lg text-white transition"
+              style="background:#698C6A">
+        Edit Profile
+      </button>
+    </div>
+
+    <!-- Right panel -->
+    <div class="w-full md:w-2/3 space-y-8">
+      <div>
+        <h3 class="text-lg font-semibold mb-2">Court Preference</h3>
+        <p class="text-gray-700">{{ user.get_preference_display }}</p>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold mb-2">Recent Activity</h3>
+        <p class="text-gray-700">
+        Last login: 
+        {% if user.last_login %}
+          {{ user.last_login|date:"d M Y, H:i" }}
+        {% else %}
+          Never logged in
+        {% endif %}
+      </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+  <div class="bg-white w-96 rounded-xl p-6 shadow-xl">
+    <h2 class="text-lg font-semibold mb-4" style="color:#2F593F">Edit Profile</h2>
+
+    <form id="editProfileForm" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <label class="block text-sm font-medium" style="color:#2F593F">Name</label>
+      <input type="text" name="username" value="{{ user.username }}"
+             class="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2"
+             style="--tw-ring-color:#698C6A">
+
+      <label class="block text-sm font-medium" style="color:#2F593F">Preference</label>
+      <select name="preference"
+              class="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2"
+              style="--tw-ring-color:#698C6A">
+        <option value="Indoor"  {% if user.preference == "Indoor" %}selected{% endif %}>Indoor</option>
+        <option value="Outdoor" {% if user.preference == "Outdoor" %}selected{% endif %}>Outdoor</option>
+        <option value="Both"    {% if user.preference == "Both" %}selected{% endif %}>Both</option>
+      </select>
+
+      <label class="block text-sm font-medium" style="color:#2F593F">Photo</label>
+      <input type="file" name="photo" id="photoInput"
+             class="w-full mb-4 text-sm text-gray-700 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:text-white hover:file:opacity-90"
+             style="--tw-ring-color:#698C6A; --file-bg:#79A6B9; ">
+      <style>
+        /* tailwind can't style file bg via inline hex utility—add tiny helper */
+        input[type="file"]::file-selector-button{ background:#79A6B9 }
+      </style>
+
+      <img id="previewImage" class="w-24 h-24 object-cover rounded-full mt-2 hidden" />
+
+      <div class="flex justify-end gap-3 mt-6">
+        <button type="button" id="closeModalBtn"
+                class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100">
+          Cancel
+        </button>
+        <button type="submit"
+                class="px-5 py-2 rounded-lg text-white transition"
+                style="background:#698C6A">
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("editModal");
+  const openBtn = document.getElementById("openModalBtn");
+  const closeBtn = document.getElementById("closeModalBtn");
+  const form = document.getElementById("editProfileForm");
+  const photoInput = document.getElementById("photoInput");
+  const previewImage = document.getElementById("previewImage");
+
+  openBtn.addEventListener("click", () => modal.classList.remove("hidden"));
+  if (closeBtn) closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
+  modal.addEventListener("click", (e)=>{ if(e.target===modal) modal.classList.add("hidden"); });
+
+  // Live preview
+  photoInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      previewImage.src = ev.target.result;
+      previewImage.classList.remove("hidden");
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // AJAX submit
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    const res = await fetch("{% url 'autentikasi:update_profile_ajax' %}", {
+      method: "POST",
+      headers: { "X-CSRFToken": csrftoken },
+      body: formData
+    });
+
+    const data = await res.json();
+    if (data.status === "success") {
+      modal.classList.add("hidden");
+      window.location.replace(
+        window.location.pathname +
+        window.location.search +
+        (window.location.search ? "&" : "?") +
+        "t=" + Date.now()
+      ); // atau update DOM manual
+    } else {
+      alert("Gagal menyimpan profil");
+      console.log(data.errors);
+    }
+  });
+});
+</script>
+{% endblock content %}
+
