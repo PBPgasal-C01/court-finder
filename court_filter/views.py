@@ -9,6 +9,8 @@ from decimal import Decimal
 from .models import Court, Bookmark, Province
 from .serializers import CourtSerializer, ProvinceSerializer
 from .utils import haversine_distance, geocode_address, is_in_indonesia
+from django.shortcuts import get_object_or_404
+from urllib.parse import unquote
 
 @require_http_methods(["GET"])
 def court_finder(request):
@@ -21,7 +23,7 @@ def court_finder(request):
         'court_types': court_types,
         'default_lat': -6.2088,  # Jakarta
         'default_lon': 106.8456,
-        'is_authenticated': request.user.is_authenticated,  # ← TAMBAH INI
+        'is_authenticated': request.user.is_authenticated, 
     }
     return render(request, 'court_filter/court_finder.html', context)
 
@@ -178,3 +180,17 @@ def get_provinces(request):
     provinces = Province.objects.all()
     serializer = ProvinceSerializer(provinces, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+def court_detail_view(request, court_name):
+    # Decode nama dari URL
+    decoded_name = unquote(court_name)
+    
+    # Get court by name
+    court = get_object_or_404(Court, name=decoded_name)
+    
+    context = {
+        'court': court,
+        'is_authenticated': request.user.is_authenticated,
+    }
+    
+    return render(request, 'court_filter/court_detail.html', context)

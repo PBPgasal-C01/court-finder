@@ -16,6 +16,8 @@
 <body>
     {% csrf_token %}
 
+    
+
     <!-- Main Container -->
     <div class="container">
         <!-- Sidebar -->
@@ -90,8 +92,12 @@
     <!-- Messages -->
     <div class="message" id="message"></div>
 
+
+    <!-- Tambahkan di bagian atas script, setelah CSRFTOKEN -->
     <script>
         const CSRFTOKEN = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const IS_AUTHENTICATED = {% if user.is_authenticated %}true{% else %}false{% endif %};
+    
         let map;
         let marker;
         let currentCoords = { lat: -6.2088, lng: 106.8456 };
@@ -207,11 +213,12 @@
                 const starClass = court.is_bookmarked ? 'active' : 'inactive';
                 
                 const card = document.createElement('div');
+                const encodedName = encodeURIComponent(court.name);
                 card.className = 'court-card';
                 card.innerHTML = `
                     <div class="court-card-header">
                         <div>
-                            <h3>${court.name}</h3>
+                            <h3><a href="/courts/detail/${encodeURIComponent(court.name)}/">${court.name}</a></h3>
                             <div class="court-time">10:00 - 21:00</div>
                         </div>
                         <span class="bookmark-star ${starClass}" onclick="toggleBookmark(${court.id}, this)">★</span>
