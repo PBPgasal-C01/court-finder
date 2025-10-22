@@ -25,6 +25,7 @@ urlpatterns = [
     path('', include('main.urls')),
     path('auth/', include('autentikasi.urls')),
     path('accounts/', include('allauth.urls')),
+    path('event_list/', include('game_scheduler.urls')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

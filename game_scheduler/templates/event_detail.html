@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ event.title }}{% endblock %}
+
+{% block content %}
+
+<div class="bg-[#3F5940] text-white pt-8 pb-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+        <div>
+            <a href="{% url 'game_scheduler:event_list' %}" class="inline-flex items-center gap-2 text-sm font-semibold bg-white text-[#698C6A] px-4 py-2 rounded-full hover:bg-gray-100 shadow-sm transition">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" /></svg>
+                BACK
+            </a>
+        </div>
+
+        <div class="space-y-4">
+            <h1 class="text-4xl md:text-5xl font-bold text-white">{{ event.title }}</h1>
+            <span class="inline-block mt-2 text-sm font-bold bg-white/30 text-white px-3 py-1.5 rounded-full">
+                {{ event.get_event_type_display }}
+            </span>
+            
+            {% with p_count=event.participants.count %}
+            <div class="flex items-center gap-3">
+                
+                <div class="flex items-center -space-x-2"> 
+                    
+                    {% for participant in event.participants.all|slice:":5" %}
+                        {% if participant.photo %}
+                            <img class="w-8 h-8 rounded-full border-2 border-white object-cover" 
+                                src="{{ participant.photo.url }}" 
+                                alt="{{ participant.username }}">
+                        {% else %}
+                            <div class="w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center text-xs font-semibold text-gray-600" 
+                                title="{{ participant.username }}">
+                                {{ participant.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+    
+                    {% if p_count > 5 %}
+                        <div class="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-semibold text-gray-600">
+                            +{{ p_count|add:"-5" }}
+                        </div>
+                    
+                    {% else %}
+                        {% if p_count < 5 %}<div class="w-8 h-8 rounded-full bg-white/20 border-2 border-dashed border-white/50"></div>{% endif %}
+                        {% if p_count < 4 %}<div class="w-8 h-8 rounded-full bg-white/20 border-2 border-dashed border-white/50"></div>{% endif %}
+                        {% if p_count < 3 %}<div class="w-8 h-8 rounded-full bg-white/20 border-2 border-dashed border-white/50"></div>{% endif %}
+                        {% if p_count < 2 %}<div class="w-8 h-8 rounded-full bg-white/20 border-2 border-dashed border-white/50"></div>{% endif %}
+                        {% if p_count < 1 %}<div class="w-8 h-8 rounded-full bg-white/20 border-2 border-dashed border-white/50"></div>{% endif %}
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center gap-2 text-sm font-semibold text-white">
+                    <span class="text-white/70">•</span>
+                    <span>
+                        <span class="text-white font-bold">{{ p_count }}</span>/10
+                    </span>
+                </div>
+                
+            </div>
+            {% endwith %}
+            </div>
+
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+    <div class="flex flex-col lg:flex-row gap-8 -mt-16">
+        
+        <div class="lg:w-2/3 text-gray-600 leading-relaxed pt-20 break-all">
+            {{ event.description|linebreaks }}
+        </div>
+
+        <div class="lg:w-1/3">
+            <div class="bg-white rounded-2xl shadow-2xl p-6 space-y-6 border border-gray-200"> 
+                <div class="space-y-4">
+                    <div class="text-gray-500 text-sm">
+                        <div class="flex items-center mb-2"> <img src="{% static 'images/location.png' %}" alt="Court" class="w-4 h-4 mr-2"> <span>{{ event.location }}</span>
+                        </div>
+                        <div class="flex items-center mb-2">
+                            <img src="{% static 'images/date.png' %}" alt="date" class="w-4 h-4 mr-2"> <span>{{ event.scheduled_date|date:"l, j F Y" }}</span>
+                        </div>
+                        <div class="flex items-center mb-2">
+                            <img src="{% static 'images/time.png' %}" alt="time" class="w-4 h-4 mr-2"> <span>{{ event.start_time|time:"H:i" }} - {{ event.end_time|time:"H:i" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center">
+                    {% if user.is_authenticated %}
+                        {% if user in event.participants.all %}
+                            <a href="{% url 'game_scheduler:leave_event' event.id %}" class="w-auto px-6 text-center bg-red-600 text-white font-bold py-3 rounded-lg transition hover:bg-red-700">LEAVE EVENT</a>
+                        {% elif not event.is_full %}
+                            <a href="{% url 'game_scheduler:join_event' event.id %}" class="w-auto px-6 text-center bg-[#698C6A] text-white font-bold py-3 rounded-lg transition hover:bg-opacity-90">JOIN EVENT</a>
+                        {% else %}
+                            <button class="w-auto px-6 bg-gray-300 text-gray-500 font-bold py-3 rounded-lg cursor-not-allowed">EVENT PENUH</button>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'autentikasi:login' %}" class="w-auto px-6 text-center bg-[#698C6A] text-white font-bold py-3 rounded-lg transition hover:bg-opacity-90">LOGIN UNTUK JOIN</a>
+                    {% endif %}
+                </div>
+
+                {% if user == event.creator %}
+                <div class="flex items-center justify-center space-x-4 pt-4 border-t border-gray-100">
+                    <a href="{% url 'game_scheduler:edit_event' event.id %}" class="px-5 py-2 bg-[#FFE9CC] text-[#A16E27] border border-[#A16E27] font-semibold rounded-lg text-sm transition hover:bg-gray-50">
+                        Edit
+                    </a>
+                    <button type="button" 
+                            data-url="{% url 'game_scheduler:delete_event' event.id %}" 
+                            class="delete-btn px-5 py-2 bg-[#FFD9D1] text-[#8B483A] border border-[#8B483A] font-semibold rounded-lg text-sm transition hover:bg-gray-50">
+                        Delete
+                    </button>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto pt-12">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">OTHER EVENTS YOU MIGHT LIKE</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            {% for event in other_events %}
+                <div class="bg-white rounded-2xl shadow-lg p-5 flex flex-col transition hover:shadow-xl border border-gray"> 
+                    
+                    <div class="flex-grow space-y-3">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1">{{ event.title }}</h3>
+                        <span class="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{{ event.get_event_type_display }}</span>
+                        
+                        <br> 
+                        <br>
+
+                        <div class="text-gray-500 text-sm">
+                            <div class="flex items-center mb-2"> <img src="{% static 'images/location.png' %}" alt="Court" class="w-4 h-4 mr-2"> <span>{{ event.location }}</span>
+                            </div>
+                            <div class="flex items-center mb-2">
+                                <img src="{% static 'images/date.png' %}" alt="date" class="w-4 h-4 mr-2"> <span>{{ event.scheduled_date|date:"l, j F Y" }}</span>
+                            </div>
+                            <div class="flex items-center mb-2">
+                                <img src="{% static 'images/time.png' %}" alt="time" class="w-4 h-4 mr-2"> <span>{{ event.start_time|time:"H:i" }} - {{ event.end_time|time:"H:i" }}</span>
+                            </div>
+                        </div>
+                        
+                        {% with p_count=event.participants.count %}
+                        <div class="flex items-center gap-3 pt-3">
+                            
+                            <div class="flex items-center -space-x-2"> 
+                                {% for participant in event.participants.all|slice:":5" %}
+                                    {% if participant.photo %}
+                                        <img class="w-8 h-8 rounded-full border-2 border-white object-cover" 
+                                            src="{{ participant.photo.url }}" 
+                                            alt="{{ participant.username }}">
+                                    {% else %}
+                                        <div class="w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center text-xs font-semibold text-gray-600" 
+                                            title="{{ participant.username }}">
+                                            {{ participant.username|slice:":1"|upper }}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                
+                                {% if p_count > 5 %}
+                                    <div class="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-semibold text-gray-600">
+                                        +{{ p_count|add:"-5" }}
+                                    </div>
+                                {% else %}
+                                    {% if p_count < 5 %}<div class="w-8 h-8 rounded-full bg-white border-2 border-dashed border-gray-300"></div>{% endif %}
+                                    {% if p_count < 4 %}<div class="w-8 h-8 rounded-full bg-white border-2 border-dashed border-gray-300"></div>{% endif %}
+                                    {% if p_count < 3 %}<div class="w-8 h-8 rounded-full bg-white border-2 border-dashed border-gray-300"></div>{% endif %}
+                                    {% if p_count < 2 %}<div class="w-8 h-8 rounded-full bg-white border-2 border-dashed border-gray-300"></div>{% endif %}
+                                    {% if p_count < 1 %}<div class="w-8 h-8 rounded-full bg-white border-2 border-dashed border-gray-300"></div>{% endif %}
+                                {% endif %}
+                            </div>
+
+                            <div class="flex items-center gap-2 text-sm font-semibold text-gray-500">
+                                <span class="text-gray-400">•</span>
+                                <span>
+                                    <span class="text-gray-900 font-bold">{{ p_count }}</span>/10
+                                </span>
+                            </div>
+                            
+                        </div>
+                        {% endwith %}
+                        </div>
+
+                    <div class="flex justify-between items-center pt-4 border-t border-gray-100 mt-4">
+                        
+                        <div class="flex items-center gap-2">
+                            {% if event.creator.photo %}
+                                <img class="w-6 h-6 rounded-full object-cover" 
+                                     src="{{ event.creator.photo.url }}" 
+                                     alt="{{ event.creator.username }}">
+                            {% else %}
+                                <div class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-semibold text-gray-600"
+                                     title="{{ event.creator.username }}">
+                                    {{ event.creator.username|slice:":1"|upper }}
+                                </div>
+                            {% endif %}
+                            <span class="text-sm font-medium text-gray-500">
+                                {{ event.creator.username|default:'admin12345' }}
+                            </span>
+                        </div>
+                        
+                        <a href="{% url 'game_scheduler:event_detail' event.id %}" class="px-5 py-2 bg-[#F6FAF6] text-[#547254] border border-[#547254] font-semibold rounded-lg text-sm transition hover:bg-gray-50">
+                            DETAIL
+                        </a>
+                    </div>
+                    </div>
+            {% empty %}
+                <p class="text-gray-500 col-span-3">Tidak ada event lain saat ini.</p>
+            {% endfor %}
+
+        </div>
+    </div>
+</div>
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const deleteUrl = this.dataset.url;
+
+            if (confirm('Apakah anda yakin ingin menghapus event ini?')) {
+                fetch(deleteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                        window.location.href = data.redirect_url;
+                    } else {
+                        alert(data.message || 'Gagal menghapus event.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan.');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
