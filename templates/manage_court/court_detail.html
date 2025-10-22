@@ -4,7 +4,14 @@
 {% block content %}
 {% include 'navbar.html' %}
 
-<main class_alias="max-w-4xl mx-auto p-6">
+<main class="max-w-4xl mx-auto p-6">
+
+    <div class="mb-4">
+        <a href="{% url 'manage_court:show_manage_court' %}" 
+           class="flex items-center text-gray-600 hover:text-[#698C6A] transition font-semibold">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Manage Courts
+        </a>
+    </div>
 
     <div class="bg-white shadow-lg rounded-lg overflow-hidden">
         
@@ -17,27 +24,30 @@
         {% if court.photo %}
             <img src="{{ court.photo.url }}" alt="{{ court.name }}" class="w-full h-96 object-cover">
         {% else %}
-            <div class="w-full h-96 bg-gray-200 flex items-center justify-center text-gray-500">No Image</div>
+            <div class="w-full h-96 bg-gray-200 flex items-center justify-center text-gray-500 text-lg">No Image Available</div>
         {% endif %}
 
         <div class="flex justify-between items-center p-4 bg-gray-50 border-t border-b">
-            <span class_alias="text-lg font-medium text-gray-700">
+            <span class="text-lg font-medium text-gray-700">
                 <i class="fas fa-clock mr-1"></i>
                 {{ court.operational_hours|default:"-" }}
             </span>
-            <span class_alias="text-lg font-medium text-yellow-500">
+            <span class="text-lg font-medium text-yellow-500">
                 <i class="fas fa-star"></i>
                 <i class="fas fa-star"></i>
                 <i class="fas fa-star"></i>
                 <i class="fas fa-star"></i>
                 <i class="far fa-star"></i>
-                (4.0) </span>
-            <span class="text-2xl font-bold text-[#698C6A]">
-                Rp {{ court.price_per_hour|floatformat:0 }}/H
+                (4.0) 
             </span>
-        </div>
+            
+            <span class="text-2xl font-bold text-[#698C6A]">
+                Rp {{ court.price_per_hour|floatformat:0|stringformat:"s"|slice:":-2" }}.{{ court.price_per_hour|floatformat:0|stringformat:"s"|slice:"-3:" }}/H
+            </span>
+            </div>
 
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            
             <div>
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">Facilities</h3>
                 <div class="flex flex-wrap gap-2">
@@ -50,52 +60,19 @@
                     {% endfor %}
                 </div>
             </div>
+            
             <div>
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">Description</h3>
                 <p class="text-gray-600">{{ court.description|default:"No description available." }}</p>
             </div>
+            
             <div class="md:col-span-2">
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">Contact</h3>
                 <p class="text-gray-600 font-medium">{{ court.phone_number|default:"-" }}</p>
             </div>
+            
         </div>
         
-        <div class="p-6 border-t">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-semibold text-gray-800">Reviews ({{ reviews.count }})</h3>
-                <button type="button" class="px-4 py-2 bg-[#698C6A] text-white font-semibold rounded-lg shadow-md hover:bg-[#5a7a5b] transition">
-                    + Add Review
-                </button>
-            </div>
-
-            <div class="space-y-4">
-                {% for review in reviews %}
-                <div class="border rounded-lg p-4 flex gap-4">
-                    <div>
-                        {% if review.photo %}
-                            <img src="{{ review.photo.url }}" alt="{{ review.user.username }}" class="w-12 h-12 rounded-full object-cover">
-                        {% else %}
-                            <div class="w-12 h-12 rounded-full bg-gray-200"></div>
-                        {% endif %}
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between items-center">
-                            <h4 class="font-bold text-gray-800">{{ review.user.username }}</h4>
-                            <span class="text-sm text-gray-500">{{ review.created_at|date:"d M Y" }}</span>
-                        </div>
-                        <div class="text-yellow-500 my-1">
-                            {% for i in "12345"|make_list %}
-                                <i class="fas fa-star"></i> {% endfor %}
-                        </div>
-                        <p class="text-gray-600">{{ review.comment }}</p>
-                    </div>
-                </div>
-                {% empty %}
-                <p class="text-gray-500 text-center">Be the first to review this court!</p>
-                {% endfor %}
-            </div>
-        </div>
-
     </div>
 </main>
 {% endblock %}
