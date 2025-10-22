@@ -1,16 +1,468 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Court</title>
-</head>
-<body style="background-color: #f0f0f0; font-family: sans-serif;">
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block content %}
+{% include 'navbar.html' %}
 
-    <h1>Halo, Ini dari File HTML!</h1>
-    <p>Sekarang kita sudah pakai template.</p>
+<main class="max-w-7xl mx-auto p-6">
+
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold text-gray-800">
+            Manage Court
+        </h1>
+        <button type="button" id="open-add-modal-btn" class="px-4 py-2 bg-[#698C6A] text-white font-semibold rounded-lg shadow-md hover:bg-[#5a7a5b] transition">
+            + Add New Court
+        </button>
+    </div>
+
+    <hr class="my-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        {% for court in courts_list %}
+
+        <div class="bg-white shadow-md rounded-xl overflow-hidden flex flex-col hover:shadow-xl transition-shadow">
+            
+            <!-- Content Section -->
+            <div class="p-5 flex flex-col flex-grow">
+                
+                <!-- Court Name - Centered -->
+                <a href="{% url 'manage_court:court_detail' court.pk %}" target="_blank" class="text-center">
+                    <h2 class="text-xl font-bold text-gray-800 hover:text-[#698C6A] transition">{{ court.name }}</h2>
+                </a>
+                
+                <!-- Court Type - Centered -->
+                <p class="text-sm text-gray-500 capitalize mt-1 mb-3 text-center">{{ court.court_type }} Court</p>
+
+                <!-- Operational Hours & Price -->
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-clock text-gray-400 text-sm"></i>
+                        <p class="text-sm text-gray-600">{{ court.operational_hours|default:"-" }}</p>
+                    </div>
+                    <span class="text-base font-bold text-[#698C6A]">Rp {{ court.price_per_hour|floatformat:0|stringformat:"s"|slice:":-2" }}.{{ court.price_per_hour|floatformat:0|stringformat:"s"|slice:"-3:" }}/Jam</span>
+                </div>
+
+                <!-- Image Section -->
+                {% if court.photo %}
+                    <img src="{{ court.photo.url }}" alt="{{ court.name }}" class="w-full h-48 object-cover rounded-lg mb-4">
+                {% else %}
+                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400 rounded-lg mb-4">
+                        <i class="fas fa-image text-4xl"></i>
+                    </div>
+                {% endif %}
+
+                <!-- Address with bottom stroke -->
+                <div class="pb-4 border-b border-gray-200 mb-4">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-map-marker-alt text-gray-400 text-sm mt-0.5"></i>
+                        <p class="text-sm text-gray-600">{{ court.address }}</p>
+                    </div>
+                </div>
+
+                <!-- Facilities with bubbles -->
+                <div class="mb-4">
+                    <h3 class="text-xs font-semibold text-gray-600 uppercase mb-2">Facilities</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for facility in court.facilities.all %}
+                            <span class="px-3 py-1 bg-green-50 text-[#698C6A] text-xs font-medium rounded-full border border-green-200">
+                                {{ facility.name }}
+                            </span>
+                        {% empty %}
+                            <span class="text-sm text-gray-400">No facilities listed</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Description in frame -->
+                <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <h3 class="text-xs font-semibold text-gray-600 uppercase mb-2">Description</h3>
+                    <p class="text-sm text-gray-600 line-clamp-3">{{ court.description|default:"No description available." }}</p>
+                </div>
+
+                <!-- Contact -->
+                <div class="mb-4">
+                    <h3 class="text-xs font-semibold text-gray-600 uppercase mb-1">Contact</h3>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-phone text-gray-400 text-sm"></i>
+                        <p class="text-sm text-gray-600">{{ court.phone_number|default:"-" }}</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons - Centered -->
+                <div class="flex justify-center gap-4 pt-3 border-t border-gray-100">
+                    <button type="button" 
+                            class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition delete-btn" 
+                            data-court-id="{{ court.pk }}" 
+                            data-court-name="{{ court.name }}"
+                            title="Delete Court">
+                        <i class="fas fa-trash text-xl"></i> 
+                    </button>
+                    
+                    <button type="button" 
+                            class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition edit-btn" 
+                            data-court-id="{{ court.pk }}"
+                            title="Edit Court">
+                        <i class="fas fa-edit text-xl"></i> 
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <i class="fas fa-basketball-ball text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500 text-lg">No courts have been added yet.</p>
+            <p class="text-gray-400 text-sm mt-1">Click "+ Add New Court" to start.</p>
+        </div>
+
+        {% endfor %}
+    </div>
+</main>
+
+
+<div id="add-court-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <form id="dynamic-court-form" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="p-6 border-b text-center">
+                <h2 id="court-modal-title" class="text-2xl font-bold text-gray-800">Add New Court</h2>
+                <p class="text-sm text-gray-500">Own a Court? Share it Here!</p>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">Court Name</label>
+                        {{ form.name.errors }}
+                        <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700">Address</label>
+                        {{ form.address.errors }}
+                        <textarea name="{{ form.address.name }}" id="{{ form.address.id_for_label }}" rows="3"
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"></textarea>
+                    </div>
+                    <div>
+                        <label for="{{ form.court_type.id_for_label }}" class="block text-sm font-medium text-gray-700">Sport Type</label>
+                        {{ form.court_type.errors }}
+                        {{ form.court_type }}
+                    </div>
+                    <div>
+                        <label for="{{ form.operational_hours.id_for_label }}" class="block text-sm font-medium text-gray-700">Operational Hours (e.g. 09.00 - 22.00)</label>
+                        {{ form.operational_hours.errors }}
+                        <input type="text" name="{{ form.operational_hours.name }}" id="{{ form.operational_hours.id_for_label }}"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label for="{{ form.price_per_hour.id_for_label }}" class="block text-sm font-medium text-gray-700">Price per Hour (Rp)</label>
+                        {{ form.price_per_hour.errors }}
+                        <input type="number" name="{{ form.price_per_hour.name }}" id="{{ form.price_per_hour.id_for_label }}"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        {{ form.phone_number.errors }}
+                        <input type="text" name="{{ form.phone_number.name }}" id="{{ form.phone_number.id_for_label }}"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                    </div>
+                    <div>
+                       <label for="{{ form.province.id_for_label }}" class="block text-sm font-medium text-gray-700">Province</label>
+                        {{ form.province.errors }}
+                        {{ form.province|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" }} 
+                    </div>
+                                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label for="{{ form.photo.id_for_label }}" class="block text-sm font-medium text-gray-700">Court Image</label>
+                        {{ form.photo.errors }}
+                        <input type="file" name="{{ form.photo.name }}" id="{{ form.photo.id_for_label }}" accept="image/*"
+                               class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+                                      file:rounded-full file:border-0 file:text-sm file:font-semibold
+                                      file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Facilities</label>
+                        {{ form.facilities.errors }}
+                        <div class="mt-2 space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                            {{ form.facilities }}
+                        </div>
+                    </div>
+                    <div>
+                        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700">Description</label>
+                        {{ form.description.errors }}
+                        <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="4"
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6 bg-gray-50 rounded-b-lg flex justify-end gap-3">
+                <button type="button" id="cancel-add-btn" class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-300 transition">
+                    Cancel
+                </button>
+                <button type="submit" id="submit-court-btn" class="px-4 py-2 bg-[#698C6A] text-white font-semibold rounded-lg shadow-md hover:bg-[#5a7a5b] transition">
+                    Save Court
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="delete-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+        
+        <!-- Header with warning icon and title -->
+        <div class="p-6 pb-4">
+            <div class="flex flex-col items-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-brown-800" style="color: #5D4037;">
+                    DELETE COURT
+                </h2>
+            </div>
+            
+            <!-- Confirmation text -->
+            <p id="delete-confirmation-text" class="text-gray-700 text-base leading-relaxed text-center">
+                Are you sure you want to delete court <strong>"Fasilkom Court"</strong>? This action cannot be undone.
+            </p>
+        </div>
+        
+        <!-- Action buttons -->
+        <div class="px-6 pb-6 flex justify-center gap-3">
+            <button type="button" 
+                    id="cancel-delete-btn" 
+                    class="px-8 py-3 bg-white text-gray-700 border-2 border-gray-300 font-semibold rounded-full hover:bg-gray-50 transition">
+                CANCEL
+            </button>
+            
+            <button type="button" 
+                    id="confirm-delete-btn" 
+                    class="px-8 py-3 text-white font-semibold rounded-full shadow-md hover:opacity-90 transition" 
+                    style="background-color: #D4A5A5;">
+                DELETE
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// untuk Buka/Tutup Modal 
+const openModalBtn = document.getElementById('open-add-modal-btn');
+const modalBackdrop = document.getElementById('add-court-modal-backdrop');
+const cancelModalBtn = document.getElementById('cancel-add-btn');
+
+// Logika AJAX untuk Submit Form 
+const form = document.getElementById('dynamic-court-form');
+const submitButton = document.getElementById('submit-court-btn'); 
+const modalTitle = document.getElementById('court-modal-title');
+
+// u status edit
+let isEditMode = false;
+let courtIdToEdit = null;
+
+// Modal Delete
+const deleteModalBackdrop = document.getElementById('delete-modal-backdrop');
+const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+const deleteConfirmationText = document.getElementById('delete-confirmation-text');
+
+
+function hideModal() {
+    modalBackdrop.classList.add('hidden');
+    isEditMode = false;
+    courtIdToEdit = null;
+    form.reset();
+    form.action = ''; 
+    modalTitle.textContent = "Add New Court"; // Reset Judul
+    submitButton.textContent = "Save Court"; // Reset Tombol
+    submitButton.disabled = false;
+}
+
+openModalBtn.addEventListener('click', function() {
+    isEditMode = false;
+    modalTitle.textContent = "Add New Court";
+    submitButton.textContent = "Save Court";
+    modalBackdrop.classList.remove('hidden');
+});
+cancelModalBtn.addEventListener('click', hideModal);
+modalBackdrop.addEventListener('click', function(event) {
+    if (event.target === modalBackdrop) {
+        hideModal();
+    }
+});
+
+// LOGIKA EDIT (FETCH DATA)
+document.querySelectorAll('.edit-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const courtId = this.dataset.courtId;
+        
+        isEditMode = true;
+        courtIdToEdit = courtId;
+        modalTitle.textContent = "Edit Court"; 
+        submitButton.textContent = "Update Court"; 
+        modalBackdrop.classList.remove('hidden');
+
+        const fetchUrl = "{% url 'manage_court:get_court_data' 0 %}".replace('0', courtId);
+        
+        fetch(fetchUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    fillFormFields(data.court);
+                } else {
+                    alert('Failed to load court data: ' + data.message);
+                    hideModal();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching court data:', error);
+                alert('An error occurred while fetching court data.');
+                hideModal();
+            });
+    });
+});
+
+// Fungsi untuk mengisi form dengan data yang diambil dari server.
+function fillFormFields(court) {
+    document.getElementById('id_name').value = court.name || '';
+    document.getElementById('id_address').value = court.address || '';
+    document.getElementById('id_operational_hours').value = court.operational_hours || '';
+    document.getElementById('id_price_per_hour').value = court.price_per_hour || '';
+    document.getElementById('id_phone_number').value = court.phone_number || '';
+    document.getElementById('id_description').value = court.description || '';
     
-    <button type="button">+ Add New</button>
+    document.getElementById('id_court_type').value = court.court_type || '';
+    document.getElementById('id_province').value = court.province || '';
 
-</body>
-</html>
+    // Logika untuk checkbox/fasilitas
+    document.querySelectorAll('input[name="facilities"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    court.facilities.forEach(facilityId => {
+        const checkbox = document.querySelector(`input[name="facilities"][value="${facilityId}"]`);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+}
+
+//LOGIKA SUBMIT FORM
+form.addEventListener('submit', function(event) {
+    event.preventDefault(); 
+    
+    submitButton.disabled = true;
+    submitButton.innerHTML = isEditMode ? "Updating..." : "Saving...";
+
+    const formData = new FormData(form);
+
+    let submitUrl;
+    if (isEditMode) {
+        // Jika mode Edit, pake URL Edit dengan ID dinamis
+        submitUrl = "{% url 'manage_court:edit_court_ajax' 0 %}".replace('0', courtIdToEdit);
+    } else {
+        // Jika mode Add, pake URL Add
+        submitUrl = "{% url 'manage_court:add_court_ajax' %}";
+    }
+
+    fetch(submitUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            hideModal();
+            location.reload(); 
+        } else {
+            alert('Error: ' + JSON.stringify(data.errors));
+            submitButton.disabled = false;
+            submitButton.innerHTML = "Save Court";
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An unexpected error occurred. Check the console (F12).');
+        submitButton.disabled = false;
+        submitButton.innerHTML = isEditMode ? "Update Court" : "Save Court";
+    });
+});
+
+
+let courtToDeleteId = null;
+
+function showDeleteModal(courtName) {
+    deleteConfirmationText.innerHTML = `Are you sure you want to delete court <strong>${courtName}</strong>? This action cannot be undone.`;
+    deleteModalBackdrop.classList.remove('hidden');
+}
+
+function hideDeleteModal() {
+    deleteModalBackdrop.classList.add('hidden');
+    courtToDeleteId = null; // Reset ID
+    confirmDeleteBtn.disabled = false; // Pastikan tombol aktif
+    confirmDeleteBtn.innerHTML = "DELETE";
+}
+
+cancelDeleteBtn.addEventListener('click', hideDeleteModal);
+
+document.querySelectorAll('.delete-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        courtToDeleteId = this.dataset.courtId;
+        const courtName = this.dataset.courtName;
+        showDeleteModal(courtName); 
+    });
+});
+
+confirmDeleteBtn.addEventListener('click', function() {
+    if (!courtToDeleteId) return; 
+
+    confirmDeleteBtn.disabled = true;
+    confirmDeleteBtn.innerHTML = "Deleting...";
+
+    const deleteUrl = "{% url 'manage_court:delete_court' 0 %}".replace('0', courtToDeleteId);
+    
+    // Logika AJAX DELETE
+    fetch(deleteUrl, {
+        method: 'POST',
+        headers: {
+            // Ambil CSRF token dari elemen form manapun (misalnya form Add/Edit)
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 
+            'Content-Type': 'application/json' 
+        },
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 404) {
+                 alert('Error: Deletion failed. Court not found or you are not the owner of this court.');
+            } else if (response.status === 403) {
+                 alert('Error: You must be logged in to delete this court.');
+            }
+            throw new Error(`Deletion failed with status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert(data.message);
+        hideDeleteModal();
+        location.reload(); 
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        if (!alert.includes('Error: Deletion failed.')) {
+            alert('An unexpected error occurred during deletion. Check the console.');
+        }
+        hideDeleteModal();
+    });
+});
+
+</script>
+
+{% endblock %}

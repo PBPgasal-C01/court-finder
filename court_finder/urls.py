@@ -28,4 +28,5 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('manage-court/', include('manage_court.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

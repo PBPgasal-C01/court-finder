@@ -5,11 +5,11 @@ from .models import Facility, Province, Court, Review
 # Kustomisasi tampilan Admin untuk Court (Biar rapi)
 class CourtAdmin(admin.ModelAdmin):
     list_display = ('name', 'court_type', 'price_per_hour')
-    list_filter = ('court_type', 'provinces', 'facilities')
+    list_filter = ('court_type', 'province', 'facilities')
     search_fields = ('name', 'address')
     
     # Mengubah 'facilities' & 'provinces' jadi checklist keren
-    filter_horizontal = ('facilities', 'provinces',)
+    filter_horizontal = ('facilities',)
 
 # Kustomisasi tampilan Admin untuk Review
 class ReviewAdmin(admin.ModelAdmin):

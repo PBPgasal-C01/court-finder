@@ -2,14 +2,14 @@
 
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.conf import settings # Untuk User (Review)
-from django.core.validators import MinValueValidator # Untuk Harga (Court)
+from django.conf import settings 
+from django.core.validators import MinValueValidator 
+import uuid
 
 User = get_user_model()
 
 # MODEL 1: FACILITY
 class Facility(models.Model):
-    # (Saran: verbose_name biasanya singular, "Facility")
     name = models.CharField(max_length=100, unique=True, verbose_name="Facility")
 
     class Meta:
@@ -32,6 +32,13 @@ class Province(models.Model):
 
 # MODEL 3: COURT (Model Inti)
 class Court(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='owned_courts', 
+        null=True, 
+        blank=True
+    )
     
     SPORT_TYPES = [
         ('basketball', 'Basketball'),
@@ -39,7 +46,6 @@ class Court(models.Model):
         ('badminton', 'Badminton'),
         ('tennis', 'Tennis'),
         ('baseball', 'Baseball'),
-        ('soccer', 'Soccer'),
         ('volleyball', 'Volleyball'),
         ('padel', 'Padel'),
         ('golf', 'Golf'),
@@ -60,16 +66,23 @@ class Court(models.Model):
                                          verbose_name="Price/hour")
     phone_number = models.CharField(max_length=20, verbose_name="Phone Number", blank=True)
     facilities = models.ManyToManyField(Facility, blank=True, verbose_name="Facilities")
+    operational_hours = models.CharField(max_length=100, verbose_name="Operational Hours", blank=True)
     photo = models.ImageField(upload_to='court_photos/', null=True, blank=True, verbose_name="Court Photo")
 
     # Status & Waktu
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Map & Lokasi
-    latitude = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="Latitude")
-    longitude = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="Longitude")
-    provinces = models.ManyToManyField(Province, related_name='courts', verbose_name="Provinces")
+    # Map & Lokasi (dari Maira)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="Latitude", null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="Longitude", null=True, blank=True)
+    province = models.ForeignKey(
+        Province, 
+        on_delete=models.SET_NULL, # Jika Province dihapus, Court tetap ada tapi field ini jadi NULL
+        related_name='courts', 
+        verbose_name="Province", 
+        null=True, blank=True # Boleh dikosongi
+    )
     
     class Meta:
         ordering = ['-created_at'] 
@@ -91,6 +104,7 @@ class Review(models.Model):
     # Konektor
     court = models.ForeignKey(Court, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE) 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
     # Data Review
     rating = models.IntegerField(choices=Rating.choices, default=Rating.THREE)
