@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST, require_GET
 # Create your views here.
 
+@login_required
 def show_manage_court(request):
     courts = Court.objects.filter(owner=request.user)
     form = CourtForm()
@@ -30,6 +31,7 @@ def court_detail(request, pk):
     # Render halaman HTML yang baru kita buat
     return render(request, 'manage_court/court_detail.html', context)
 
+@login_required 
 @require_GET
 def get_court_data(request, pk):
     try:
@@ -58,6 +60,7 @@ def get_court_data(request, pk):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+@login_required 
 def add_court_ajax(request):
     if request.method == 'POST':
         form = CourtForm(request.POST, request.FILES)
@@ -73,6 +76,7 @@ def add_court_ajax(request):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
+@login_required 
 def delete_court(request, pk):
     if request.method == 'POST':
         # KEAMANAN: get_object_or_404 akan otomatis mengembalikan 404 
@@ -86,6 +90,7 @@ def delete_court(request, pk):
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request method for deletion.'}, status=405)
 
+@login_required 
 @require_POST
 def edit_court_ajax(request, pk):
     court = get_object_or_404(Court, pk=pk)
