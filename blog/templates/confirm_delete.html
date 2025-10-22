@@ -1,0 +1,67 @@
+  <div class="px-6 py-6">
+    <!-- Header (icon + title) -->
+    <div class="flex items-center gap-4 mb-4">
+      <div class="w-full flex items-center justify-center gap-4">
+        <i class="fa-solid fa-triangle-exclamation text-red-800 text-3xl md:text-5xl"></i>
+        <h2 class="text-2xl md:text-3xl font-extrabold tracking-wide text-[#7A3A2E] uppercase">DELETE BLOG</h2>
+      </div>
+    </div>
+    <div class="h-px bg-gray-200 mb-6"></div>
+
+    <p class="text-xl md:text-2xl leading-relaxed text-[#2F593F]">
+      Are you sure you want to <span class="text-[#9B4D3A] font-semibold">delete</span> blog
+      “<span class="font-semibold">{{ post.title }}</span>”? This action cannot be undone.
+    </p>
+
+    <form method="post" action="{{ action_url|default:request.path }}" class="mt-8 flex items-center justify-between" id="delete-form">
+      {% csrf_token %}
+      <button type="button" data-close-modal class="inline-flex items-center justify-center px-8 py-3 rounded-full border-2 border-[#698C6A] text-[#2F593F] font-extrabold bg-white hover:bg-[#F3F6F4]">CANCEL</button>
+      <button type="submit"
+              class="inline-flex items-center justify-center px-8 py-3 rounded-full border-2 border-[#C1725D] text-[#7A3A2E] font-extrabold bg-[#EAC0B5] hover:bg-[#e3b0a3]">
+        DELETE
+      </button>
+    </form>
+  </div>
+  <script>
+    (function(){
+      const form = document.getElementById('delete-form');
+      if (!form) return;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = new FormData(form);
+        const res = await fetch(form.getAttribute('action') || globalThis.location.href, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: data });
+        if (res.ok) {
+          let json = await res.json().catch(() => ({}));
+          // Prefer partial refresh when available (list page)
+          if (typeof globalThis.cfRefreshBlogList === 'function') {
+            globalThis.cfRefreshBlogList();
+            const modal = document.getElementById('cf-modal-root');
+            if (modal) {
+              modal.classList.add('hidden');
+              const content = document.getElementById('cf-modal-content');
+              if (content) content.innerHTML = '';
+            }
+            return;
+          }
+          // Otherwise use server-provided redirect or fallback reload
+          if (json && json.redirect) { location.assign(json.redirect); return; }
+          location.reload();
+        }
+        form.submit();
+      });
+      // Close modal handler
+      const closeBtn = document.querySelector('[data-close-modal]');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          const modal = document.getElementById('cf-modal-root');
+          if (modal) {
+            modal.classList.add('hidden');
+            const content = document.getElementById('cf-modal-content');
+            if (content) content.innerHTML = '';
+          } else {
+            location.assign("{{ post.get_absolute_url }}");
+          }
+        });
+      }
+    })();
+  </script>
