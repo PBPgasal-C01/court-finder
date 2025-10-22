@@ -7,6 +7,10 @@ from .models import Complain
 from .forms import ComplainUserForm, ComplainAdminForm
 from autentikasi.decorators import admin_required
 
+def show_guest_complaint(request):
+    context = {} 
+    return render(request, 'guest_complaint.html', context)
+
 @login_required
 def show_complain(request):
     if request.method == 'POST':
@@ -16,7 +20,7 @@ def show_complain(request):
             complain.user = request.user
             complain.save()
             
-            messages.success(request, 'Laporan Anda telah berhasil dikirim.')
+            messages.success(request, 'Your report is sent successfully.')
             return redirect('complain:show_complain')
     else:
         form = ComplainUserForm()
@@ -33,15 +37,15 @@ def delete_complain(request, id):
     complain = get_object_or_404(Complain, pk=id)
     
     if complain.user != request.user:
-        return HttpResponseForbidden("Anda tidak diizinkan menghapus laporan ini.")
+        return HttpResponseForbidden("You are not allowed to delete your report.")
 
-    if complain.status != 'DITINJAU':
-        messages.error(request, 'Laporan yang sedang/sudah diproses tidak dapat dihapus.')
+    if complain.status != 'IN REVIEW':
+        messages.error(request, 'Your report is in process. You can\'t delete it.')
         return redirect('complain:show_complain')
 
     if request.method == 'POST':
         complain.delete()
-        messages.success(request, 'Laporan telah berhasil dihapus.')
+        messages.success(request, 'Your report is deleted successfully.')
     
     return redirect('complain:show_complain')
 
@@ -56,6 +60,7 @@ def show_json(request):
             'deskripsi': complain.deskripsi,
             'foto_url': complain.foto.url if complain.foto else None,
             'status': complain.status,
+            'komentar': complain.komentar,
             'created_at': complain.created_at.isoformat(),
         }
         for complain in complains
@@ -87,45 +92,36 @@ def admin_update_status(request, id):
 
         if form.is_valid():
             updated_complain = form.save()
+            success_message = f'Report on {updated_complain.masalah} at {updated_complain.court_name} updated.'
             
             if is_ajax:
                 response_data = {
                     'status': 'success',
-                    'message': f'Status laporan #{updated_complain.masalah} berhasil diperbarui.',
-                    'new_status_display': updated_complain.get_status_display()
+                    'message': success_message,
+                    'new_status_display': updated_complain.get_status_display(),
+                    'new_komentar': updated_complain.komentar 
                 }
                 status_code = 200
                 return JsonResponse(response_data, status=status_code)
             else:
-                messages.success(request, response_data['message'])
+                messages.success(request, success_message) 
                 return redirect('complain:admin_dashboard')
         else:
             if is_ajax:
                 response_data = {
                     'status': 'error', 
-                    'message': 'Gagal memperbarui: Data tidak valid.',
+                    'message': 'Failed to update.',
                     'errors': form.errors 
                 }
                 status_code = 400 
                 return JsonResponse(response_data, status=status_code)
             else:
-                messages.error(request, 'Gagal memperbarui: Status tidak valid.')
+                messages.error(request, 'Failed to update.')
                 return redirect('complain:admin_dashboard')
 
     is_ajax_non_post = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if is_ajax_non_post:
         return JsonResponse(response_data, status=status_code)
     else:
-        messages.error(request, 'Metode tidak diizinkan.')
+        messages.error(request, 'Method is not allowed.')
         return redirect('complain:admin_dashboard')
-
-
-@login_required
-@admin_required
-def admin_delete_complain(request, id):
-    complain = get_object_or_404(Complain, pk=id)
-    if request.method == 'POST':
-        complain.delete()
-        messages.success(request, 'Laporan telah dihapus oleh Admin.')
-    
-    return redirect('complain:admin_dashboard')

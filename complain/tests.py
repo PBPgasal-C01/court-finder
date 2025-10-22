@@ -32,7 +32,7 @@ class ComplainModelTestCase(TestCase):
         self.assertEqual(self.complain.pk, self.complain.id)
 
     def test_default_status(self):
-        self.assertEqual(self.complain.status, 'DITINJAU')
+        self.assertEqual(self.complain.status, 'IN REVIEW')
 
     def test_created_at_auto_now_add(self):
         self.assertIsNotNone(self.complain.created_at)

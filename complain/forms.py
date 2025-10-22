@@ -9,4 +9,4 @@ class ComplainUserForm(forms.ModelForm):
 class ComplainAdminForm(forms.ModelForm):
     class Meta:
         model = Complain
-        fields = ['status']
+        fields = ['status', 'komentar']

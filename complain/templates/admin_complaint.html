@@ -14,7 +14,7 @@
         <div class="max-w-6xl mx-auto">
 
             <h2 class="text-2xl font-bold tracking-tight text-brand-green mb-8 uppercase text-center font-title">
-                DASHBOARD PENGELOLAAN LAPORAN
+                REPORTs MANAGEMENT
             </h2>
 
             {% if messages %}
@@ -36,9 +36,9 @@
                         <tr class="border-b-2 border-[#3F5940]">
                             <th class="py-4 px-3 text-left font-title text-brand-green uppercase tracking-wider">Photo</th>
                             <th class="py-4 px-3 text-left font-title text-brand-green uppercase tracking-wider">Court Name</th>
-                            <th class="py-4 px-3 text-left font-title text-brand-green uppercase tracking-wider">Judul Masalah</th>
+                            <th class="py-4 px-3 text-left font-title text-brand-green uppercase tracking-wider">Main Problem</th>
                             <th class="py-4 px-3 text-left font-title text-brand-green uppercase tracking-wider">Status</th>
-                            <th class="py-4 px-3 text-left font-title text-brand-green uppercase tracking-wider">Tindakan</th>
+                            <th class="py-4 px-3 text-left font-title text-brand-green uppercase tracking-wider">Detail</th>
                         </tr>
                     </thead>
                     
@@ -52,7 +52,7 @@
                                             <img src="{{ complain.foto.url }}" alt="Foto Laporan" class="w-20 h-10 object-cover rounded-md border border-gray-200">
                                         {% else %}
                                             <div class="w-20 h-10 rounded-md border border-gray-200 bg-gray-100 flex items-center justify-center">
-                                                <span class="text-xs text-gray-500">No Foto</span>
+                                                <span class="text-xs text-gray-500">No Image</span>
                                             </div>
                                         {% endif %}
                                     </td>
@@ -67,15 +67,15 @@
                                     
                                     <td class="py-2 px-3 align-middle whitespace-nowrap">
                                         <span class="inline-flex items-center px-4 py-1 rounded-full text-sm font-semibold 
-                                            {% if complain.status == 'SELESAI' %}
+                                            {% if complain.status == 'DONE' %}
                                                 border border-green-500 bg-green-100 text-green-700 
-                                            {% elif complain.status == 'DIPROSES' %}
+                                            {% elif complain.status == 'IN PROCESS' %}
                                                 border border-orange-500 bg-orange-100 text-orange-600
-                                            {% elif complain.status == 'DITINJAU' %}
+                                            {% elif complain.status == 'IN REVIEW' %}
                                                 border border-yellow-500 bg-yellow-100 text-yellow-700
                                             {% endif %}
                                         ">
-                                            {{ complain.status }}
+                                            {{ complain.get_status_display }}
                                         </span>
                                     </td>
                                     
@@ -83,7 +83,7 @@
                                         <button type="button" 
                                                 class="font-title text-brand-green hover:underline modal-open-btn" 
                                                 data-modal-target="modal-{{ complain.id }}">
-                                            LIHAT DETAIL
+                                            More Detail
                                         </button>
                                     </td>
                                 </tr>
@@ -92,7 +92,7 @@
                                     <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
                                         
                                         <div class="p-4 border-b flex justify-between items-center">
-                                            <h3 class="text-lg font-title text-brand-green">DETAIL LAPORAN</h3>
+                                            <h3 class="text-lg font-title text-brand-green">REPORT DETAIL</h3>
                                             <button type="button" class="modal-close-btn text-gray-500 hover:text-gray-800">&times;</button>
                                         </div>
                                         
@@ -103,9 +103,9 @@
                                             </div>
                                             
                                             <div>
-                                                <label class="font-title text-brand-green">Deskripsi Pengguna:</label>
+                                                <label class="font-title text-brand-green">Description: </label>
                                                 <p class="text-gray-700 text-sm mt-1 p-3 bg-gray-100 rounded-md border border-gray-200">
-                                                    {{ complain.deskripsi }}
+                                                    {{ complain.deskripsi|linebreaksbr }}
                                                 </p>
                                             </div>
                                             
@@ -115,32 +115,45 @@
                                             </div>
                                             {% endif %}
 
-                                            <form method="POST" action="{% url 'complain:admin_update_status' complain.id %}">
+                                            <form method="POST" action="{% url 'complain:admin_update_status' complain.id %}" class="space-y-4">
                                                 {% csrf_token %}
-                                                <label for="{{ form.status.id_for_label }}" class="font-title text-brand-green sr-only">Ubah Status:</label>
-                                                
-                                                {{ form.status }}
-                                                
-                                                {# --- PERUBAHAN DI SINI: Warna tombol PROSES --- #}
-                                                <button type="submit" 
-                                                        class="w-full mt-4 px-4 py-2 bg-[#7FA580] text-white rounded-md hover:bg-[#6a8a6b] font-title font-semibold"> 
-                                                    PROSES
+
+                                                <div>
+                                                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Status:</label>
+                                                    {{ form.status.errors }}
+                                                    <select name="{{ form.status.name }}" 
+                                                            id="{{ form.status.id_for_label }}"
+                                                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A] text-gray-900">
+                                                        {% for value, text in form.status.field.choices %}
+                                                            <option value="{{ value }}" {% if form.status.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label for="{{ form.komentar.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Comment:</label>
+                                                    {{ form.komentar.errors }}
+                                                    <textarea name="{{ form.komentar.name }}" 
+                                                              id="{{ form.komentar.id_for_label }}"
+                                                              rows="4"
+                                                              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A] text-gray-900">{% if form.komentar.value %}{{ form.komentar.value }}{% endif %}</textarea>
+                                                </div>
+                                                <button type="submit" class="w-full mt-4 px-4 py-2 bg-[#547254] text-white rounded-md hover:bg-[#6a8a6b] font-title font-semibold"> 
+                                                    PROCESS
                                                 </button>
                                             </form>
-                                        </div>
+                                            </div>
                                     </div>
                                 </div>
                                 {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td colspan="5" class="py-8 px-3 text-center text-gray-500">
-                                    Belum ada laporan yang masuk.
-                                </td>
-                            </tr>
-                        {% endif %}
                     </tbody>
                 </table>
             </div>
+            {% else %}
+                <p class="text-center text-gray-500 mt-6 text-lg">
+                    there's no any reports yet.
+                </p>
+            {% endif %}
 
         </div>
     </main>

@@ -89,9 +89,9 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 
 ---
 
-## 6. Modul Complain & Report System (Zhafira) 🚨
+## 6. Modul Complaint & Report System (Zhafira) 🚨
 
-- **CRUD Laporan:** Fitur pelaporan masalah terkait lapangan (ring rusak, lampu mati, lantai licin), dengan status laporan yang dapat diperbarui.
+- **CRUD Laporan:** Fitur pelaporan masalah terkait lapangan (ring rusak, lampu mati, lantai licin), dengan status laporan yang dapat diperbarui. User bisa create, read, & delete report dan admin bisa update & read report
 
 |                | Guest                | Registered User                         | Admin                                                                                                  |
 | -------------- | -------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------ |

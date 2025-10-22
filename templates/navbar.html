@@ -5,16 +5,19 @@
 
     <div class="hidden md:flex items-center space-x-8 text-sm font-semibold">
       <a href="#" class="hover:text-gray-200 transition">Court</a>
-      <a href="#" class="hover:text-gray-200 transition">Event</a>
+      <a href="#" class="hover:text-gray-200 transition">Finder</a>
       <a href="#" class="hover:text-gray-200 transition">Blog</a>
-      <a href="#" class="hover:text-gray-200 transition">Contact</a>
+      <a href="#" class="hover:text-gray-200 transition">Game Scheduler</a>
+      <a href="#" class="hover:text-gray-200 transition">Manage Court</a>
       
       {% if user.is_authenticated %}
         {% if user.is_superuser or user.is_staff %}
-          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Complaint</a>
+          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Report</a>
         {% else %}
-          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
+          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Report</a>
         {% endif %}
+      {% else %}
+        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Report</a>
       {% endif %}
       </div>
 
@@ -151,6 +154,3 @@
     });
   }
 </script>
-
-
-
