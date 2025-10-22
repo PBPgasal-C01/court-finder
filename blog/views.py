@@ -109,7 +109,7 @@ def post_create(request):
 				# fallback to current admin identity
 				post.author = getattr(request.user, 'username', '') or getattr(request.user, 'email', '') or 'Admin'
 			post.save()
-			messages.success(request, 'Post created.')
+			# messages.success(request, 'Post created.')
 			if request.headers.get('x-requested-with') == 'XMLHttpRequest':
 				return JsonResponse({'ok': True, 'redirect': post.get_absolute_url()})
 			return redirect(post.get_absolute_url())
@@ -120,7 +120,7 @@ def post_create(request):
 				return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 	else:
 		form = BlogPostForm(initial={"author": "Admin"})
-	return render(request, 'form.html', {'form': form, 'action': 'Create'})
+	return render(request, 'form.html', {'form': form, 'action': 'Create', 'action_url': request.path})
 
 
 @login_required
@@ -134,7 +134,7 @@ def post_update(request, pk: int):
 			if not post.author:
 				post.author = getattr(request.user, 'username', '') or getattr(request.user, 'email', '') or 'Admin'
 			post.save()
-			messages.success(request, 'Post updated.')
+			# messages.success(request, 'Post updated.')
 			if request.headers.get('x-requested-with') == 'XMLHttpRequest':
 				return JsonResponse({'ok': True, 'redirect': post.get_absolute_url()})
 			return redirect(post.get_absolute_url())
@@ -144,7 +144,7 @@ def post_update(request, pk: int):
 				return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 	else:
 		form = BlogPostForm(instance=post)
-	return render(request, 'form.html', {'form': form, 'action': 'Update'})
+	return render(request, 'form.html', {'form': form, 'action': 'Update', 'action_url': request.path})
 
 
 @login_required
@@ -153,8 +153,8 @@ def post_delete(request, pk: int):
 	post = get_object_or_404(BlogPost, pk=pk)
 	if request.method == 'POST':
 		post.delete()
-		messages.success(request, 'Post deleted.')
+		# messages.success(request, 'Post deleted.')
 		if request.headers.get('x-requested-with') == 'XMLHttpRequest':
 			return JsonResponse({'ok': True, 'redirect': reverse('blog:list')})
 		return redirect('blog:list')
-	return render(request, 'confirm_delete.html', {'post': post})
+	return render(request, 'confirm_delete.html', {'post': post, 'action_url': request.path})
