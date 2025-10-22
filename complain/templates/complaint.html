@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% load static %}
-{% include 'toast.html' %}
 {% block meta %}
 <title>Complain and Report - CourtFinder</title>
 {% endblock meta %}
@@ -13,17 +12,20 @@
         
         <div class="w-full md:col-span-1 bg-[#DFF6DF] py-10 px-4 sm:px-6 lg:px-8">
             <div class="max-w-md mx-auto">
-                {% if messages and request.method == 'POST' %}
-                    <div class="mb-6">
-                    {% for message in messages %}
-                        <div class="rounded-md p-4 {% if message.tags == 'success' %}bg-green-100 border border-green-300{% else %}bg-red-100 border border-red-300{% endif %}">
-                            <p class="text-sm font-medium {% if message.tags == 'success' %}text-green-800{% else %}text-red-800{% endif %}">
-                                {{ message }}
-                            </p>
+                
+                <div id="form-message-container" class="mb-6">
+                    {% if messages and request.method == 'POST' %}
+                        <div class="mb-6">
+                        {% for message in messages %}
+                            <div class="rounded-md p-4 {% if message.tags == 'success' %}bg-green-100 border border-green-300{% else %}bg-red-100 border border-red-300{% endif %}">
+                                <p class="text-sm font-medium {% if message.tags == 'success' %}text-green-800{% else %}text-red-800{% endif %}">
+                                    {{ message }}
+                                </p>
+                            </div>
+                        {% endfor %}
                         </div>
-                    {% endfor %}
-                    </div>
-                {% endif %}
+                    {% endif %}
+                </div>
 
                 <h2 class="text-2xl font-bold tracking-tight text-brand-green mb-6 uppercase text-center">
                     SISTEM LAPORAN
@@ -35,44 +37,45 @@
                         BUAT LAPORAN BARU
                     </h4>
 
-                    <form action="{% url 'complain:show_complain' %}" method="post" enctype="multipart/form-data" class="space-y-4">
+                    <form id="complain-form" action="{% url 'complain:show_complain' %}" method="post" enctype="multipart/form-data" class="space-y-4">
                         {% csrf_token %}
                         <div>
                             <label for="{{ form.court_name.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Court Name</label>
                             {{ form.court_name.errors }}
                             <input type="text" 
-                                   name="{{ form.court_name.name }}" 
-                                   id="{{ form.court_name.id_for_label }}"
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A]">
+                                    name="{{ form.court_name.name }}" 
+                                    id="{{ form.court_name.id_for_label }}"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A]">
                         </div>
                         <div>
                             <label for="{{ form.masalah.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Judul Masalah</label>
                             {{ form.masalah.errors }}
                             <input type="text" 
-                                   name="{{ form.masalah.name }}" 
-                                   id="{{ form.masalah.id_for_label }}"
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A]">
+                                    name="{{ form.masalah.name }}" 
+                                    id="{{ form.masalah.id_for_label }}"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A]">
                         </div>
                         <div>
                             <label for="{{ form.deskripsi.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Deskripsi</label>
                             {{ form.deskripsi.errors }}
                             <textarea name="{{ form.deskripsi.name }}" 
-                                      id="{{ form.deskripsi.id_for_label }}"
-                                      rows="4"
-                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A]"></textarea>
+                                        id="{{ form.deskripsi.id_for_label }}"
+                                        rows="4"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#698C6A] focus:border-[#698C6A]"></textarea>
                         </div>
                         <div>
                             <label for="{{ form.foto.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Upload Foto</label>
                             {{ form.foto.errors }}
                             <input type="file" 
-                                   name="{{ form.foto.name }}" 
-                                   id="{{ form.foto.id_for_label }}"
-                                   class="mt-1 block w-full text-sm text-gray-500 border border-gray-300 rounded-md
-                                          file:mr-4 file:py-2 file:px-4
-                                          file:rounded-l-md file:border-0
-                                          file:text-sm file:font-semibold
-                                          file:bg-gray-100 file:text-gray-700
-                                          hover:file:bg-gray-200">
+                                    name="{{ form.foto.name }}" 
+                                    id="{{ form.foto.id_for_label }}"
+                                    accept="image/*"
+                                    class="mt-1 block w-full text-sm text-gray-500 border border-gray-300 rounded-md
+                                            file:mr-4 file:py-2 file:px-4
+                                            file:rounded-l-md file:border-0
+                                            file:text-sm file:font-semibold
+                                            file:bg-gray-100 file:text-gray-700
+                                            hover:file:bg-gray-200">
                         </div>
 
                         <div class="flex justify-between gap-3 pt-4">
@@ -90,62 +93,64 @@
 
         <div class="w-full md:col-span-1 bg-white py-10 px-4 sm:px-6 lg:px-8">
             <div class="max-w-2xl mx-auto">
-                {% if messages and request.method == 'GET' %}
-                    <div class="mb-6">
-                    {% for message in messages %}
-                        <div class="rounded-md p-4 {% if message.tags == 'success' %}bg-green-100 border border-green-300{% else %}bg-red-100 border border-red-300{% endif %}">
-                            <p class="text-sm font-medium {% if message.tags == 'success' %}text-green-800{% else %}text-red-800{% endif %}">
-                                {{ message }}
-                            </p>
+                
+                <div id="list-message-container" class="mb-6">
+                    {% if messages and request.method == 'GET' %}
+                        <div class="mb-6">
+                        {% for message in messages %}
+                            <div class="rounded-md p-4 {% if message.tags == 'success' %}bg-green-100 border border-green-300{% else %}bg-red-100 border border-red-300{% endif %}">
+                                <p class="text-sm font-medium {% if message.tags == 'success' %}text-green-800{% else %}text-red-800{% endif %}">
+                                    {{ message }}
+                                </p>
+                            </div>
+                        {% endfor %}
                         </div>
-                    {% endfor %}
-                    </div>
-                {% endif %}
+                    {% endif %}
+                </div>
 
                 <h2 class="text-2xl font-bold tracking-tight text-brand-green mb-6 uppercase text-center">
                     RIWAYAT LAPORAN SAYA
                 </h2>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="complain-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {% if complains %}
                         {% for complain in complains %}
                             
-                            <article class="w-full max-w-xs mx-auto rounded-lg border border-gray-200 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+                            <article id="complain-card-{{ complain.id }}" class="w-full max-w-xs mx-auto rounded-lg border border-gray-200 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
 
                                 <div class="p-2 bg-gray-50">
-                                  <h3 class="text-lg font-bold text-brand-green text-center uppercase tracking-wide truncate" title="{{ complain.court_name }} - {{ complain.masalah }}">
-                                      {{ complain.court_name }} - {{ complain.masalah }}
-                                  </h3>
+                                    <h3 class="text-lg font-bold text-brand-green text-center uppercase tracking-wide truncate" title="{{ complain.court_name }} - {{ complain.masalah }}">
+                                        {{ complain.court_name }} - {{ complain.masalah }}
+                                    </h3>
                                 </div>
                                 <hr class="border-gray-200">
-                              
+                            
                                 <div class="relative">
-                                  {% if complain.foto %}
-                                      <img src="{{ complain.foto.url }}" alt="Foto Laporan: {{ complain.masalah }}" class="w-full h-32 object-cover">
-                                  {% else %}
-                                      <div class="w-full h-32 bg-gray-200 flex items-center justify-center">
-                                          <span class="text-gray-500">Tidak ada foto</span>
-                                      </div>
-                                  {% endif %}
+                                    {% if complain.foto %}
+                                        <img src="{{ complain.foto.url }}" alt="Foto Laporan: {{ complain.masalah }}" class="w-full h-32 object-cover">
+                                    {% else %}
+                                        <div class="w-full h-32 bg-gray-200 flex items-center justify-center">
+                                            <span class="text-gray-500">Tidak ada foto</span>
+                                        </div>
+                                    {% endif %}
                                 </div> 
                                 
                                 <div class="p-3 space-y-1 text-md">
-                                  <div class="flex">
-                                      <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Court Name</span>
-                                      <span class="text-brand-green">: {{ complain.court_name }}</span>
-                                  </div>
-                                  
-                                  <div class="flex">
-                                      <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Deskripsi</span>
-                                      <span class="text-brand-green">: {{ complain.masalah }}</span>
-                                  </div>
-                                  
-                                  <div class="flex items-center">
-                                      <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Status</span>
-                                      <span class="text-gray-900 mr-2">:</span> {# <- Tanda ':' ini warnanya masih abu2 #}
-                                      
-                                      {# --- PERUBAHAN UTAMA ADA DI SINI --- #}
-                                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold
+                                    <div class="flex">
+                                        <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Court Name</span>
+                                        <span class="text-brand-green">: {{ complain.court_name }}</span>
+                                    </div>
+                                    
+                                    <div class="flex">
+                                        <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Deskripsi</span>
+                                        <span class="text-brand-green">: {{ complain.masalah }}</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center">
+                                        <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Status</span>
+                                        <span class="text-gray-900 mr-2">:</span>
+                                        
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold
                                             {% if complain.status == 'SELESAI' %}
                                                 border border-green-500 bg-green-100 text-green-700
                                             {% elif complain.status == 'DIPROSES' %}
@@ -153,23 +158,23 @@
                                             {% elif complain.status == 'DITINJAU' %}
                                                 border border-yellow-500 bg-yellow-100 text-yellow-700
                                             {% endif %}
-                                      ">
-                                          {{ complain.status }}
-                                      </span>
-                                      {# --- AKHIR PERUBAHAN STATUS --- #}
-                                  </div>
-                              
-                                  {% if complain.status == 'DITINJAU' %}
-                                  <div class="flex justify-end pt-2"> <form method="POST" action="{% url 'complain:delete_complain' complain.id %}" onsubmit="return confirm('Yakin ingin menghapus laporan ini?');">
-                                          {% csrf_token %}
-                                          <button type="submit" class="text-red-600 hover:text-red-700 text-sm font-medium transition-colors">
-                                              Hapus Laporan
-                                          </button>
-                                      </form>
-                                  </div>
-                                  {% endif %}
+                                        ">
+                                            {{ complain.status }}
+                                        </span>
+                                    </div>
+                                
+                                    {% if complain.status == 'DITINJAU' %}
+                                    <div class="flex justify-end pt-2"> 
+                                        <button type="button" 
+                                                class="delete-complain-btn text-red-600 hover:text-red-700 text-sm font-medium transition-colors"
+                                                data-delete-url="{% url 'complain:delete_complain' complain.id %}"
+                                                data-complain-id="{{ complain.id }}">
+                                            Hapus Laporan
+                                        </button>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                              
+                            
                             </article>
                             
                         {% endfor %}
@@ -181,4 +186,188 @@
         </div>
     </main>
 </div> 
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const complainListUrl = "{% url 'complain:show_json' %}"; 
+    const deleteUrlTemplate = "{% url 'complain:delete_complain' '00000000-0000-0000-0000-000000000000' %}";
+    
+    const complainForm = document.getElementById('complain-form');
+    const complainListContainer = document.getElementById('complain-list');
+    const formMessageContainer = document.getElementById('form-message-container');
+    const listMessageContainer = document.getElementById('list-message-container');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    function showMessage(container, text, isSuccess) {
+        const tag = isSuccess ? 'success' : 'error';
+        const bgColor = isSuccess ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300';
+        const textColor = isSuccess ? 'text-green-800' : 'text-red-800';
+        
+        container.innerHTML = `
+            <div class="rounded-md p-4 ${bgColor} border">
+                <p class="text-sm font-medium ${textColor}">${text}</p>
+            </div>
+        `;
+    }
+    
+    function getStatusClasses(status) {
+        switch(status) {
+            case 'SELESAI':
+                return 'border border-green-500 bg-green-100 text-green-700';
+            case 'DIPROSES':
+                return 'border border-orange-500 bg-orange-100 text-orange-600';
+            case 'DITINJAU':
+                return 'border border-yellow-500 bg-yellow-100 text-yellow-700';
+            default:
+                return 'border border-gray-500 bg-gray-100 text-gray-700';
+        }
+    }
+
+    function createComplainCardHTML(complain) {
+        const fotoHtml = complain.foto_url
+            ? `<img src="${complain.foto_url}" alt="Foto Laporan: ${complain.masalah}" class="w-full h-32 object-cover">`
+            : `<div class="w-full h-32 bg-gray-200 flex items-center justify-center">
+                   <span class="text-gray-500">Tidak ada foto</span>
+               </div>`;
+
+        const deleteButtonUrl = deleteUrlTemplate.replace('0000', complain.id);
+        
+        const deleteButtonHtml = complain.status === 'DITINJAU'
+            ? `<div class="flex justify-end pt-2">
+                   <button type="button"
+                           class="delete-complain-btn text-red-600 hover:text-red-700 text-sm font-medium transition-colors"
+                           data-delete-url="${deleteButtonUrl}"
+                           data-complain-id="${complain.id}">
+                       Hapus Laporan
+                   </button>
+               </div>`
+            : '';
+
+        return `
+            <article id="complain-card-${complain.id}" class="w-full max-w-xs mx-auto rounded-lg border border-gray-200 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+                <div class="p-2 bg-gray-50">
+                    <h3 class="text-lg font-bold text-brand-green text-center uppercase tracking-wide truncate" title="${complain.court_name} - ${complain.masalah}">
+                        ${complain.court_name} - ${complain.masalah}
+                    </h3>
+                </div>
+                <hr class="border-gray-200">
+                <div class="relative">${fotoHtml}</div> 
+                <div class="p-3 space-y-1 text-md">
+                    <div class="flex">
+                        <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Court Name</span>
+                        <span class="text-brand-green">: ${complain.court_name}</span>
+                    </div>
+                    <div class="flex">
+                        <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Deskripsi</span>
+                        <span class="text-brand-green">: ${complain.masalah}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Status</span>
+                        <span class="text-gray-900 mr-2">:</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold ${getStatusClasses(complain.status)}">
+                            ${complain.status}
+                        </span>
+                    </div>
+                    ${deleteButtonHtml}
+                </div>
+            </article>
+        `;
+    }
+    
+    async function refreshComplainList() {
+        try {
+            const response = await fetch(complainListUrl);
+            if (!response.ok) {
+                throw new Error('Gagal memuat data laporan.');
+            }
+            const complains = await response.json();
+            
+            complainListContainer.innerHTML = '';
+            
+            if (complains.length > 0) {
+                complains.forEach(complain => {
+                    const cardHtml = createComplainCardHTML(complain);
+                    complainListContainer.insertAdjacentHTML('beforeend', cardHtml);
+                });
+            } else {
+                complainListContainer.innerHTML = '<p class="text-gray-600 col-span-2">Anda belum membuat laporan apapun.</p>';
+            }
+        } catch (error) {
+            showMessage(listMessageContainer, error.message, false);
+        }
+    }
+
+    complainForm.addEventListener('submit', async (event) => {
+        event.preventDefault(); 
+        formMessageContainer.innerHTML = ''; 
+
+        const formData = new FormData(complainForm);
+        
+        try {
+            const response = await fetch(complainForm.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                showMessage(formMessageContainer, 'Laporan berhasil dikirim!', true);
+                complainForm.reset(); 
+                
+                await refreshComplainList(); 
+            } else {
+                let errorMessage = 'Gagal mengirim laporan. Periksa kembali isian Anda.';
+                try {
+                    const errors = await response.json();
+                    if (errors && typeof errors === 'object') {
+                        errorMessage = Object.values(errors).flat().join(' ');
+                    }
+                } catch (e) {}
+                
+                showMessage(formMessageContainer, errorMessage, false);
+            }
+        } catch (error) {
+            showMessage(formMessageContainer, `Terjadi kesalahan jaringan: ${error.message}`, false);
+        }
+    });
+
+    complainListContainer.addEventListener('click', async (event) => {
+        const deleteButton = event.target.closest('.delete-complain-btn');
+        
+        if (!deleteButton) {
+            return;
+        }
+
+        if (!confirm('Yakin ingin menghapus laporan ini?')) {
+            return;
+        }
+
+        const deleteUrl = deleteButton.dataset.deleteUrl;
+        const complainId = deleteButton.dataset.complainId;
+        try {
+            const response = await fetch(deleteUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            });
+
+            if (response.ok) {
+                document.getElementById(`complain-card-${complainId}`).remove();
+                showMessage(listMessageContainer, 'Laporan berhasil dihapus.', true);
+                if (complainListContainer.children.length === 0) {
+                    complainListContainer.innerHTML = '<p class="text-gray-600 col-span-2">Anda belum membuat laporan apapun.</p>';
+                }
+            } else {
+                throw new Error('Gagal menghapus laporan.');
+            }
+        } catch (error) {
+            showMessage(listMessageContainer, error.message, false);
+        }
+    });
+
+});
+</script>
 {% endblock content %}

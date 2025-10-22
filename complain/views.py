@@ -45,6 +45,23 @@ def delete_complain(request, id):
     
     return redirect('complain:show_complain')
 
+def show_json(request):
+    complains = Complain.objects.all()
+    data = [
+        {
+            'id': str(complain.id),
+            'user_id': complain.user_id,  
+            'court_name': complain.court_name,
+            'masalah': complain.masalah,
+            'deskripsi': complain.deskripsi,
+            'foto_url': complain.foto.url if complain.foto else None,
+            'status': complain.status,
+            'created_at': complain.created_at.isoformat(),
+        }
+        for complain in complains
+    ]
+    return JsonResponse(data, safe=False)
+
 @login_required
 @admin_required 
 def admin_dashboard(request):
