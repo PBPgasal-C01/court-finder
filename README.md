@@ -71,11 +71,11 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 
 ## 4. Modul Blog (Tristan) 📒
 
-- **CRUD Blog:** Pengguna dapat membuat, mengedit, menghapus artikel blog mereka sendiri, serta melihat dan memberi interaksi pada artikel orang lain.
+- **CRUD Blog:** Pengguna dapat melihat dan menambahkan ke favourite dan juga menshare link dari artikel, admin dapat membuat, mengedit dan menghapus artikel.
 
-|                | Guest                  | Registered User                                                                            | Admin                                      |
-| -------------- | ---------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------ |
-| Peran Pengguna | Dapat melihat artikel. | Dapat membuat, mengedit, dan menghapus artikel sendiri; dapat memberi like dan share link. | Dapat menghapus semua artikel tanpa batas. |
+|                | Guest                  | Registered User                                                     | Admin                                                      |
+| -------------- | ---------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Peran Pengguna | Dapat melihat artikel. | Dapat melihat dan menambahkan ke favourite artikel juga share link. | Dapat membuat, mengedit dan menghapus artikel tanpa batas. |
 
 ---
 
