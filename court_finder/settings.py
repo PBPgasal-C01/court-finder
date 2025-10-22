@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'manage_court',
+    'widget_tweaks',
     'main',
     'autentikasi',
     'blog',
