@@ -25,6 +25,7 @@ urlpatterns = [
     path('', include('main.urls')),
     path('auth/', include('autentikasi.urls')),
     path('accounts/', include('allauth.urls')),
+    path('courts/', include('court_filter.urls')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

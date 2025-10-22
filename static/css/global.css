@@ -1,0 +1,271 @@
+/* ===== BUTTONS ===== */
+
+/* Primary Button (Login, Register, Submit) */
+.btn-primary {
+  width: 100%;
+  padding: 14px 16px;
+  background: #2F593F;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: #244d36;
+}
+
+/* Secondary Button (Google Sign In) */
+.btn-secondary {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: white;
+  color: #2F593F;
+  font-size: 16px;
+  font-weight: 500;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+}
+
+/* Sign Up Button (Blue) */
+.btn-signup {
+  background: #79A6B9;
+  color: white;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-signup:hover {
+  background: #5b8ca0;
+}
+
+/* Login Button (White with Border) */
+.btn-login {
+  background: white;
+  color: #2F593F;
+  border: 1px solid #2F593F;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-login:hover {
+  background: #F2F6F6;
+}
+
+/* Logout Button (Red) */
+.btn-logout {
+  background: #DC2626;
+  color: white;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-logout:hover {
+  background: #B91C1C;
+}
+
+
+/* ===== FORM INPUTS ===== */
+
+/* Input Fields */
+.input-field {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: #1f2937;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #698C6A;
+  ring: 2px;
+  ring-color: #698C6A;
+  box-shadow: 0 0 0 2px rgba(105, 140, 106, 0.2);
+}
+
+/* Input Label */
+.input-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2F593F;
+  margin-bottom: 4px;
+}
+
+/* Select Dropdown */
+.select-field {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: #1f2937;
+  font-size: 16px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.select-field:focus {
+  outline: none;
+  border-color: #698C6A;
+  box-shadow: 0 0 0 2px rgba(105, 140, 106, 0.2);
+}
+
+/* File Input */
+.file-input {
+  width: 100%;
+  font-size: 14px;
+  color: #374151;
+}
+
+.file-input::file-selector-button {
+  margin-right: 16px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  background: #79A6B9;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.file-input::file-selector-button:hover {
+  background: #5b8ca0;
+}
+
+/* Error Message */
+.error-message {
+  font-size: 14px;
+  color: #DC2626;
+  margin-top: 4px;
+}
+
+
+/* ===== DIVIDERS ===== */
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 32px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.divider-text {
+  padding: 0 12px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+
+/* ===== CARDS ===== */
+
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+}
+
+.card-header {
+  font-size: 32px;
+  font-weight: 600;
+  color: #2F593F;
+  text-align: center;
+  margin-bottom: 24px;
+  letter-spacing: 0.5px;
+}
+
+
+/* ===== LINKS ===== */
+
+.link-primary {
+  color: #79A6B9;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.link-primary:hover {
+  text-decoration: underline;
+}
+
+.text-muted {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+
+/* ===== UTILITY CLASSES ===== */
+
+.text-center {
+  text-align: center;
+}
+
+.mt-4 {
+  margin-top: 16px;
+}
+
+.mt-6 {
+  margin-top: 24px;
+}
+
+.mt-8 {
+  margin-top: 32px;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.mb-6 {
+  margin-bottom: 24px;
+}
+
+.gap-4 {
+  gap: 16px;
+}
+
+.gap-6 {
+  gap: 24px;
+}
