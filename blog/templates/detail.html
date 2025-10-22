@@ -22,8 +22,8 @@
           <div class="mt-1 flex items-center gap-3">
             <span>Author: {{ post.author|default:'admin123456' }}</span>
             {% if is_admin %}
-              <a href="{% url 'blog:update' post.pk %}" class="text-sm text-green-700">Edit</a>
-              <a href="{% url 'blog:delete' post.pk %}" class="text-sm text-red-700">Delete</a>
+              <a href="{% url 'blog:update' post.pk %}" data-modal="true" class="text-sm text-green-700">Edit</a>
+              <a href="{% url 'blog:delete' post.pk %}" data-modal="true" class="text-sm text-red-700">Delete</a>
             {% endif %}
           </div>
         </div>
@@ -91,6 +91,13 @@
       </div>
     </aside>
   </section>
+  <!-- Modal root for edit/delete -->
+  <div id="cf-modal-root" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50" data-dismiss-modal></div>
+    <div class="relative bg-white rounded-2xl shadow-xl max-h-[90vh] w-[95vw] md:w-[80vw] lg:w-[60vw] overflow-y-auto">
+      <div id="cf-modal-content" class="p-4"></div>
+    </div>
+  </div>
   <script>
   // Web Share API with fallback ke clipboard/prompt
   (function(){
@@ -161,8 +168,13 @@
   // Favorite toggle on detail
   (function(){
     function getCookie(name){
-      const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-      return m ? m.pop() : '';
+      const pairs = document.cookie ? document.cookie.split('; ') : [];
+      for (const pair of pairs) {
+        const idx = pair.indexOf('=');
+        const k = pair.slice(0, idx);
+        if (k === name) return decodeURIComponent(pair.slice(idx + 1));
+      }
+      return '';
     }
     const favBtn = document.getElementById('favBtn');
     if (!favBtn) return;
@@ -171,7 +183,7 @@
     const loginUrl = "{% url 'autentikasi:login' %}";
 
     favBtn.addEventListener('click', async () => {
-      const postId = favBtn.getAttribute('data-post-id');
+  const postId = favBtn.dataset.postId;
       if (!postId) return;
       if (!isAuthenticated) { globalThis.location.assign(loginUrl); return; }
       const url = `{% url 'blog:toggle_favorite' 0 %}`.replace('/0/', `/${postId}/`);
@@ -196,6 +208,83 @@
         }
       } catch (err) {
         console.warn('Toggle favorite failed:', err);
+      }
+    });
+  })();
+  </script>
+
+  <script>
+  // Modal loader (same behavior as on list page)
+  (function(){
+    const root = document.getElementById('cf-modal-root');
+    const content = document.getElementById('cf-modal-content');
+    if (!root || !content) return;
+
+    function initBlogFormPreview(container){
+      const input = container.querySelector('input[name="thumbnail_url"]');
+      const img = container.querySelector('#thumb-preview');
+      const ph = container.querySelector('#thumb-placeholder');
+      if (!input || !img || !ph) { return; }
+      const update = () => {
+        const url = (input.value || '').trim();
+        if (url) { img.src = url; img.classList.remove('hidden'); ph.classList.add('hidden'); }
+        else { img.src = ''; img.classList.add('hidden'); ph.classList.remove('hidden'); }
+      };
+      input.addEventListener('input', update);
+      update();
+    }
+
+    async function openModal(url){
+      try {
+        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        content.innerHTML = res.ok ? (await res.text()) : '<div class="p-6">Failed to load content</div>';
+        // Initialize dynamic preview for forms
+        initBlogFormPreview(content);
+        root.classList.remove('hidden');
+      } catch (err) {
+        console.warn('Failed to load modal content:', err);
+        content.innerHTML = '<div class="p-6">Failed to load content</div>';
+        root.classList.remove('hidden');
+      }
+    }
+
+    function closeModal(){
+      root.classList.add('hidden');
+      content.innerHTML = '';
+    }
+
+  // backdrop and Cancel button close
+  root.addEventListener('click', (e) => { if (e.target.closest('[data-dismiss-modal],[data-close-modal]')) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !root.classList.contains('hidden')) closeModal(); });
+
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a[data-modal="true"]');
+      if (!link) return;
+      e.preventDefault();
+      const url = link.getAttribute('href');
+      if (!url) return;
+      openModal(url);
+    });
+
+    // Delegate form submits inside modal (delete/create/update)
+    root.addEventListener('submit', async (e) => {
+      const form = e.target;
+      if (!(form && (form.id === 'delete-form' || form.id === 'blog-form'))) return;
+      e.preventDefault();
+      const res = await fetch(form.getAttribute('action') || globalThis.location.href, {
+        method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: new FormData(form)
+      });
+      const json = await res.json().catch(() => ({}));
+      if (form.id === 'delete-form') {
+        // On detail page, follow redirect if provided (usually to list)
+        if (json && json.redirect) { globalThis.location.assign(json.redirect); return; }
+        // Fallback: close modal only
+        closeModal();
+        return;
+      }
+      if (form.id === 'blog-form') {
+        if (json && json.redirect) { globalThis.location.assign(json.redirect); return; }
+        closeModal();
       }
     });
   })();
