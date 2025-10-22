@@ -6,12 +6,17 @@ from django.http import JsonResponse
 from django.urls import reverse
 
 # Create your views here.
-def event_list(request): #view buat nampilin list event (public/private)
+def event_list(request, is_admin_view=False): #view buat nampilin list event (public/private)
     events = GameScheduler.objects.all().order_by('scheduled_date')
     query = request.GET.get('q')
 
     active_filter = request.GET.get('filter') # Ambil parameter 'filter' dari URL
+    user = request.user
+    if (user.is_staff or user.is_superuser):
+        is_admin_view = True
+        
     active_type = request.GET.get('type', 'public') 
+    sport_type_query= request.GET.get('sport_type')
     events = events.filter(event_type=active_type)
 
     if active_filter == 'my_events' and request.user.is_authenticated:
@@ -20,11 +25,17 @@ def event_list(request): #view buat nampilin list event (public/private)
     if query:
         events = events.filter(title__icontains=query)
 
+    if sport_type_query:
+        events = events.filter(sport_type=sport_type_query)
+
     context = {
         'events': events,
         'query': query,
         'active_filter': active_filter,
         'active_type': active_type,
+        'selected_sport': sport_type_query,
+        'sport_choices': GameScheduler.SPORT_CHOICHES,
+        'is_admin_view': is_admin_view
     }
 
     return render(request, 'event_list.html', context)

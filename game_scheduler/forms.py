@@ -6,7 +6,7 @@ from datetime import date, time
 class GameSchedulerForm(forms.ModelForm):
     class Meta:
         model = GameScheduler
-        fields = ['title', 'description', 'scheduled_date', 'start_time', 'end_time', 'location', 'event_type']
+        fields = ['title', 'description', 'scheduled_date', 'start_time', 'end_time', 'location', 'event_type', 'sport_type']
         widgets = {
             'scheduled_date': forms.DateInput(attrs={'type': 'date'}),
             'start_time': forms.TimeInput(attrs={'type': 'time'}),
@@ -15,6 +15,7 @@ class GameSchedulerForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'required': True}),
             'location': forms.TextInput(attrs={'required': True}),
             'event_type': forms.Select(attrs={'required': True}),
+            'sport_type': forms.Select(attrs={'required': True}),
         }
     
     def clean(self):

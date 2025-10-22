@@ -1,3 +1,3 @@
-from django.db import models
+# manage_court/models.py
 
-# Create your models here.
+from django.db import models

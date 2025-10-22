@@ -11,4 +11,5 @@ urlpatterns = [
     path('<int:event_id>/', views.event_detail, name='event_detail'),
     path('<int:event_id>/edit/', views.edit_event, name='edit_event'),
     path('<int:event_id>/delete/', views.delete_event, name='delete_event'),
+    # path('admin/', views.event_list, {'is_admin_view': False}, name='admin_event_list'),
 ]

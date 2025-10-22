@@ -9,7 +9,8 @@
       <a href="#" class="hover:text-gray-200 transition">Court</a>
       <a href="{% url 'game_scheduler:event_list' %}" class="hover:text-gray-200 transition">Game Scheduler</a>
       <a href="#" class="hover:text-gray-200 transition">Blog</a>
-      <a href="#" class="hover:text-gray-200 transition">Contact</a>
+      <a href="#" class="hover:text-gray-200 transition">Manage Court</a>
+      <a href="#" class="hover:text-gray-200 transition">Complaint</a>
     </div>
 
     <!-- Right side (Desktop) -->
@@ -85,6 +86,7 @@
       <a href="{% url 'game_scheduler:event_list' %}" class="hover:text-gray-200 transition">Game Scheduler</a>
       <a href="#" class="hover:text-gray-200 transition">Blog</a>
       <a href="#" class="hover:text-gray-200 transition">Contact</a>
+      <a href="#" class="hover:text-gray-200 transition">Manage Court</a>
 
       {% if user.is_authenticated %}
         <div class="flex flex-col items-center gap-2">
