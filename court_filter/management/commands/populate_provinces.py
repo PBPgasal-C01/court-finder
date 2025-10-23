@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from manage_court.models import Province
+from court_filter.models import Province
 
 class Command(BaseCommand):
     help = 'Populate Indonesia provinces'
