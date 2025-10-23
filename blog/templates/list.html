@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+{% endblock %}
+
+{% block content %}
+  {% include 'navbar.html' %}
+
+  <main class="max-w-7xl mx-auto px-6 py-8" data-show-favs="{{ show_favs|yesno:"true,false" }}" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center gap-3">
+      <form method="get" action="" class="flex-1">
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+            <!-- search icon -->
+              <i class="fa-solid fa-magnifying-glass w-5 h-5"></i>
+          </span>
+          <input id="q" name="q" type="search" autocomplete="off" value="{{ q }}" placeholder="Search blog by title..." aria-label="Search blog by title"
+                 class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#79A6B9]" />
+        </div>
+      </form>
+
+      <!-- Favourites toggle + refresh -->
+      <div class="flex items-center gap-2">
+        <!-- Fixed-width slot so Refresh does not shift when toggling -->
+        <div class="relative w-[150px] h-10 shrink-0">
+          <button id="btn-favs" type="button"
+                  class="absolute inset-0 inline-flex items-center justify-center gap-2 px-4 py-2 w-full h-full rounded-md border border-gray-300 shadow-sm bg-white hover:bg-gray-50 text-sm">
+            <i class="fa-regular fa-heart"></i>
+            <span>My Favorites</span>
+          </button>
+          <button id="btn-all" type="button"
+                  class="absolute inset-0 hidden inline-flex items-center justify-center gap-2 px-4 py-2 w-full h-full rounded-md border border-gray-300 shadow-sm bg-white hover:bg-gray-50 text-sm">
+            <i class="fa-solid fa-list"></i>
+            <span>Back to all</span>
+          </button>
+        </div>
+
+        <button id="btn-refresh" type="button"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 shadow-sm bg-white hover:bg-gray-50 text-sm"
+        >
+          <i class="fa-solid fa-rotate-right"></i>
+          <span>Refresh</span>
+        </button>
+      </div>
+      {% if is_admin %}
+        <a href="{% url 'blog:create' %}" data-modal="true"
+           class="inline-flex items-center justify-center gap-2 bg-[#698C6A] text-white text-sm font-semibold px-4 py-2 rounded-md shadow hover:bg-[#55735a] sm:whitespace-nowrap">
+          <!-- plus icon -->
+            <i class="fa-solid fa-plus text-base leading-none relative top-px"></i>
+          New Post
+        </a>
+      {% endif %}
+    </div>
+
+    {% if messages %}
+      <div class="space-y-2 mb-6">
+        {% for message in messages %}
+          <div class="px-4 py-3 rounded-md text-sm {{ message.tags|default:'info' }} bg-green-50 text-green-800">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Cards Grid -->
+    <div id="cards-container">
+      {% include 'partials/cards.html' %}
+    </div>
+  </main>
+  <!-- Modal root -->
+  <div id="cf-modal-root" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50" data-dismiss-modal></div>
+    <div class="relative bg-white rounded-2xl shadow-xl max-h-[90vh] w-[95vw] md:w-[80vw] lg:w-[60vw] overflow-y-auto">
+      <div id="cf-modal-content" class="p-4"></div>
+    </div>
+  </div>
+  <script>
+    // AJAX search
+    (function(){
+      const form = document.querySelector('form[method="get"]');
+      const input = document.getElementById('q');
+      const container = document.getElementById('cards-container');
+      const btnFavs = document.getElementById('btn-favs');
+  const btnAll = document.getElementById('btn-all');
+  const btnRefresh = document.getElementById('btn-refresh');
+      // Read initial favorites flag from the main[data-show-favs] attribute so the JS file remains valid
+  const mainEl = document.querySelector('main');
+  let showFavs = !!(mainEl && mainEl.dataset.showFavs === 'true');
+      if(!input || !container) return;
+
+      // prevent full page reload on Enter
+      if (form) form.addEventListener('submit', (e) => e.preventDefault());
+
+      let handle;
+      let controller = null;
+  const baseUrl = globalThis.location.pathname;
+
+      const fetchCards = async (queryRaw) => {
+        const query = (queryRaw || '').trim();
+
+        // cancel any in-flight request to avoid older result overriding newer one
+        if (controller) controller.abort();
+        controller = new AbortController();
+        const signal = controller.signal;
+
+    // build fresh params so we dont keep stale ones 
+        const params = new URLSearchParams();
+  if (query) { params.set('q', query); }
+        params.set('partial', '1');
+  if (showFavs) { params.set('favs', '1'); }
+
+        const url = `${baseUrl}?${params.toString()}`;
+
+        // keep address bar in sync without reloading
+  const historyParams = new URLSearchParams(globalThis.location.search);
+    if (query) { historyParams.set('q', query); } else { historyParams.delete('q'); }
+  if (showFavs) { historyParams.set('favs', '1'); } else { historyParams.delete('favs'); }
+  const historyUrl = `${baseUrl}${historyParams.toString() ? '?' + historyParams.toString() : ''}`;
+  globalThis.history.replaceState(null, '', historyUrl);
+
+        try {
+          const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal });
+          if (res.ok) {
+            container.innerHTML = await res.text();
+          }
+        } catch (err) {
+          // ignore abort errors, surface others for visibility in dev tools
+          if (!(err && err.name === 'AbortError')) {
+            console.warn('Search update failed:', err);
+          }
+        }
+      };
+
+      // expose for other fragments (e.g., delete confirm) to trigger list refresh
+      globalThis.cfRefreshBlogList = () => {
+        fetchCards(input ? input.value : '');
+      };
+
+      const onInput = (e) => {
+        clearTimeout(handle);
+        handle = setTimeout(() => fetchCards(e.target.value), 250);
+      };
+      input.addEventListener('input', onInput);
+
+      // Toggle favorites view
+      const updateToggleButtons = () => {
+        if (showFavs) {
+          btnFavs.classList.add('hidden');
+          btnAll.classList.remove('hidden');
+        } else {
+          btnFavs.classList.remove('hidden');
+          btnAll.classList.add('hidden');
+        }
+      };
+      updateToggleButtons();
+      btnFavs.addEventListener('click', () => { showFavs = true; updateToggleButtons(); fetchCards(input.value); });
+      btnAll.addEventListener('click', () => { showFavs = false; updateToggleButtons(); fetchCards(input.value); });
+      if (btnRefresh) btnRefresh.addEventListener('click', () => { fetchCards(input.value); });
+    })();
+  </script>
+
+  <script>
+    // Delegated handler for favorite toggling on cards
+    (function(){
+      function getCookie(name){
+        const pairs = document.cookie ? document.cookie.split('; ') : [];
+        for (const pair of pairs) {
+          const idx = pair.indexOf('=');
+          const k = pair.slice(0, idx);
+          if (k === name) return decodeURIComponent(pair.slice(idx + 1));
+        }
+        return '';
+      }
+      const loginUrl = "{% url 'autentikasi:login' %}";
+      const mainEl = document.querySelector('main');
+      document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.cf-fav-btn');
+        if (!btn) return;
+  const postId = btn.dataset.postId;
+        if (!postId) return;
+
+        // If not authenticated, send to login
+        const isAuthenticated = mainEl && mainEl.dataset.isAuthenticated === 'true';
+        if (!isAuthenticated) {
+          globalThis.location.assign(loginUrl);
+          return;
+        }
+
+        const url = `{% url 'blog:toggle_favorite' 0 %}`.replace('/0/', `/${postId}/`);
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRFToken': getCookie('csrftoken'),
+            }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const icon = btn.querySelector('i');
+            if (data.favorited) {
+              icon.classList.remove('fa-regular', 'text-gray-700');
+              icon.classList.add('fa-solid', 'text-red-600');
+            } else {
+              icon.classList.remove('fa-solid', 'text-red-600');
+              icon.classList.add('fa-regular', 'text-gray-700');
+            }
+          }
+        } catch (err) {
+          console.warn('Toggle favorite failed:', err);
+        }
+      });
+    })();
+  </script>
+
+  <script>
+    // Lightweight modal loader for create/edit/delete within blog module
+    (function(){
+      const root = document.getElementById('cf-modal-root');
+      const content = document.getElementById('cf-modal-content');
+      if (!root || !content) return;
+
+      function initBlogFormPreview(container){
+        const input = container.querySelector('input[name="thumbnail_url"]');
+        const img = container.querySelector('#thumb-preview');
+        const ph = container.querySelector('#thumb-placeholder');
+        if (!input || !img || !ph) { return; }
+        const update = () => {
+          const url = (input.value || '').trim();
+          if (url) {
+            img.src = url; img.classList.remove('hidden'); ph.classList.add('hidden');
+          } else {
+            img.src = ''; img.classList.add('hidden'); ph.classList.remove('hidden');
+          }
+        };
+        input.addEventListener('input', update);
+        update();
+      }
+
+      async function openModal(url){
+        try {
+          const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+          content.innerHTML = res.ok ? (await res.text()) : '<div class="p-6">Failed to load content</div>';
+          // Initialize any dynamic behavior for forms (thumbnail preview)
+          initBlogFormPreview(content);
+          root.classList.remove('hidden');
+        } catch (err) {
+          console.warn('Failed to load modal content:', err);
+          content.innerHTML = '<div class="p-6">Failed to load content</div>';
+          root.classList.remove('hidden');
+        }
+      }
+
+      function closeModal(){
+        root.classList.add('hidden');
+        content.innerHTML = '';
+      }
+
+      // backdrop and Cancel button close
+      root.addEventListener('click', (e) => {
+        if (e.target.closest('[data-dismiss-modal],[data-close-modal]')) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !root.classList.contains('hidden')) closeModal();
+      });
+
+      // Delegate clicks for any link with data-modal="true"
+      document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[data-modal="true"]');
+        if (!link) return;
+        const url = link.getAttribute('href');
+        if (!url) return;
+        e.preventDefault();
+        openModal(url);
+      });
+
+      // Delegate form submits inside modal (so fragments don't need inline <script>)
+      root.addEventListener('submit', async (e) => {
+        const form = e.target;
+        if (!(form && (form.id === 'delete-form' || form.id === 'blog-form'))) return;
+        e.preventDefault();
+        const res = await fetch(form.getAttribute('action') || globalThis.location.href, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          body: new FormData(form)
+        });
+        const json = await res.json().catch(() => ({}));
+        if (form.id === 'delete-form') {
+          if (typeof globalThis.cfRefreshBlogList === 'function') { globalThis.cfRefreshBlogList(); }
+          closeModal();
+          if (json && json.redirect && typeof globalThis.cfRefreshBlogList !== 'function') {
+            globalThis.location.assign(json.redirect);
+          }
+          return;
+        }
+        if (form.id === 'blog-form') {
+          // For create/update: prefer refreshing list if available, else follow redirect detail
+          if (typeof globalThis.cfRefreshBlogList === 'function') { globalThis.cfRefreshBlogList(); closeModal(); return; }
+          if (json && json.redirect) { globalThis.location.assign(json.redirect); return; }
+        }
+      });
+    })();
+  </script>
+{% endblock %}

@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+  <title>{{ post.title }} - Blog</title>
+{% endblock %}
+
+{% block content %}
+  {% include 'navbar.html' %}
+
+  <section class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
+    <!-- Kiri: Main article -->
+  <article class="lg:col-span-2">
+      <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 leading-tight uppercase">{{ post.title }}</h1>
+
+      <div class="mt-3 flex items-start justify-between">
+        <!-- Kiri: reading time (top) and author (below) -->
+        <div class="text-sm text-gray-600">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-clock text-gray-500 text-sm"></i>
+            <span>{{ post.reading_time_minutes }} min reading</span>
+          </div>
+          <div class="mt-1 flex items-center gap-3">
+            <span>Author: {{ post.author|default:'admin123456' }}</span>
+            {% if is_admin %}
+              <a href="{% url 'blog:update' post.pk %}" data-modal="true" class="text-sm text-green-700">Edit</a>
+              <a href="{% url 'blog:delete' post.pk %}" data-modal="true" class="text-sm text-red-700">Delete</a>
+            {% endif %}
+          </div>
+        </div>
+        <!-- Kanan: favorite + share (and admin actions) -->
+        <div class="flex items-center gap-4" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
+          <!-- Favorite toggle button -->
+          <button type="button" id="favBtn" title="Favorite"
+                  class="text-gray-500 hover:text-red-600"
+                  data-post-id="{{ post.id }}"
+                  data-favorited="{{ is_favorited|yesno:'true,false' }}">
+            {% if is_favorited %}
+              <i class="fa-solid fa-heart text-red-600 text-base"></i>
+            {% else %}
+              <i class="fa-regular fa-heart text-gray-700 text-base"></i>
+            {% endif %}
+          </button>
+          <button type="button" id="shareBtn" title="Share" class="text-gray-500 hover:text-gray-700">
+            <i class="fa-solid fa-share-nodes text-gray-500 text-base"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Cover image -->
+      {% if post.thumbnail_url %}
+        <img src="{{ post.thumbnail_url }}" alt="cover" class="mt-6 w-full h-64 object-cover rounded-2xl"/>
+      {% else %}
+        <div class="mt-6 w-full h-64 rounded-2xl bg-gray-300"></div>
+      {% endif %}
+
+      <!-- Content -->
+      <div class="mt-6 leading-relaxed text-gray-800 whitespace-pre-line">
+        {{ post.content }}
+      </div>
+    </article>
+
+    <!-- Kanan: Other blogs you might like -->
+    <aside>
+      <h2 class="text-lg font-extrabold text-gray-800 uppercase tracking-wide mb-4">OTHER BLOGS YOU MIGHT LIKE</h2>
+      <div class="space-y-4">
+        {% for item in others %}
+          <a href="{{ item.get_absolute_url }}" class="block rounded-2xl bg-white ring-1 ring-gray-200 hover:shadow transition overflow-hidden">
+            <div class="grid grid-cols-[120px_1fr] gap-4 items-center p-4">
+              {% if item.thumbnail_url %}
+                <img src="{{ item.thumbnail_url }}" alt="thumb" class="h-20 w-full rounded-xl object-cover"/>
+              {% else %}
+                <div class="h-20 w-full rounded-xl bg-gray-200"></div>
+              {% endif %}
+              <div>
+                <p class="font-semibold text-gray-800 truncate">{{ item.title }}</p>
+                <div class="mt-1 flex items-center gap-3 text-xs text-gray-500">
+                  <div class="flex items-center gap-1">
+                      <i class="fa-solid fa-clock text-gray-500 text-sm"></i>
+                    <span>{{ item.reading_time_minutes }} min reading</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                      <i class="fa-solid fa-pen text-gray-500 text-sm"></i>
+                    <span>{{ item.author|default:'admin123456' }}</span>
+                  </div>
+                </div>
+                <p class="mt-1 text-xs text-gray-500 line-clamp-2" style="display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ item.summary }}</p>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </aside>
+  </section>
+  <!-- Modal root for edit/delete -->
+  <div id="cf-modal-root" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50" data-dismiss-modal></div>
+    <div class="relative bg-white rounded-2xl shadow-xl max-h-[90vh] w-[95vw] md:w-[80vw] lg:w-[60vw] overflow-y-auto">
+      <div id="cf-modal-content" class="p-4"></div>
+    </div>
+  </div>
+  <script>
+  // Web Share API with fallback ke clipboard/prompt
+  (function(){
+    const btn = document.getElementById('shareBtn');
+    if (!btn) return;
+
+    async function copyToClipboard(text) {
+      // Try Clipboard API yang baru pertama
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (error_) {
+        console.warn('Clipboard API gagal, mencoba fallback:', error_);
+        // Fallback ke execCommand approach
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'absolute';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          ta.remove();
+          return ok;
+        } catch (error__) {
+          console.warn('Legacy clipboard fallback gagal:', error__);
+          return false;
+        }
+      }
+    }
+
+    btn.addEventListener('click', async () => {
+      const shareData = {
+        title: "{{ post.title|escapejs }}",
+        text: "Baca artikel blog ini",
+        url: globalThis.location.href
+      };
+
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (err) {
+          // Ignore user cancellation; attempt fallback on other errors
+          if (err && err.name === 'AbortError') return;
+          // else continue to fallback
+        }
+      }
+
+      // Fallback to copy link to clipboard, then final fallback to prompt
+      const copied = await copyToClipboard(shareData.url);
+      if (copied) {
+        alert('Link disalin ke clipboard');
+      } else {
+        try {
+          // Last resort
+          prompt('Salin tautan ini:', shareData.url);
+        } catch (error_) {
+          console.warn('Gagal menjalankan fallback share:', error_);
+        }
+      }
+    });
+  })();
+  </script>
+
+  <script>
+  // Favorite toggle on detail
+  (function(){
+    function getCookie(name){
+      const pairs = document.cookie ? document.cookie.split('; ') : [];
+      for (const pair of pairs) {
+        const idx = pair.indexOf('=');
+        const k = pair.slice(0, idx);
+        if (k === name) return decodeURIComponent(pair.slice(idx + 1));
+      }
+      return '';
+    }
+    const favBtn = document.getElementById('favBtn');
+    if (!favBtn) return;
+    const container = favBtn.closest('[data-is-authenticated]');
+    const isAuthenticated = container && container.dataset.isAuthenticated === 'true';
+    const loginUrl = "{% url 'autentikasi:login' %}";
+
+    favBtn.addEventListener('click', async () => {
+  const postId = favBtn.dataset.postId;
+      if (!postId) return;
+      if (!isAuthenticated) { globalThis.location.assign(loginUrl); return; }
+      const url = `{% url 'blog:toggle_favorite' 0 %}`.replace('/0/', `/${postId}/`);
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken'),
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const icon = favBtn.querySelector('i');
+          if (data.favorited) {
+            icon.classList.remove('fa-regular', 'text-gray-700');
+            icon.classList.add('fa-solid', 'text-red-600');
+          } else {
+            icon.classList.remove('fa-solid', 'text-red-600');
+            icon.classList.add('fa-regular', 'text-gray-700');
+          }
+        }
+      } catch (err) {
+        console.warn('Toggle favorite failed:', err);
+      }
+    });
+  })();
+  </script>
+
+  <script>
+  // Modal loader (same behavior as on list page)
+  (function(){
+    const root = document.getElementById('cf-modal-root');
+    const content = document.getElementById('cf-modal-content');
+    if (!root || !content) return;
+
+    function initBlogFormPreview(container){
+      const input = container.querySelector('input[name="thumbnail_url"]');
+      const img = container.querySelector('#thumb-preview');
+      const ph = container.querySelector('#thumb-placeholder');
+      if (!input || !img || !ph) { return; }
+      const update = () => {
+        const url = (input.value || '').trim();
+        if (url) { img.src = url; img.classList.remove('hidden'); ph.classList.add('hidden'); }
+        else { img.src = ''; img.classList.add('hidden'); ph.classList.remove('hidden'); }
+      };
+      input.addEventListener('input', update);
+      update();
+    }
+
+    async function openModal(url){
+      try {
+        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        content.innerHTML = res.ok ? (await res.text()) : '<div class="p-6">Failed to load content</div>';
+        // Initialize dynamic preview for forms
+        initBlogFormPreview(content);
+        root.classList.remove('hidden');
+      } catch (err) {
+        console.warn('Failed to load modal content:', err);
+        content.innerHTML = '<div class="p-6">Failed to load content</div>';
+        root.classList.remove('hidden');
+      }
+    }
+
+    function closeModal(){
+      root.classList.add('hidden');
+      content.innerHTML = '';
+    }
+
+  // backdrop and Cancel button close
+  root.addEventListener('click', (e) => { if (e.target.closest('[data-dismiss-modal],[data-close-modal]')) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !root.classList.contains('hidden')) closeModal(); });
+
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a[data-modal="true"]');
+      if (!link) return;
+      e.preventDefault();
+      const url = link.getAttribute('href');
+      if (!url) return;
+      openModal(url);
+    });
+
+    // Delegate form submits inside modal (delete/create/update)
+    root.addEventListener('submit', async (e) => {
+      const form = e.target;
+      if (!(form && (form.id === 'delete-form' || form.id === 'blog-form'))) return;
+      e.preventDefault();
+      const res = await fetch(form.getAttribute('action') || globalThis.location.href, {
+        method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: new FormData(form)
+      });
+      const json = await res.json().catch(() => ({}));
+      if (form.id === 'delete-form') {
+        // On detail page, follow redirect if provided (usually to list)
+        if (json && json.redirect) { globalThis.location.assign(json.redirect); return; }
+        // Fallback: close modal only
+        closeModal();
+        return;
+      }
+      if (form.id === 'blog-form') {
+        if (json && json.redirect) { globalThis.location.assign(json.redirect); return; }
+        closeModal();
+      }
+    });
+  })();
+  </script>
+{% endblock %}

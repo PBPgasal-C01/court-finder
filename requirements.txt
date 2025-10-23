@@ -10,3 +10,7 @@ requests
 urllib3
 python-dotenv
 django-cors-headers
+djangorestframework
+requests
+django-widget-tweaks
+djangorestframework

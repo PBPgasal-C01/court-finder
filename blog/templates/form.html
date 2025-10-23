@@ -1,0 +1,130 @@
+<form method="post" action="{{ action_url|default:request.path }}" id="blog-form">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+        <!-- kiri: Title & Content -->
+        <div class="p-6 md:p-8">
+          <p class="text-xs font-bold text-[#2F593F] tracking-wide">TITLE</p>
+          <label for="{{ form.title.id_for_label }}" class="sr-only">Title</label>
+          {{ form.title }}
+          {% if form.title.errors %}<p class="text-sm text-red-600 mt-1">{{ form.title.errors|striptags }}</p>{% endif %}
+
+          <div class="mt-6">
+            <p class="text-xs font-bold text-[#2F593F] tracking-wide">CONTENT</p>
+            <label for="{{ form.content.id_for_label }}" class="sr-only">Content</label>
+            {{ form.content }}
+            {% if form.content.errors %}<p class="text-sm text-red-600 mt-1">{{ form.content.errors|striptags }}</p>{% endif %}
+          </div>
+        </div>
+
+        <!-- Kanan: Author, Thumbnail preview & URL -->
+        <div class="p-6 md:p-8">
+
+          <div class="mt-2">
+            <p class="text-xs font-bold text-[#2F593F] tracking-wide">AUTHOR</p>
+            <label for="{{ form.author.id_for_label }}" class="sr-only">Author</label>
+            {{ form.author }}
+            {% if form.author.errors %}<p class="text-sm text-red-600 mt-1">{{ form.author.errors|striptags }}</p>{% endif %}
+          </div>
+
+          <!-- Preview box -->
+          <div class="mt-4">
+            <p class="text-xs font-bold text-[#2F593F] tracking-wide">THUMBNAIL</p>
+            <div class="w-full h-56 rounded-xl bg-gray-200 border border-gray-300 overflow-hidden flex items-center justify-center">
+              <img id="thumb-preview" alt="thumbnail" class="w-full h-full object-cover hidden" />
+              <span id="thumb-placeholder" class="text-gray-400 text-sm">No thumbnail preview</span>
+            </div>
+            <label for="{{ form.thumbnail_url.id_for_label }}" class="sr-only">Thumbnail URL</label>
+            {{ form.thumbnail_url }}
+          </div>
+
+          <div class="mt-6 flex justify-end gap-3">
+            <button type="submit" class="px-5 py-2 rounded-full bg-[#698C6A] text-white font-semibold hover:bg-[#55735a]">{{ action|default:'Save' }}</button>
+            <button type="button" data-close-modal
+               class="px-5 py-2 rounded-full bg-[#EAC0B5] text-[#6D3B32] font-semibold hover:bg-[#e4b1a4]">CANCEL</button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+  <script>
+    // Live preview for thumbnail URL
+    (function() {
+      const input = document.querySelector('input[name="thumbnail_url"]');
+      if (!input) return;
+      const img = document.getElementById('thumb-preview');
+      const ph = document.getElementById('thumb-placeholder');
+      const update = () => {
+        const url = input.value.trim();
+        if (url) {
+          img.src = url;
+          img.classList.remove('hidden');
+          ph.classList.add('hidden');
+        } else {
+          img.src = '';
+          img.classList.add('hidden');
+          ph.classList.remove('hidden');
+        }
+      };
+      input.addEventListener('input', update);
+      update();
+    })();
+
+    // AJAX submit for create/update
+    (function(){
+      const form = document.getElementById('blog-form');
+      if (!form) return;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = new FormData(form);
+        const res = await fetch(form.getAttribute('action') || globalThis.location.href, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          body: data
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.ok && json.redirect) {
+            location.assign(json.redirect);
+            return;
+          }
+        } else if (res.status === 400) {
+          const json = await res.json();
+          // Simple inline error rendering beneath fields 
+          const errors = json.errors || {};
+          for (const [name, msgs] of Object.entries(errors)) {
+            const input = form.querySelector(`[name="${name}"]`);
+            if (!input) continue;
+            let help = input.nextElementSibling;
+            if (!help || !help.classList.contains('cf-error')) {
+              help = document.createElement('p');
+              help.className = 'cf-error text-sm text-red-600 mt-1';
+              input.after(help);
+            }
+            help.textContent = Array.isArray(msgs) ? msgs.join(' ') : String(msgs);
+          }
+          return;
+        }
+        // Fallback: submit normally if something unexpected
+        form.submit();
+      });
+
+      // Close modal (if rendered inside modal)
+      const closeBtn = document.querySelector('[data-close-modal]');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          const modal = document.getElementById('cf-modal-root');
+          if (modal) {
+            modal.classList.add('hidden');
+            const content = document.getElementById('cf-modal-content');
+            if (content) content.innerHTML = '';
+          } else {
+            // fallback navigate back to list
+            globalThis.location.assign("{% url 'blog:list' %}");
+          }
+        });
+      }
+    })();
+  </script>
+
