@@ -89,6 +89,66 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.querySelector("form");
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  // Try to find the existing non-field error div if it exists
+  let errorBox = document.querySelector(".text-sm.text-red-600.mb-4");
+
+  // If it doesn’t exist (because the form had no errors initially), create it dynamically
+  if (!errorBox) {
+    errorBox = document.createElement("div");
+    errorBox.className = "text-sm text-red-600 mb-4 hidden";
+    form.parentNode.insertBefore(errorBox, form); // place right above the form
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault(); // stop normal refresh
+
+    // clear previous error
+    errorBox.textContent = "";
+    errorBox.classList.add("hidden");
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+        credentials: "same-origin",
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (data.success) {
+        //  successful login : redirect
+        window.location.href = data.redirect_url;
+      } else {
+        //  failed login : show message in red text
+        const msg =
+          data.error ||
+          "Please enter a correct email and password. Note that both fields may be case-sensitive.";
+        errorBox.textContent = msg;
+        errorBox.classList.remove("hidden");
+      }
+    } catch (err) {
+      errorBox.textContent = "Something went wrong. Please try again.";
+      errorBox.classList.remove("hidden");
+    }
+  });
+});
+</script>
+
+
+
+
 {% endblock content %}
 
 
