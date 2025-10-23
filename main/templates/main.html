@@ -1,6 +1,97 @@
 {% extends "base.html" %}
 {% load static %}
-{% block meta %}<title>Main</title>{% endblock meta %}
+
+{% block meta %}
+<title>CourtFinder | Find Your Perfect Court</title>
+{% endblock meta %}
 
 {% block content %}
+<div class="bg-white">
+
+  <!-- SLIDER -->
+  <section class="w-full py-4 md:py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="relative w-full h-[35vh] md:h-[45vh] overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-gray-100">
+        <!-- Banner images -->
+        <div id="cf-track" class="flex h-full transition-transform duration-700 ease-in-out">
+          {% for img in banner_images %}
+          <div class="relative w-full h-full flex-shrink-0">
+            <img src="{% static 'images/' %}{{ img }}" alt="{{ img|cut:'.jpg' }}"
+                 class="absolute inset-0 w-full h-full object-cover object-center" />
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Controls -->
+        <button id="cf-prev"
+                class="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#2F593F] rounded-full p-2 shadow-sm transition"
+                aria-label="Previous">&#10094;</button>
+        <button id="cf-next"
+                class="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-[#2F593F] rounded-full p-2 shadow-sm transition"
+                aria-label="Next">&#10095;</button>
+
+        <!-- Dots -->
+        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+          {% for _ in banner_images %}
+          <button class="cf-dot h-2 w-2 rounded-full bg-white/70 hover:bg-white transition"></button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEXT & CTA -->
+  <section class="text-center py-8 md:py-10 px-4">
+    <h1 class="text-3xl md:text-4xl font-extrabold tracking-wide text-[#2F593F]">
+      Welcome to <span class="text-[#698C6A]">CourtFinder</span>
+    </h1>
+    <p class="mt-3 md:mt-4 text-gray-700 text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
+      Temukan dan pesan lapangan <span class="font-semibold">Basketball</span>, <span class="font-semibold">Badminton</span>,
+      <span class="font-semibold">Tennis</span>, <span class="font-semibold">Volleyball</span>, dan <span class="font-semibold">Futsal</span>
+      dengan mudah — semua di satu platform.
+    </p>
+    <a href="{% url 'court_filter:court_finder' %}"
+       class="mt-6 inline-block bg-[#698C6A] hover:bg-[#557358] text-white font-semibold px-8 py-3 rounded-xl shadow-md transition">
+      Find a Court Now
+    </a>
+  </section>
+
+</div>
+
+<!-- SLIDER SCRIPT -->
+<script>
+  (function() {
+    const track = document.getElementById('cf-track');
+    const slides = Array.from(track.children);
+    const dots   = Array.from(document.querySelectorAll('.cf-dot'));
+    const prev   = document.getElementById('cf-prev');
+    const next   = document.getElementById('cf-next');
+    const total  = slides.length;
+    let index = 0, timer = null;
+
+    slides.forEach(s => { s.classList.add('min-w-full', 'h-full'); });
+
+    function go(i) {
+      index = (i + total) % total;
+      track.style.transform = `translateX(-${index * 100}%)`;
+      dots.forEach((d, k) => d.classList.toggle('opacity-100', k === index));
+      dots.forEach((d, k) => d.classList.toggle('opacity-50', k !== index));
+    }
+
+    function start() { timer = setInterval(() => go(index + 1), 4000); }
+    function stop()  { if (timer) clearInterval(timer); }
+
+    go(0); start();
+
+    const wrapper = track.parentElement;
+    wrapper.addEventListener('mouseenter', stop);
+    wrapper.addEventListener('mouseleave', start);
+
+    if (prev && next) {
+      prev.addEventListener('click', () => { stop(); go(index - 1); start(); });
+      next.addEventListener('click', () => { stop(); go(index + 1); start(); });
+    }
+    dots.forEach((dot, i) => dot.addEventListener('click', () => { stop(); go(i); start(); }));
+  })();
+</script>
 {% endblock content %}
