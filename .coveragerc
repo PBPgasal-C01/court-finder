@@ -1,17 +1,17 @@
 [run]
 source = .
 omit =
-    venv/*
-
+    env/*
     */migrations/*
-    */tests/*
+    */tests.py
     */__init__.py
-    */admin.py
     */apps.py
+    */admin.py
     manage.py
-    court_finder/settings.py
-    court_finder/wsgi.py
     court_finder/asgi.py
+    court_finder/wsgi.py
+    court_finder/settings.py
 
 [report]
 show_missing = True
+skip_covered = True
