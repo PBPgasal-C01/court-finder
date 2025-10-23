@@ -1,3 +1,127 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import HttpResponseForbidden, JsonResponse
 
-# Create your views here.
+from .models import Complain
+from .forms import ComplainUserForm, ComplainAdminForm
+from autentikasi.decorators import admin_required
+
+def show_guest_complaint(request):
+    context = {} 
+    return render(request, 'guest_complaint.html', context)
+
+@login_required
+def show_complain(request):
+    if request.method == 'POST':
+        form = ComplainUserForm(request.POST, request.FILES)
+        if form.is_valid():
+            complain = form.save(commit=False)
+            complain.user = request.user
+            complain.save()
+            
+            messages.success(request, 'Your report is sent successfully.')
+            return redirect('complain:show_complain')
+    else:
+        form = ComplainUserForm()
+
+    my_complains = Complain.objects.filter(user=request.user).order_by('-created_at')
+    context = {
+        'form': form,
+        'complains': my_complains,
+    }
+    return render(request, 'complaint.html', context)
+
+@login_required
+def delete_complain(request, id):
+    complain = get_object_or_404(Complain, pk=id)
+    
+    if complain.user != request.user:
+        return HttpResponseForbidden("You are not allowed to delete your report.")
+
+    if complain.status != 'IN REVIEW':
+        messages.error(request, 'Your report is in process. You can\'t delete it.')
+        return redirect('complain:show_complain')
+
+    if request.method == 'POST':
+        complain.delete()
+        messages.success(request, 'Your report is deleted successfully.')
+    
+    return redirect('complain:show_complain')
+
+def show_json(request):
+    complains = Complain.objects.all()
+    data = [
+        {
+            'id': str(complain.id),
+            'user_id': complain.user_id,  
+            'court_name': complain.court_name,
+            'masalah': complain.masalah,
+            'deskripsi': complain.deskripsi,
+            'foto_url': complain.foto.url if complain.foto else None,
+            'status': complain.status,
+            'komentar': complain.komentar,
+            'created_at': complain.created_at.isoformat(),
+        }
+        for complain in complains
+    ]
+    return JsonResponse(data, safe=False)
+
+@login_required
+@admin_required 
+def admin_dashboard(request):
+    all_complains = Complain.objects.all().order_by('-created_at')
+    admin_forms = [ComplainAdminForm(instance=c) for c in all_complains]
+    complain_data = zip(all_complains, admin_forms)
+    context = {
+
+        'complain_data': complain_data,
+    }
+    return render(request, 'admin_complaint.html', context)
+
+@login_required
+@admin_required
+def admin_update_status(request, id):
+    response_data = {'status': 'error', 'message': 'Invalid request'}
+    status_code = 400
+
+    if request.method == 'POST':
+        complain = get_object_or_404(Complain, pk=id)
+        form = ComplainAdminForm(request.POST, instance=complain)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+        if form.is_valid():
+            updated_complain = form.save()
+            success_message = f'Report on {updated_complain.masalah} at {updated_complain.court_name} updated.'
+            
+            if is_ajax:
+                response_data = {
+                    'status': 'success',
+                    'message': success_message,
+                    'new_status_display': updated_complain.get_status_display(),
+                    'new_komentar': updated_complain.komentar 
+                }
+                status_code = 200
+                return JsonResponse(response_data, status=status_code)
+            else:
+                messages.success(request, success_message) 
+                return redirect('complain:admin_dashboard')
+        else:
+            if is_ajax:
+                response_data = {
+                    'status': 'error', 
+                    'message': 'Failed to update.',
+                    'errors': form.errors 
+                }
+                status_code = 400 
+                return JsonResponse(response_data, status=status_code)
+            else:
+                messages.error(request, 'Failed to update.')
+                return redirect('complain:admin_dashboard')
+
+    is_ajax_non_post = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    if is_ajax_non_post:
+        return JsonResponse(response_data, status=status_code)
+    else:
+        messages.error(request, 'Method is not allowed.')
+        return redirect('complain:admin_dashboard')
