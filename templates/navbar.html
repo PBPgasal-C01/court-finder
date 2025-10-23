@@ -26,6 +26,10 @@
         <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Report</a>
       {% endif %}
       </div>
+      <a href="{% url 'game_scheduler:event_list' %}" class="hover:text-gray-200 transition">Game Scheduler</a>
+      <a href="{% url 'manage_court:show_manage_court' %}" class="hover:text-gray-200 transition">Manage Court</a>
+      <a href="#" class="hover:text-gray-200 transition">Complain</a>
+    </div>
 
     <!-- Right: Auth -->
     <div class="col-span-6 md:col-span-3 flex justify-end items-center gap-3 relative">
@@ -91,8 +95,8 @@
       <a href="{% url 'main:show_main' %}" class="hover:text-gray-200 transition">Home</a>
       <a href="#" class="hover:text-gray-200 transition">Finder</a>
       <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
-      <a href="#" class="hover:text-gray-200 transition">Game Scheduler</a>
-      <a href="#" class="hover:text-gray-200 transition">Manage Court</a>
+      <a href="{% url 'game_scheduler:event_list' %}" class="hover:text-gray-200 transition">Game Scheduler</a>
+      <a href="{% url 'manage_court:show_manage_court' %}" class="hover:text-gray-200 transition">Manage Court</a>
       <a href="#" class="hover:text-gray-200 transition">Complaint</a>
 
       {% if user.is_authenticated %}
