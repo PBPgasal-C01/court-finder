@@ -8,10 +8,15 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST, require_GET
 # Create your views here.
 
-@login_required
 def show_manage_court(request):
-    courts = Court.objects.filter(owner=request.user)
-    form = CourtForm()
+    if request.user.is_authenticated:
+        # Jika SUDAH LOGIN: Ambil data miliknya & siapkan form
+        courts = Court.objects.filter(owner=request.user)
+        form = CourtForm()
+    else:
+        # Jika GUEST: Jangan ambil data apa-apa & jangan siapkan form
+        courts = Court.objects.none() # .none() = QuerySet kosong
+        form = None
     context = {
         'courts_list': courts, 
         'form': form,
@@ -47,7 +52,7 @@ def get_court_data(request, pk):
             'address': court.address,
             'court_type': court.court_type,
             'operational_hours': court.operational_hours,
-            'price_per_hour': court.price_per_hour,
+            'price_per_hour': int(court.price_per_hour),
             'phone_number': court.phone_number,
             'province': court.province.pk if court.province else None,
             'description': court.description,
