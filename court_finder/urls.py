@@ -26,6 +26,7 @@ urlpatterns = [
     path('auth/', include('autentikasi.urls')),
     path('blog/', include(('blog.urls', 'blog'), namespace='blog')),
     path('accounts/', include('allauth.urls')),
+    path('complain/', include('complain.urls', namespace='complain')),
     path('courts/', include('court_filter.urls')),
     path('event_list/', include('game_scheduler.urls')),
 

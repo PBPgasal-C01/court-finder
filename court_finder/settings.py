@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'main',
     'autentikasi',
+    'complain',
     'blog',
     'allauth',
     'allauth.account',
@@ -177,6 +178,16 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "secret": os.getenv("GOOGLE_SECRET_KEY"),
+            "key": "",
+        }
+    }
+}
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {

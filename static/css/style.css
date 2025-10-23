@@ -1,0 +1,11 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+body {
+    background-color: linear-gradient(to right , #DFF6DF 0%, #DFF6DF 50%, white 50%, white 100%);
+}
+.text-brand-green {
+  color: #3F5940;
+}
