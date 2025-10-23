@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'manage_court',
+    'court_filter',
     'widget_tweaks',
     'main',
     'autentikasi',
@@ -66,6 +67,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'court_filter',
     'game_scheduler',
+    'django.contrib.humanize',
 ]
 
 REST_FRAMEWORK = {
