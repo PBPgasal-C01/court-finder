@@ -1,449 +1,481 @@
-<!DOCTYPE html>
 {% extends "base.html" %}
 {% load static %}
-{% block meta %}<title>Find Court</title>{% endblock meta %}
+
+{% block meta %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Find Court</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="{% static 'css/find_court.css' %}">
+<style>
+    /* Override base.html styling if needed */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+</style>
+{% endblock meta %}
+
 {% block content %}
-
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Court Finder</title>
-    <link rel="stylesheet" href="{% static 'css/find_court.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-</head>
-<body>
-    {% csrf_token %}
-
-    
-
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <!-- Search Section -->
-            <div class="search-section">
-                <div class="search-box">
-                    <input type="text" id="addressInput" placeholder="Search location..." onkeypress="handleEnterKey(event)">
-                    <span class="search-icon" onclick="geocodeAddress()" style="cursor: pointer;">🔍</span>
-                </div>
-                <div class="action-buttons">
+<!-- Main Container - NO NAVBAR HERE -->
+<div class="container">
+    <!-- Sidebar - Left Panel -->
+    <div class="sidebar">
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="addressInput" placeholder="Search location..." onkeypress="handleEnterKey(event)">
+                <span class="search-icon" onclick="geocodeAddress()" style="cursor: pointer;">🔍</span>
+            </div>
+            <div class="action-buttons">
                     <button class="btn-gps" onclick="getUserLocation()">Nearby</button>
                     <button class="btn-bookmark" onclick="toggleBookmarkFilter()">Bookmark</button>
                     <button class="btn-filter" onclick="openFilterModal()">FILTER</button>
-                </div>
-            </div>
-            
-            <!-- Section Header (Dynamic) -->
-            <div class="section-header" id="sectionHeader">NEAREST FROM YOU</div>
-            <div class="loading" id="loading">⏳ Loading courts...</div>
-            <div class="court-list" id="courtResults">
-                <!-- Court cards will be populated here -->
             </div>
         </div>
         
-        <!-- Map -->
-        <div class="map-container">
-            <div id="map"></div>
+        <!-- Section Header (Dynamic) -->
+        <div class="section-header" id="sectionHeader">NEAREST FROM YOU</div>
+        <div class="loading" id="loading">⏳ Loading courts...</div>
+        <div class="court-list" id="courtResults">
+            <!-- Court cards will be populated here -->
         </div>
     </div>
     
-    <!-- Filter Modal -->
-    <div class="filter-modal" id="filterModal">
-        <div class="filter-content">
-            <div class="filter-header">FILTER</div>
-            <div class="filter-body">
-                <!-- Type Filter -->
-                <div class="filter-group">
-                    <label>TYPE</label>
-                    <div class="filter-tags" id="typeFilters">
-                        <div class="filter-tag" data-type="basketball">Basketball</div>
-                        <div class="filter-tag" data-type="badminton">Badminton</div>
-                        <div class="filter-tag" data-type="tennis">Tennis</div>
-                        <div class="filter-tag" data-type="volleyball">Volleyball</div>
-                        <div class="filter-tag" data-type="futsal">Futsal</div>
-                    </div>
-                </div>
-                
-                <!-- Province Filter -->
-                <div class="filter-group">
-                    <label>PROVINCE</label>
-                    <div class="filter-tags" id="provinceFilters">
-                        <!-- Will be populated dynamically -->
-                    </div>
-                </div>
-                
-                <!-- Price Filter -->
-                <div class="filter-group">
-                    <label>PRICE</label>
-                    <div class="price-inputs">
-                        <input type="number" id="priceMin" placeholder="Min price">
-                        <input type="number" id="priceMax" placeholder="Max price">
-                    </div>
+    <!-- Map - Right Panel -->
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="filter-modal" id="filterModal">
+    <div class="filter-content">
+        <div class="filter-header">FILTER</div>
+        <div class="filter-body">
+            <!-- Type Filter -->
+            <div class="filter-group">
+                <label>TYPE</label>
+                <div class="filter-tags" id="typeFilters">
+                    <div class="filter-tag" data-type="basketball">Basketball</div>
+                    <div class="filter-tag" data-type="badminton">Badminton</div>
+                    <div class="filter-tag" data-type="tennis">Tennis</div>
+                    <div class="filter-tag" data-type="volleyball">Volleyball</div>
+                    <div class="filter-tag" data-type="futsal">Futsal</div>
                 </div>
             </div>
-            <div class="filter-footer">
-                <button class="btn-apply-filter" onclick="applyFilters()">APPLY FILTER</button>
+            
+            <!-- Province Filter -->
+            <div class="filter-group">
+                <label>PROVINCE</label>
+                <div class="filter-tags" id="provinceFilters">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+            
+            <!-- Price Filter -->
+            <div class="filter-group">
+                <label>PRICE</label>
+                <div class="price-inputs">
+                    <input type="number" id="priceMin" placeholder="Min price">
+                    <input type="number" id="priceMax" placeholder="Max price">
+                </div>
             </div>
         </div>
+        <div class="filter-footer">
+            <button class="btn-apply-filter" onclick="applyFilters()">APPLY FILTER</button>
+        </div>
     </div>
-    
-    <!-- Messages -->
-    <div class="message" id="message"></div>
+</div>
 
+<!-- Messages -->
+<div class="message" id="message"></div>
 
-    <!-- Tambahkan di bagian atas script, setelah CSRFTOKEN -->
-    <script>
-        const CSRFTOKEN = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const IS_AUTHENTICATED = {% if user.is_authenticated %}true{% else %}false{% endif %};
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+    const CSRFTOKEN = '{{ csrf_token }}';
+    console.log(CSRFTOKEN);
+    const IS_AUTHENTICATED = {{ is_authenticated|yesno:"true,false" }};
+
+    let map;
+    let marker;
+    let currentCoords = { lat: {{ default_lat }}, lng: {{ default_lon }} };
+    let courtMarkers = [];
+    let selectedTypes = [];
+    let selectedProvinces = [];
+    let bookmarkFilterActive = false;
     
-        let map;
-        let marker;
-        let currentCoords = { lat: -6.2088, lng: 106.8456 };
-        let courtMarkers = [];
-        let selectedTypes = [];
-        let selectedProvinces = [];
-        let bookmarkFilterActive = false;
+    // Initialize map
+    function initMap() {
+        // Check if mobile device
+        const isMobile = window.innerWidth <= 768;
         
-        // Initialize map
-        function initMap() {
-            map = L.map('map').setView([currentCoords.lat, currentCoords.lng], 12);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors',
-                maxZoom: 19,
+        map = L.map('map', {
+            tap: true,
+            tapTolerance: 15,
+            touchZoom: true,
+            dragging: true,
+            zoomControl: !isMobile // Hide zoom control on mobile to save space
+        }).setView([currentCoords.lat, currentCoords.lng], 12);
+        
+        // Add zoom control to bottom right on mobile
+        if (isMobile) {
+            L.control.zoom({
+                position: 'bottomright'
             }).addTo(map);
-            
-            marker = L.marker([currentCoords.lat, currentCoords.lng], {
-                draggable: true,
-            }).addTo(map);
-            
-            marker.bindPopup('📍 Your Location').openPopup();
-            
-            marker.on('dragend', function() {
-                const pos = marker.getLatLng();
-                currentCoords = { lat: pos.lat, lng: pos.lng };
-                searchCourts();
-            });
-            
-            map.on('click', function(e) {
-                currentCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
-                marker.setLatLng(e.latlng);
-                searchCourts();
-            });
-            
-            getUserLocation();
         }
         
-        // Get user location
-        function getUserLocation() {
-            if (navigator.geolocation) {
-                showLoading(true);
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        currentCoords = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        };
-                        marker.setLatLng([currentCoords.lat, currentCoords.lng]);
-                        map.setView([currentCoords.lat, currentCoords.lng], 13);
-                        document.getElementById('sectionHeader').textContent = 'NEAREST FROM YOU';
-                        showMessage('Location found! Searching nearby courts...', 'success');
-                        setTimeout(() => searchCourts(), 500);
-                    },
-                    function(error) {
-                        showMessage('GPS not available. Showing default location.', 'error');
-                        showLoading(false);
-                        document.getElementById('sectionHeader').textContent = 'NEAREST FROM YOU';
-                        searchCourts();
-                    }
-                );
-            } else {
-                showMessage('Browser does not support GPS', 'error');
-                document.getElementById('sectionHeader').textContent = 'NEAREST FROM YOU';
-                searchCourts();
-            }
-        }
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19,
+        }).addTo(map);
         
-        // Search courts
-        function searchCourts() {
-            const formData = new FormData();
-            formData.append('latitude', currentCoords.lat);
-            formData.append('longitude', currentCoords.lng);
-            selectedTypes.forEach(t => formData.append('court_types[]', t));
-            selectedProvinces.forEach(p => formData.append('provinces[]', p));
-            
-            const priceMin = document.getElementById('priceMin').value;
-            const priceMax = document.getElementById('priceMax').value;
-            if (priceMin) formData.append('price_min', priceMin);
-            if (priceMax) formData.append('price_max', priceMax);
-            if (bookmarkFilterActive) formData.append('bookmarked_only', 'true');
-            
-            showLoading(true);
-            fetch('/courts/api/search/', {
-                method: 'POST',
-                headers: { 'X-CSRFToken': CSRFTOKEN },
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                showLoading(false);
-                if (data.courts && data.courts.length > 0) {
-                    displayResults(data.courts);
-                    plotCourtMarkers(data.courts);
-                    showMessage(`Found ${data.count} courts nearby`, 'success');
-                } else {
-                    document.getElementById('courtResults').innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No courts found within 10km</div>';
-                    clearCourtMarkers();
-                }
-            })
-            .catch(err => {
-                showMessage('Error: ' + err.message, 'error');
-                showLoading(false);
-            });
-        }
+        marker = L.marker([currentCoords.lat, currentCoords.lng], {
+            draggable: true,
+        }).addTo(map);
         
-        // Display results
-        function displayResults(courts) {
-            const resultsDiv = document.getElementById('courtResults');
-            resultsDiv.innerHTML = '';
-            
-            courts.forEach(court => {
-                const distance = court.distance ? court.distance.toFixed(2) : 'N/A';
-                const starClass = court.is_bookmarked ? 'active' : 'inactive';
-                
-                const card = document.createElement('div');
-                const encodedName = encodeURIComponent(court.name);
-                card.className = 'court-card';
-                card.innerHTML = `
-                    <div class="court-card-header">
-                        <div>
-                            <h3><a href="/courts/detail/${encodeURIComponent(court.name)}/">${court.name}</a></h3>
-                            <div class="court-time">10:00 - 21:00</div>
-                        </div>
-                        <span class="bookmark-star ${starClass}" onclick="toggleBookmark(${court.id}, this)">★</span>
-                    </div>
-                    <div class="court-details">
-                        <span>🚶 ${distance} km</span>
-                        <span>⚽ ${court.court_type}</span>
-                    </div>
-                    <div class="court-location">${court.address}</div>
-                `;
-                resultsDiv.appendChild(card);
-            });
-        }
+        marker.bindPopup('📍 Your Location').openPopup();
         
-        // Plot court markers
-        function plotCourtMarkers(courts) {
-            clearCourtMarkers();
-            
-            courts.forEach(court => {
-                const courtMarker = L.circleMarker([court.latitude, court.longitude], {
-                    radius: 8,
-                    fillColor: court.is_bookmarked ? '#FFD700' : '#ff7800',
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map);
-                
-                courtMarker.bindPopup(`
-                    <strong>${court.name}</strong><br>
-                    💰 Rp ${parseInt(court.price_per_hour).toLocaleString('id-ID')}/hour<br>
-                    🚶 ${court.distance ? court.distance.toFixed(2) : 'N/A'} km
-                `);
-                
-                courtMarkers.push(courtMarker);
-            });
-            
-            if (courts.length > 0) {
-                const group = L.featureGroup([marker, ...courtMarkers]);
-                map.fitBounds(group.getBounds().pad(0.1));
-            }
-        }
-        
-        // Clear markers
-        function clearCourtMarkers() {
-            courtMarkers.forEach(m => map.removeLayer(m));
-            courtMarkers = [];
-        }
-        
-        // Toggle bookmark
-        function toggleBookmark(courtId, element) {
-            if (!IS_AUTHENTICATED) {
-                showMessage('Please login to bookmark', 'error');
-                return;
-            }
-            
-            const isBookmarked = element.classList.contains('active');
-            const method = isBookmarked ? 'DELETE' : 'POST';
-            
-            fetch(`/courts/api/bookmark/${courtId}/`, {
-                method: method,
-                headers: { 'X-CSRFToken': CSRFTOKEN }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.bookmarked) {
-                    element.classList.add('active');
-                    element.classList.remove('inactive');
-                    showMessage('Court bookmarked!', 'success');
-                } else {
-                    element.classList.remove('active');
-                    element.classList.add('inactive');
-                    showMessage('Bookmark removed', 'success');
-                }
-                searchCourts();
-            })
-            .catch(err => {
-                showMessage('Error: ' + err.message, 'error');
-            });
-        }
-        
-        // Toggle bookmark filter
-        function toggleBookmarkFilter() {
-            if (!IS_AUTHENTICATED) {
-                showMessage('Please login to use bookmark filter', 'error');
-                return;
-            }
-            bookmarkFilterActive = !bookmarkFilterActive;
-            const btn = document.querySelector('.btn-bookmark');
-            if (bookmarkFilterActive) {
-                btn.style.background = '#FFA500';
-            } else {
-                btn.style.background = '#FFD700';
-            }
+        marker.on('dragend', function() {
+            const pos = marker.getLatLng();
+            currentCoords = { lat: pos.lat, lng: pos.lng };
             searchCourts();
-        }
-        
-        // Open filter modal
-        function openFilterModal() {
-            document.getElementById('filterModal').classList.add('show');
-        }
-        
-        // Close filter modal on outside click
-        document.getElementById('filterModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.remove('show');
-            }
         });
         
-        // Apply filters
-        function applyFilters() {
-            document.getElementById('filterModal').classList.remove('show');
+        map.on('click', function(e) {
+            currentCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
+            marker.setLatLng(e.latlng);
             searchCourts();
-        }
+        });
         
-        // Setup filter tags
-        function setupFilters() {
-            // Type filters
-            document.querySelectorAll('#typeFilters .filter-tag').forEach(tag => {
-                tag.addEventListener('click', function() {
-                    const type = this.dataset.type;
-                    this.classList.toggle('active');
-                    if (selectedTypes.includes(type)) {
-                        selectedTypes = selectedTypes.filter(t => t !== type);
-                    } else {
-                        selectedTypes.push(type);
-                    }
-                });
-            });
-            
-            // Load provinces
-            loadProvinces();
-        }
+        // Force map to resize
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100);
         
-        // Load provinces
-        async function loadProvinces() {
-            try {
-                const response = await fetch('/courts/api/provinces/');
-                const provinces = await response.json();
-                
-                const container = document.getElementById('provinceFilters');
-                provinces.slice(0, 6).forEach(province => {
-                    const tag = document.createElement('div');
-                    tag.className = 'filter-tag';
-                    tag.textContent = province.name;
-                    tag.dataset.provinceId = province.id;
-                    tag.addEventListener('click', function() {
-                        const id = this.dataset.provinceId;
-                        this.classList.toggle('active');
-                        if (selectedProvinces.includes(id)) {
-                            selectedProvinces = selectedProvinces.filter(p => p !== id);
-                        } else {
-                            selectedProvinces.push(id);
-                        }
-                    });
-                    container.appendChild(tag);
-                });
-            } catch (err) {
-                console.error('Error loading provinces:', err);
-            }
-        }
-        
-        // Show message
-        function showMessage(text, type) {
-            const msgEl = document.getElementById('message');
-            msgEl.textContent = text;
-            msgEl.className = `message ${type} show`;
-            setTimeout(() => msgEl.classList.remove('show'), 3000);
-        }
-        
-        // Show loading
-        function showLoading(show) {
-            document.getElementById('loading').classList.toggle('show', show);
-        }
-        
-        // Geocode address
-        function geocodeAddress() {
-            const address = document.getElementById('addressInput').value.trim();
-            if (!address) {
-                showMessage('Please enter an address', 'error');
-                return;
-            }
-            
+        getUserLocation();
+    }
+    
+    // Get user location
+    function getUserLocation() {
+        if (navigator.geolocation) {
             showLoading(true);
-            fetch('/courts/api/geocode/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': CSRFTOKEN
-                },
-                body: JSON.stringify({ address: address })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.latitude && data.longitude) {
-                    currentCoords = { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude) };
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    currentCoords = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
                     marker.setLatLng([currentCoords.lat, currentCoords.lng]);
                     map.setView([currentCoords.lat, currentCoords.lng], 13);
-                    document.getElementById('sectionHeader').textContent = 'NEAREST COURT';
-                    showMessage('Address found! Searching nearby courts...', 'success');
+                    document.getElementById('sectionHeader').textContent = 'NEAREST FROM YOU';
+                    showMessage('Location found! Searching nearby courts...', 'success');
                     setTimeout(() => searchCourts(), 500);
-                } else {
-                    showMessage(data.error || 'Address not found', 'error');
+                },
+                function(error) {
+                    showMessage('GPS not available. Showing default location.', 'error');
                     showLoading(false);
+                    document.getElementById('sectionHeader').textContent = 'NEAREST FROM YOU';
+                    searchCourts();
                 }
-            })
-            .catch(err => {
-                showMessage('Error: ' + err.message, 'error');
-                showLoading(false);
-            });
+            );
+        } else {
+            showMessage('Browser does not support GPS', 'error');
+            document.getElementById('sectionHeader').textContent = 'NEAREST FROM YOU';
+            searchCourts();
         }
+    }
+    
+    // Search courts
+    function searchCourts() {
+        const formData = new FormData();
+        formData.append('latitude', currentCoords.lat);
+        formData.append('longitude', currentCoords.lng);
+        selectedTypes.forEach(t => formData.append('court_types[]', t));
+        selectedProvinces.forEach(p => formData.append('provinces[]', p));
         
-        // Handle Enter key on search input
-        function handleEnterKey(event) {
-            if (event.key === 'Enter') {
-                geocodeAddress();
+        const priceMin = document.getElementById('priceMin').value;
+        const priceMax = document.getElementById('priceMax').value;
+        if (priceMin) formData.append('price_min', priceMin);
+        if (priceMax) formData.append('price_max', priceMax);
+        if (bookmarkFilterActive) formData.append('bookmarked_only', 'true');
+        
+        showLoading(true);
+        fetch('/courts/api/search/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRFTOKEN },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            showLoading(false);
+            if (data.courts && data.courts.length > 0) {
+                displayResults(data.courts);
+                plotCourtMarkers(data.courts);
+                showMessage(`Found ${data.count} courts nearby`, 'success');
+            } else {
+                document.getElementById('courtResults').innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No courts found within 10km</div>';
+                clearCourtMarkers();
             }
+        })
+        .catch(err => {
+            showMessage('Error: ' + err.message, 'error');
+            showLoading(false);
+        });
+    }
+    
+    // Display results
+    function displayResults(courts) {
+        const resultsDiv = document.getElementById('courtResults');
+        resultsDiv.innerHTML = '';
+        
+        courts.forEach(court => {
+            const distance = court.distance ? court.distance.toFixed(2) : 'N/A';
+            const starClass = court.is_bookmarked ? 'active' : 'inactive';
+            
+            const card = document.createElement('div');
+            card.className = 'court-card';
+            card.innerHTML = `
+                <div class="court-card-header">
+                    <div>
+                        <h3><a href="/courts/detail/${encodeURIComponent(court.name)}/">${court.name}</a></h3>
+                    </div>
+                    <span class="bookmark-star ${starClass}" onclick="toggleBookmark('${court.id}', this)">★</span>
+                </div>
+                <div class="court-details">
+                    <span>🚶 ${distance} km</span>
+                    <span>⚽ ${court.court_type}</span>
+                </div>
+                <div class="court-location">${court.address}</div>
+            `;
+            resultsDiv.appendChild(card);
+        });
+    }
+    
+    // Plot court markers
+    function plotCourtMarkers(courts) {
+        clearCourtMarkers();
+        
+        courts.forEach(court => {
+            const courtMarker = L.circleMarker([court.latitude, court.longitude], {
+                radius: 8,
+                fillColor: court.is_bookmarked ? '#FFD700' : '#ff7800',
+                color: '#fff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+            
+            courtMarker.bindPopup(`
+                <strong>${court.name}</strong><br>
+                💰 Rp ${parseInt(court.price_per_hour).toLocaleString('id-ID')}/hour<br>
+                🚶 ${court.distance ? court.distance.toFixed(2) : 'N/A'} km
+            `);
+            
+            courtMarkers.push(courtMarker);
+        });
+        
+        if (courts.length > 0) {
+            const group = L.featureGroup([marker, ...courtMarkers]);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+    
+    // Clear markers
+    function clearCourtMarkers() {
+        courtMarkers.forEach(m => map.removeLayer(m));
+        courtMarkers = [];
+    }
+    
+// Toggle bookmark
+    function toggleBookmark(courtId, element) {
+        if (!IS_AUTHENTICATED) {
+            showMessage('Please login to bookmark', 'error');
+            return;
         }
         
-        // Initialize
-        window.addEventListener('DOMContentLoaded', function() {
-            initMap();
-            setupFilters();
+        const isBookmarked = element.classList.contains('active');
+        const method = isBookmarked ? 'DELETE' : 'POST';
+        
+        fetch(`/courts/api/bookmark/${courtId}/`, {
+            method: method,
+            headers: {
+                'X-CSRFToken': CSRFTOKEN,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.bookmarked) {
+                element.classList.add('active');
+                element.classList.remove('inactive');
+                showMessage('Court bookmarked!', 'success');
+            } else {
+                element.classList.remove('active');
+                element.classList.add('inactive');
+                showMessage('Bookmark removed', 'success');
+            }
+            searchCourts();
+        })
+        .catch(err => {
+            showMessage('Error: ' + err.message, 'error');
         });
-    </script>
-    {% endblock content %}
-</body>
-</html>
+    } 
+
+    // Toggle bookmark filter
+    function toggleBookmarkFilter() {
+        if (!IS_AUTHENTICATED) {
+            showMessage('Please login to use bookmark filter', 'error');
+            return;
+        }
+        bookmarkFilterActive = !bookmarkFilterActive;
+        const btn = document.querySelector('.btn-bookmark');
+        if (bookmarkFilterActive) {
+            btn.style.background = '#FFA500';
+        } else {
+            btn.style.background = '#FFD700';
+        }
+        searchCourts();
+    }
+    
+    // Open filter modal
+    function openFilterModal() {
+        document.getElementById('filterModal').classList.add('show');
+    }
+    
+    // Close filter modal on outside click
+    document.getElementById('filterModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('show');
+        }
+    });
+    
+    // Apply filters
+    function applyFilters() {
+        document.getElementById('filterModal').classList.remove('show');
+        searchCourts();
+    }
+    
+    // Setup filter tags
+    function setupFilters() {
+        // Type filters
+        document.querySelectorAll('#typeFilters .filter-tag').forEach(tag => {
+            tag.addEventListener('click', function() {
+                const type = this.dataset.type;
+                this.classList.toggle('active');
+                if (selectedTypes.includes(type)) {
+                    selectedTypes = selectedTypes.filter(t => t !== type);
+                } else {
+                    selectedTypes.push(type);
+                }
+            });
+        });
+        
+        // Load provinces
+        loadProvinces();
+    }
+    
+    // Load provinces
+    async function loadProvinces() {
+        try {
+            const response = await fetch('/courts/api/provinces/');
+            const provinces = await response.json();
+            
+            const container = document.getElementById('provinceFilters');
+            provinces.slice(0, 6).forEach(province => {
+                const tag = document.createElement('div');
+                tag.className = 'filter-tag';
+                tag.textContent = province.name;
+                tag.dataset.provinceId = province.id;
+                tag.addEventListener('click', function() {
+                    const id = this.dataset.provinceId;
+                    this.classList.toggle('active');
+                    if (selectedProvinces.includes(id)) {
+                        selectedProvinces = selectedProvinces.filter(p => p !== id);
+                    } else {
+                        selectedProvinces.push(id);
+                    }
+                });
+                container.appendChild(tag);
+            });
+        } catch (err) {
+            console.error('Error loading provinces:', err);
+        }
+    }
+    
+    // Show message
+    function showMessage(text, type) {
+        const msgEl = document.getElementById('message');
+        msgEl.textContent = text;
+        msgEl.className = `message ${type} show`;
+        setTimeout(() => msgEl.classList.remove('show'), 3000);
+    }
+    
+    // Show loading
+    function showLoading(show) {
+        document.getElementById('loading').classList.toggle('show', show);
+    }
+    
+    // Geocode address
+    function geocodeAddress() {
+        const address = document.getElementById('addressInput').value.trim();
+        if (!address) {
+            showMessage('Please enter an address', 'error');
+            return;
+        }
+        
+        showLoading(true);
+        fetch('/courts/api/geocode/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': CSRFTOKEN
+            },
+            body: JSON.stringify({ address: address })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.latitude && data.longitude) {
+                currentCoords = { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude) };
+                marker.setLatLng([currentCoords.lat, currentCoords.lng]);
+                map.setView([currentCoords.lat, currentCoords.lng], 13);
+                document.getElementById('sectionHeader').textContent = 'NEAREST COURT';
+                showMessage('Address found! Searching nearby courts...', 'success');
+                setTimeout(() => searchCourts(), 500);
+            } else {
+                showMessage(data.error || 'Address not found', 'error');
+                showLoading(false);
+            }
+        })
+        .catch(err => {
+            showMessage('Error: ' + err.message, 'error');
+            showLoading(false);
+        });
+    }
+    
+    // Handle Enter key on search input
+    function handleEnterKey(event) {
+        if (event.key === 'Enter') {
+            geocodeAddress();
+        }
+    }
+    
+    // Initialize
+    window.addEventListener('DOMContentLoaded', function() {
+        initMap();
+        setupFilters();
+    });
+    
+    // Handle window resize for map
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            if (map) {
+                map.invalidateSize();
+            }
+        }, 250);
+    });
+
+</script>
+{% endblock content %}
