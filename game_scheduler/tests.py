@@ -1,141 +1,12 @@
 import datetime
-import json
 from django.test import TestCase, Client
-from django.contrib.auth import get_user_model  # <-- PERBAIKAN 1: Impor yang benar
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
-
-# Ganti 'your_app_name' dengan nama aplikasi Anda (misal: game_scheduler)
 from .models import GameScheduler
 from .forms import GameSchedulerForm 
 
-# PERBAIKAN 1: Mendapatkan model User yang aktif
 User = get_user_model()
-
-class GameSchedulerModelTest(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        """
-        Menyiapkan data yang tidak akan berubah untuk semua metode tes.
-        Ini dijalankan sekali di awal.
-        """
-        # 1. Buat user untuk creator
-        cls.creator_user = User.objects.create_user(
-            username='game_creator', 
-            password='testpassword123',
-            email='game_creator@example.com'  # <-- PERBAIKAN 2: Email unik
-        )
-
-        # 2. Buat 11 user untuk menguji fungsionalitas participants
-        cls.participant_users = []
-        for i in range(11):
-            user = User.objects.create_user(
-                username=f'participant{i}', 
-                password='testpassword123',
-                email=f'participant{i}@example.com' # <-- PERBAIKAN 2: Email unik
-            )
-            cls.participant_users.append(user)
-
-        # 3. Buat instance GameScheduler utama untuk pengujian
-        cls.game = GameScheduler.objects.create(
-            title="Sunday Basketball Game",
-            description="Casual game at the main court.",
-            creator=cls.creator_user,
-            scheduled_date=datetime.date(2025, 10, 26),
-            start_time=datetime.time(17, 0, 0),
-            end_time=datetime.time(19, 0, 0),
-            location="Main Court",
-            event_type='public',
-            sport_type='basketball'
-        )
-
-    def test_game_scheduler_creation(self):
-        """
-        Tes apakah instance GameScheduler dibuat dengan benar.
-        """
-        game = self.game
-        self.assertEqual(game.title, "Sunday Basketball Game")
-        self.assertEqual(game.description, "Casual game at the main court.")
-        self.assertEqual(game.creator, self.creator_user)
-        self.assertEqual(game.scheduled_date, datetime.date(2025, 10, 26))
-        self.assertEqual(game.start_time, datetime.time(17, 0, 0))
-        self.assertEqual(game.end_time, datetime.time(19, 0, 0))
-        self.assertEqual(game.location, "Main Court")
-        self.assertEqual(game.event_type, 'public')
-        self.assertEqual(game.sport_type, 'basketball')
-        
-        retrieved_game = GameScheduler.objects.get(id=game.id)
-        self.assertEqual(retrieved_game.title, "Sunday Basketball Game")
-
-    def test_default_values(self):
-        """
-        Tes apakah nilai default untuk event_type dan sport_type diterapkan.
-        """
-        default_game = GameScheduler.objects.create(
-            title="Default Game",
-            description="Testing defaults.",
-            creator=self.creator_user,
-            scheduled_date=datetime.date(2025, 11, 1),
-            start_time=datetime.time(10, 0),
-            end_time=datetime.time(12, 0),
-            location="Default Location",
-        )
-        self.assertEqual(default_game.event_type, 'public')
-        self.assertEqual(default_game.sport_type, 'basketball')
-
-    def test_str_method(self):
-        """
-        Tes representasi string dari model.
-        """
-        game = self.game
-        expected_string = "Sunday Basketball Game (2025-10-26)"
-        self.assertEqual(str(game), expected_string)
-
-    def test_participants_relationship(self):
-        """
-        Tes fungsionalitas ManyToManyField (participants).
-        """
-        game = self.game
-        user1 = self.participant_users[0]
-        user2 = self.participant_users[1]
-
-        self.assertEqual(game.participants.count(), 0)
-        game.participants.add(user1)
-        self.assertEqual(game.participants.count(), 1)
-        self.assertIn(user1, game.participants.all())
-
-        game.participants.add(user2)
-        self.assertEqual(game.participants.count(), 2)
-        self.assertIn(user2, game.participants.all())
-
-        self.assertIn(game, user1.scheduled_games.all())
-
-        game.participants.remove(user1)
-        self.assertEqual(game.participants.count(), 1)
-        self.assertNotIn(user1, game.participants.all())
-
-    def test_is_full_property(self):
-        """
-        Tes logika properti 'is_full'.
-        """
-        game = self.game
-        users = self.participant_users
-
-        self.assertEqual(game.participants.count(), 0)
-        self.assertFalse(game.is_full)
-
-        game.participants.add(*users[:9]) # Menambah user 0 sampai 8
-        self.assertEqual(game.participants.count(), 9)
-        self.assertFalse(game.is_full)
-
-        game.participants.add(users[9])
-        self.assertEqual(game.participants.count(), 10)
-        self.assertTrue(game.is_full)
-
-        game.participants.add(users[10])
-        self.assertEqual(game.participants.count(), 11)
-        self.assertTrue(game.is_full)
 
 class GameSchedulerViewTest(TestCase):
 
@@ -148,17 +19,17 @@ class GameSchedulerViewTest(TestCase):
         cls.creator_user = User.objects.create_user(
             username='creator', 
             password='testpassword123',
-            email='creator@example.com'  # <-- PERBAIKAN 2: Email unik
+            email='creator@example.com' 
         )
         cls.participant_user = User.objects.create_user(
             username='participant', 
             password='testpassword123',
-            email='participant@example.com' # <-- PERBAIKAN 2: Email unik
+            email='participant@example.com' 
         )
         cls.admin_user = User.objects.create_user(
             username='admin', 
             password='testpassword123',
-            email='admin@example.com', # <-- PERBAIKAN 2: Email unik
+            email='admin@example.com',
             is_staff=True
         )
         

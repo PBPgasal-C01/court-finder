@@ -116,13 +116,3 @@ def delete_user(request, user_id):
 
     target.delete()
     return JsonResponse({'status': 'success', 'message': 'User deleted'})
-
-
-
-
-
-
-
-
-
-
