@@ -12,8 +12,8 @@
     <!-- Center: Desktop Menu -->
     <div class="col-span-12 md:col-span-6 hidden md:flex justify-center items-center gap-8 text-sm font-semibold">
       <a href="{% url 'main:show_main' %}" class="hover:text-gray-200 transition">Home</a>
-      <a href="{% url 'court_filter:court_finder' %}" class="hover:text-gray-200 transition">Finder</a>
-      <a href="#" class="hover:text-gray-200 transition">Blog</a>
+      <a href="#" class="hover:text-gray-200 transition">Finder</a>
+      <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
       <a href="#" class="hover:text-gray-200 transition">Game Scheduler</a>
       <a href="#" class="hover:text-gray-200 transition">Manage Court</a>
       <a href="#" class="hover:text-gray-200 transition">Complain</a>
@@ -81,8 +81,8 @@
   <div id="mobile-menu" class="hidden md:hidden border-t border-[#4F6C4F] text-sm bg-[#698C6A]">
     <div class="flex flex-col items-center py-3 space-y-2">
       <a href="{% url 'main:show_main' %}" class="hover:text-gray-200 transition">Home</a>
-      <a href="{% url 'court_filter:court_finder' %}" class="hover:text-gray-200 transition">Finder</a>
-      <a href="#" class="hover:text-gray-200 transition">Blog</a>
+      <a href="#" class="hover:text-gray-200 transition">Finder</a>
+      <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
       <a href="#" class="hover:text-gray-200 transition">Game Scheduler</a>
       <a href="#" class="hover:text-gray-200 transition">Manage Court</a>
       <a href="#" class="hover:text-gray-200 transition">Complaint</a>
