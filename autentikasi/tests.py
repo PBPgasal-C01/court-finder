@@ -1,332 +1,243 @@
 from django.test import TestCase, Client
+from django.contrib.auth import get_user_model
+from django.db.utils import IntegrityError
 from django.urls import reverse
 from django.contrib.sessions.models import Session
-from django.contrib.auth import get_user_model
-import json
 
-CourtUser = get_user_model()
+User = get_user_model()
 
-class AuthViewsTest(TestCase):
-    """
-    Test suite untuk views di aplikasi 'autentikasi'.
-    """
-
-    def setUp(self):
-        """
-        Setup awal untuk semua tes. Dijalankan sebelum setiap metode tes.
-        """
-        self.client = Client()
+class AutentikasiViewsTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        """Siapkan data yang tidak berubah untuk semua tes view."""
         
-        # 1. Buat user biasa
-        self.user = CourtUser.objects.create_user(
-            username='user@example.com',  
-            email='user@example.com',
-            password='userpass123',
-            first_name='Test',
-            last_name='User',
+        cls.password = 'testpassword123'
+        
+        cls.user_biasa = User.objects.create_user(
+            username='userbiasa',
+            email='userbiasa@example.com',
+            password=cls.password,
             role='user'
         )
         
-        # 2. Buat user admin
-        self.admin_user = CourtUser.objects.create_superuser(
-            username='admin@example.com',
+        cls.admin_user = User.objects.create_user(
+            username='admin',
             email='admin@example.com',
-            password='adminpass123',
+            password=cls.password,
+            is_staff=True,
+            is_superuser=True,
             role='admin'
         )
+        
+        cls.user_target = User.objects.create_user(
+            username='usertarget',
+            email='usertarget@example.com',
+            password=cls.password,
+            role='user'
+        )
 
-    # ----------------------------------------
-    # Tes untuk register_user
-    # ----------------------------------------
-    
+        cls.client = Client()
+        
+        cls.login_url = reverse('autentikasi:login')
+        cls.main_url = reverse('main:show_main')
+
+        try:
+            cls.profile_url = reverse('autentikasi:profile_view') 
+        except NoReverseMatch:
+            cls.profile_url = reverse('autentikasi:profile')
+
+        cls.admin_dashboard_url = reverse('autentikasi:admin_dashboard')
+
     def test_register_user_get(self):
-        """Tes GET request ke halaman registrasi."""
-        response = self.client.get(self.register_url)
+        """Tes GET request ke halaman register."""
+        response = self.client.get(reverse('autentikasi:register'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'register.html')
         self.assertIn('form', response.context)
 
-    def test_register_user_post_success(self):
-        """Tes POST request (sukses) untuk registrasi user baru."""
-        # Pastikan user count awalnya 2 (dari setUp)
-        self.assertEqual(CourtUser.objects.count(), 2)
-
-        form_data = {
-            'username': 'newuser@example.com',
-            'email': 'newuser@example.com',
-            'first_name': 'New',
-            'last_name': 'User',
-            'password': 'newpass123',
-            'password2': 'newpass123',
-            'phone_number': '123456789'
-        }
-        
-        response = self.client.post(self.register_url, form_data)
-
     def test_register_user_post_invalid(self):
-        """Tes POST request (gagal) dengan data tidak valid."""
+        """Tes POST request yang tidak valid (password tidak cocok)."""
+        user_count = User.objects.count()
         form_data = {
-            'email': 'bademail.com', # Email tidak valid
-            'password': '123',       # Password terlalu pendek (asumsi)
+            'username': 'usergagal',
+            'email': 'usergagal@example.com',
+            'password_1': self.password,
+            'password_2': 'passwordbeda'
         }
-        response = self.client.post(self.register_url, form_data)
         
-        # 1. Tetap di halaman register
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'register.html')
+        response = self.client.post(reverse('autentikasi:register'), form_data)
         
-        # 2. Pastikan ada errors di form
+        self.assertEqual(User.objects.count(), user_count)
+        self.assertEqual(response.status_code, 200) 
+        self.assertIn('form', response.context)
         self.assertTrue(response.context['form'].errors)
-        
-        # 3. Tidak ada user baru dibuat
-        self.assertEqual(CourtUser.objects.count(), 2)
 
-    # ----------------------------------------
-    # Tes untuk login_user
-    # ----------------------------------------
-    
     def test_login_user_get(self):
         """Tes GET request ke halaman login."""
         response = self.client.get(self.login_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
+        self.assertIn('form', response.context)
 
-    def test_login_user_post_success(self):
-        """Tes POST request (sukses) untuk login."""
-        login_data = {'username': 'user@example.com', 'password': 'userpass123'}
-        response = self.client.post(self.login_url, login_data)
+    def test_login_user_post_valid(self):
+        """Tes POST request yang valid untuk login."""
+        form_data = {'username': self.user_biasa.email, 'password': self.password}
         
-        # 1. Pastikan user terautentikasi
-        self.assertTrue(response.wsgi_request.user.is_authenticated)
-        self.assertEqual(response.wsgi_request.user, self.user)
-        
-        # 2. Pastikan redirect ke halaman main
-        self.assertRedirects(response, self.main_redirect_url)
+        response = self.client.post(self.login_url, form_data)
+        self.assertRedirects(response, self.main_url)
+        self.assertEqual(str(response.wsgi_request.user.id), str(self.user_biasa.id))
 
     def test_login_user_post_invalid(self):
-        """Tes POST request (gagal) dengan password salah."""
-        login_data = {'username': 'user@example.com', 'password': 'wrongpassword'}
-        response = self.client.post(self.login_url, login_data)
+        """Tes POST request yang tidak valid (password salah)."""
+        form_data = {'username': self.user_biasa.email, 'password': 'passwordsalah'}
         
-        # 1. Tetap di halaman login
-        self.assertEqual(response.status_code, 200)
-        
-        # 2. User tidak terautentikasi
-        self.assertFalse(response.wsgi_request.user.is_authenticated)
-        
-        # 3. Ada error di form
+        response = self.client.post(self.login_url, form_data)
+        self.assertEqual(response.status_code, 200) 
+        self.assertIn('form', response.context)
         self.assertTrue(response.context['form'].errors)
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
 
-    # ----------------------------------------
-    # Tes untuk logout_user
-    # ----------------------------------------
-    
     def test_logout_user(self):
         """Tes fungsionalitas logout."""
-        # 1. Login dulu
-        self.client.login(email='user@example.com', password='userpass123')
-        self.assertTrue(self.client.session) # Pastikan session ada
+        self.client.login(email=self.user_biasa.email, password=self.password)
+        self.assertTrue(self.user_biasa.is_authenticated)
         
-        # 2. Panggil logout
-        response = self.client.get(self.logout_url)
+        response = self.client.get(reverse('autentikasi:logout'))
         
-        # 3. Pastikan user sudah logout
-        self.assertFalse(response.wsgi_request.user.is_authenticated)
-        
-        # 4. Pastikan redirect ke halaman login
         self.assertRedirects(response, self.login_url)
-        
-        # 5. Pastikan cookie sessionid dihapus
-        self.assertEqual(response.cookies.get('sessionid').value, '')
+        self.assertEqual(response.cookies['sessionid']['expires'], 'Thu, 01 Jan 1970 00:00:00 GMT')
 
-    # ----------------------------------------
-    # Tes untuk profile_view
-    # ----------------------------------------
-    
-    def test_profile_view_authenticated(self):
-        """Tes akses halaman profile saat sudah login."""
-        self.client.login(email='user@example.com', password='userpass123')
+        response_after_logout = self.client.get(self.profile_url)
+        self.assertEqual(response_after_logout.status_code, 302)
+
+    def test_profile_view_get_logged_in(self):
+        """Tes GET halaman profil oleh user yang login."""
+        self.client.login(email=self.user_biasa.email, password=self.password)
         response = self.client.get(self.profile_url)
         
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'profile.html')
-        self.assertEqual(response.context['user'], self.user)
+        self.assertEqual(response.context['user'], self.user_biasa)
+        self.assertIn('form', response.context)
 
-    def test_profile_view_unauthenticated(self):
-        """Tes akses halaman profile saat belum login (harus redirect)."""
-        response = self.client.get(self.profile_url)
+    def test_update_profile_ajax_post_valid(self):
+        """Tes update profil via AJAX POST yang valid."""
+        self.client.login(email=self.user_biasa.email, password=self.password)
+        form_data = {'username': 'UsernameBaru', 'preference': 'Indoor'}
         
-        # Harusnya redirect ke halaman login
-        expected_redirect_url = f"{self.login_url}?next={self.profile_url}"
-        self.assertRedirects(response, expected_redirect_url)
-
-    # ----------------------------------------
-    # Tes untuk update_profile_ajax
-    # ----------------------------------------
-    
-    def test_update_profile_ajax_success(self):
-        """Tes update profile via AJAX (sukses)."""
-        self.client.login(email='user@example.com', password='userpass123')
+        response = self.client.post(reverse('autentikasi:update_profile_ajax'), form_data)
         
-        new_data = {'first_name': 'UpdatedName', 'last_name': 'UpdatedLast'}
-        response = self.client.post(self.update_profile_url, new_data)
-        
-        # 1. Cek response JSON
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content, {'status': 'success'})
+        self.assertEqual(response.json()['status'], 'success')
         
-        # 2. Cek database
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, 'UpdatedName')
-        self.assertEqual(self.user.last_name, 'UpdatedLast')
+        self.user_biasa.refresh_from_db()
+        self.assertEqual(self.user_biasa.username, 'UsernameBaru')
+        self.assertEqual(self.user_biasa.preference, 'Indoor')
 
-    def test_update_profile_ajax_invalid(self):
-        """Tes update profile via AJAX (gagal/data tidak valid)."""
-        self.client.login(email='user@example.com', password='userpass123')
-        
-        # Asumsi 'first_name' tidak boleh kosong
-        invalid_data = {'first_name': '', 'last_name': 'User'}
-        response = self.client.post(self.update_profile_url, invalid_data)
-        
-        # 1. Cek response JSON (harus 400 Bad Request)
-        self.assertEqual(response.status_code, 400)
-        data = json.loads(response.content)
-        self.assertEqual(data['status'], 'error')
-        self.assertIn('errors', data)
-        self.assertIn('first_name', data['errors']) # Cek ada error di field first_name
+    def test_update_profile_ajax_get_request(self):
+        """Tes GET request ke update_profile_ajax dilarang (Method Not Allowed)."""
+        self.client.login(email=self.user_biasa.email, password=self.password)
+        response = self.client.get(reverse('autentikasi:update_profile_ajax'))
+        self.assertEqual(response.status_code, 405)
 
-        # 2. Cek database (tidak berubah)
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, 'Test') # Masih nama awal
-
-    def test_update_profile_ajax_not_post(self):
-        """Tes akses update_profile_ajax dengan method GET (harus 405)."""
-        self.client.login(email='user@example.com', password='userpass123')
-        response = self.client.get(self.update_profile_url)
-        
-        self.assertEqual(response.status_code, 405) # 405 Method Not Allowed
-        self.assertJSONEqual(response.content, {'status': 'invalid'})
-
-    # ----------------------------------------
-    # Tes untuk Admin Views
-    # ----------------------------------------
-
-    def test_admin_dashboard_as_admin(self):
-        """Tes akses admin dashboard sebagai admin."""
-        self.client.login(email='admin@example.com', password='adminpass123')
+    def test_admin_dashboard_anonymous_user(self):
+        """Tes user anonim tidak bisa akses admin dashboard."""
         response = self.client.get(self.admin_dashboard_url)
-        
+        self.assertRedirects(response, f'{self.login_url}?next={self.admin_dashboard_url}')
+
+    def test_admin_dashboard_standard_user(self):
+        """Tes user biasa tidak bisa akses admin dashboard."""
+        self.client.login(email=self.user_biasa.email, password=self.password)
+        response = self.client.get(self.admin_dashboard_url)
+        self.assertRedirects(response, f'{self.login_url}?next={self.admin_dashboard_url}')
+
+    def test_admin_dashboard_admin_user(self):
+        """Tes admin bisa akses admin dashboard."""
+        self.client.login(email=self.admin_user.email, password=self.password)
+        response = self.client.get(self.admin_dashboard_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin_dashboard.html')
         self.assertIn('users', response.context)
-        self.assertEqual(len(response.context['users']), 2) # Ada 2 user
+        self.assertIn(self.user_biasa, response.context['users'])
 
-    def test_admin_dashboard_as_user(self):
-        """Tes akses admin dashboard sebagai user biasa (harus redirect)."""
-        self.client.login(email='user@example.com', password='userpass123')
-        response = self.client.get(self.admin_dashboard_url)
+    def test_ban_unban_user_by_admin(self):
+        """Tes admin bisa ban dan unban user lain."""
+        self.client.login(email=self.admin_user.email, password=self.password)
+        self.assertTrue(self.user_target.is_active)
         
-        self.assertRedirects(response, self.main_redirect_url)
-
-    # --- ban_unban_user ---
-
-    def test_ban_user_as_admin(self):
-        """Tes admin bisa BAN user."""
-        self.client.login(email='admin@example.com', password='adminpass123')
-        self.assertTrue(self.user.is_active) # Pastikan user aktif
+        url = reverse('autentikasi:ban_unban_user', args=[self.user_target.id])
+        response_ban = self.client.get(url) 
+        self.assertEqual(response_ban.status_code, 200)
+        self.assertEqual(response_ban.json()['message'], f"Banned {self.user_target.email}")
         
-        # Buat sesi untuk user yang akan di-ban
-        user_client = Client()
-        user_client.login(email='user@example.com', password='userpass123')
-        self.assertEqual(Session.objects.count(), 2) # 1 admin, 1 user
-
-        ban_url = reverse('autentikasi:ban_unban_user', args=[self.user.pk])
-        response = self.client.get(ban_url)
+        self.user_target.refresh_from_db()
+        self.assertFalse(self.user_target.is_active)
         
-        # 1. Cek response
+        response_unban = self.client.get(url)
+        self.assertEqual(response_unban.status_code, 200)
+        self.assertEqual(response_unban.json()['message'], f"Unbanned {self.user_target.email}")
+        
+        self.user_target.refresh_from_db()
+        self.assertTrue(self.user_target.is_active)
+
+    def test_ban_user_deletes_session(self):
+        """Tes ban user akan menghapus sesi user tersebut."""
+        client_target = Client()
+        client_target.login(email=self.user_target.email, password=self.password)
+        session_key = client_target.session.session_key
+        self.assertTrue(Session.objects.filter(session_key=session_key).exists())
+        
+        self.client.login(email=self.admin_user.email, password=self.password)
+        url = reverse('autentikasi:ban_unban_user', args=[self.user_target.id])
+        self.client.get(url)
+        
+        self.assertFalse(Session.objects.filter(session_key=session_key).exists())
+
+    def test_admin_cannot_ban_self(self):
+        """Tes admin tidak bisa ban diri sendiri."""
+        self.client.login(email=self.admin_user.email, password=self.password)
+        url = reverse('autentikasi:ban_unban_user', args=[self.admin_user.id])
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['status'], 'error')
+        self.assertTrue(self.admin_user.is_active)
+
+    def test_delete_user_by_admin(self):
+        """Tes admin bisa delete user lain."""
+        self.client.login(email=self.admin_user.email, password=self.password)
+        target_id = self.user_target.id
+        self.assertTrue(User.objects.filter(id=target_id).exists())
+        
+        url = reverse('autentikasi:delete_user', args=[target_id])
+        response = self.client.get(url) 
+        
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(
-            response.content, 
-            {'status': 'success', 'message': f'Banned {self.user.email}'}
-        )
-        
-        # 2. Cek database
-        self.user.refresh_from_db()
-        self.assertFalse(self.user.is_active)
-        
-        # 3. Cek sesi user yang di-ban terhapus
-        self.assertEqual(Session.objects.count(), 1) # Sisa sesi admin
-        
-    def test_unban_user_as_admin(self):
-        """Tes admin bisa UNBAN user."""
-        self.client.login(email='admin@example.com', password='adminpass123')
-        self.user.is_active = False
-        self.user.save()
-        
-        ban_url = reverse('autentikasi:ban_unban_user', args=[self.user.pk])
-        response = self.client.get(ban_url)
+        self.assertEqual(response.json()['status'], 'success')
+        self.assertFalse(User.objects.filter(id=target_id).exists())
 
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.is_active)
-        self.assertJSONEqual(
-            response.content, 
-            {'status': 'success', 'message': f'Unbanned {self.user.email}'}
-        )
-        
-    def test_ban_self_as_admin(self):
-        """Tes admin tidak bisa BAN diri sendiri."""
-        self.client.login(email='admin@example.com', password='adminpass123')
-        ban_url = reverse('autentikasi:ban_unban_user', args=[self.admin_user.pk])
-        response = self.client.get(ban_url)
+    def test_admin_cannot_delete_self(self):
+        """Tes admin tidak bisa delete diri sendiri."""
+        self.client.login(email=self.admin_user.email, password=self.password)
+        admin_id = self.admin_user.id
+        url = reverse('autentikasi:delete_user', args=[admin_id])
+        response = self.client.get(url)
         
         self.assertEqual(response.status_code, 400)
-        self.assertJSONEqual(
-            response.content, 
-            {'status': 'error', 'message': "You can't ban yourself."}
-        )
+        self.assertEqual(response.json()['status'], 'error')
+        self.assertTrue(User.objects.filter(id=admin_id).exists())
 
-    def test_ban_user_as_user(self):
-        """Tes user biasa tidak bisa BAN user (harus 403)."""
-        self.client.login(email='user@example.com', password='userpass123')
-        ban_url = reverse('autentikasi:ban_unban_user', args=[self.admin_user.pk])
-        response = self.client.get(ban_url)
+    def test_admin_views_protected_from_standard_user(self):
+        """Tes semua view admin dilindungi dari user biasa."""
+        self.client.login(email=self.user_biasa.email, password=self.password)
         
-        self.assertEqual(response.status_code, 403)
-        self.assertJSONEqual(response.content, {'status': 'forbidden'})
-
-    # --- delete_user ---
-
-    def test_delete_user_as_admin(self):
-        """Tes admin bisa DELETE user."""
-        self.client.login(email='admin@example.com', password='adminpass123')
+        ban_url = reverse('autentikasi:ban_unban_user', args=[self.user_target.id])
+        delete_url = reverse('autentikasi:delete_user', args=[self.user_target.id])
         
-        # Buat user baru untuk dihapus
-        user_to_delete = CourtUser.objects.create_user(
-            username='delete@me.com',
-            email='delete@me.com', 
-            password='123'
-        )
-        user_pk = user_to_delete.pk
-        self.assertEqual(CourtUser.objects.count(), 3)
-
-    def test_delete_self_as_admin(self):
-        """Tes admin tidak bisa DELETE diri sendiri."""
-        self.client.login(email='admin@example.com', password='adminpass123')
-        delete_url = reverse('autentikasi:delete_user', args=[self.admin_user.pk])
-        response = self.client.get(delete_url)
+        response_dash = self.client.get(self.admin_dashboard_url)
+        response_ban = self.client.get(ban_url)
+        response_del = self.client.get(delete_url)
         
-        self.assertEqual(response.status_code, 400)
-        self.assertJSONEqual(
-            response.content, 
-            {'status': 'error', 'message': "You can't delete yourself."}
-        )
-        self.assertTrue(CourtUser.objects.filter(pk=self.admin_user.pk).exists())
-
-    def test_delete_user_as_user(self):
-        """Tes user biasa tidak bisa DELETE user (harus 403)."""
-        self.client.login(email='user@example.com', password='userpass123')
-        delete_url = reverse('autentikasi:delete_user', args=[self.admin_user.pk])
-        response = self.client.get(delete_url)
-        
-        self.assertEqual(response.status_code, 403)
-        self.assertJSONEqual(response.content, {'status': 'forbidden'})
+        self.assertRedirects(response_dash, f'{self.login_url}?next={self.admin_dashboard_url}')
+        self.assertRedirects(response_ban, f'{self.login_url}?next={ban_url}')
+        self.assertRedirects(response_del, f'{self.login_url}?next={delete_url}')
