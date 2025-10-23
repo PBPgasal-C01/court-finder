@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'manage_court',
+    'court_filter',
     'widget_tweaks',
     'main',
     'autentikasi',
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'game_scheduler',
+    'django.contrib.humanize',
 ]
 
 SITE_ID = 1
