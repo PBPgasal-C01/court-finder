@@ -1,22 +1,17 @@
 [run]
-branch = True
-source =
-    blog
+source = .
 omit =
+    venv/*
+
     */migrations/*
-    */tests.py
-    */env/*
+    */tests/*
+    */__init__.py
+    */admin.py
+    */apps.py
     manage.py
+    court_finder/settings.py
+    court_finder/wsgi.py
+    court_finder/asgi.py
 
 [report]
 show_missing = True
-skip_covered = False
-precision = 1
-exclude_lines =
-    pragma: no cover
-    if __name__ == '__main__':
-    raise NotImplementedError
-
-[html]
-directory = htmlcov
-title = Court Finder Coverage
