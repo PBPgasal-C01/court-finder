@@ -1,3 +1,119 @@
+
+
+
+
+#sport-filter {
+    background-color: #FFFFFF;
+    border: 1px solid #5D8190;
+    color: #5D8190;
+}
+
+#sport-filter:hover {
+    background-color: #F1F7FB;
+    border: 1px solid #5D8190;
+    color: #5D8190;
+}
+
+#sport-filter.active {
+    background-color: #5D8190;
+    border: 1px solid #5D8190;
+    color: #F3F3F3;
+}
+
+/* Styling untuk Search Box dengan ikon di dalam (FIXED) */
+
+.search-box {
+    position: relative; /* Diperlukan agar ikon bisa diposisikan absolut */
+    width: 100%;
+}
+
+/* Wrapper untuk ikon agar mudah diposisikan */
+.search-icon-wrapper {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0; /* Posisikan wrapper di paling kiri */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px; /* Beri lebar tetap untuk area klik */
+    cursor: pointer; /* Jadikan seluruh area ini bisa di-klik */
+}
+
+/* Styling untuk ikon SVG di dalamnya */
+.search-icon-svg {
+    width: 20px;
+    height: 20px;
+    fill: #9CA3AF; /* Warna abu-abu */
+}
+
+
+/* Styling untuk input field */
+.search-input {
+    width: 100%;
+    /* KUNCI PERBAIKAN: Padding kiri harus lebih besar dari lebar wrapper ikon */
+    padding: 12px 15px 12px 45px;
+    border: 1px solid #D1D5DB;
+    border-radius: 12px;
+    background-color: #ffffff;
+    font-size: 16px;
+    box-sizing: border-box; /* Pastikan padding tidak menambah lebar total */
+}
+
+/* Efek saat input di-klik (fokus) */
+.search-input:focus {
+    outline: none;
+    border-color: #698C6A;
+    box-shadow: 0 0 0 2px rgba(105, 140, 106, 0.4);
+}
+
+/* Styling for the button container */
+.action-buttons {
+    display: flex; /* Menggunakan Flexbox agar tombol sejajar rapi */
+    gap: 8px;      /* Memberi jarak antar tombol */
+    margin-top: 12px;
+}
+
+/* Base styling for all three action buttons */
+#btn-gps,
+#btn-filter,
+#btn-bookmark {
+    
+    font-family: 'AnalogueRed-Base';
+    flex: 1; /* Membuat ketiga tombol memiliki lebar yang sama */
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 500; /* Sedikit lebih tebal dari normal */
+    text-align: center;
+    border-radius: 8px; /* Sudut yang lebih tumpul, terlihat modern */
+    border: 1px solid #D1D5DB; /* Garis tepi yang soft */
+    
+    background-color: #FFFFFF; /* Latar belakang putih bersih */
+    color: #374151; /* Warna teks abu-abu tua agar mudah dibaca */
+
+    cursor: pointer;
+    transition: all 0.2s ease-in-out; /* Animasi transisi yang halus */
+}
+
+/* Efek saat kursor mouse berada di atas tombol */
+#btn-gps:hover,
+#btn-filter:hover,
+#btn-bookmark:hover {
+    background-color: #F9FAFB; /* Sedikit menggelap saat di-hover */
+    border-color: #9CA3AF;
+}
+
+
+
+/* Styling KHUSUS untuk tombol Bookmark saat aktif */
+#btn-bookmark.active {
+    background-color: #547254; /* Warna hijau solid saat filter aktif */
+    color: #FFFFFF; /* Teks menjadi putih agar kontras */
+    border-color: #4a634a; /* Border sedikit lebih gelap */
+    font-weight: 600;
+}
+
+/* ===== GLOBAL & DESKTOP LAYOUT (DEFAULT) ===== */
 * {
     margin: 0;
     padding: 0;
@@ -11,20 +127,23 @@ html {
 body {
     font-family: 'Arial', sans-serif;
     background-color: #f5f5f5;
-    overflow: hidden;
+    /* Pastikan body bisa scroll jika footer ada */
 }
 
-/* ===== DESKTOP LAYOUT (DEFAULT) ===== */
+.container-full-width {
+    max-width: 100% !important; /* Paksa lebar maksimal jadi 100% */
+    padding-left: 0 !important;  /* Hapus padding jika ada */
+    padding-right: 0 !important; /* Hapus padding jika ada */
+}
+
 .container {
     display: flex;
-    height: 100vh;
+    height: calc(100vh - 64px); /* Sesuaikan dengan tinggi navbar */
     width: 100%;
-    overflow: hidden;
-    box-sizing: border-box;
 }
 
-/* Sidebar - Left Panel (Desktop) */
-.sidebar {
+/* Wrapper untuk Search dan Sidebar di Desktop */
+.sidebar-wrapper {
     width: 400px;
     background-color: #fff;
     display: flex;
@@ -33,12 +152,13 @@ body {
     z-index: 10;
 }
 
-/* Hide drag handle on desktop */
-.sidebar::before {
-    display: none;
+.sidebar {
+    flex: 1; /* Mengisi sisa ruang di wrapper */
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Penting untuk flexbox agar overflow berfungsi */
 }
 
-/* Search Section */
 .search-section {
     padding: 20px;
     background-color: #698C6A;
@@ -60,15 +180,13 @@ body {
     outline: none;
     padding: 5px;
     font-size: 14px;
-    color: #333;
 }
 
 .search-icon {
     font-size: 18px;
-    margin-left: 10px;
+    cursor: pointer;
 }
 
-/* Action Buttons */
 .action-buttons {
     display: flex;
     gap: 10px;
@@ -81,121 +199,176 @@ body {
     border-radius: 20px;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.3s ease;
     font-size: 13px;
-}
-
-.btn-gps {
-    background-color: #FFD700;
-    color: #333;
-}
-
-.btn-bookmark {
-    background-color: #FFD700;
-    color: #333;
-}
-
-.btn-filter {
     background-color: #FFD700;
     color: #333;
 }
 
 .action-buttons button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-/* Section Header */
+.btn-bookmark.active {
+    background-color: #FFA500; /* Warna oranye saat aktif */
+    color: white;
+}
+
 .section-header {
     padding: 15px 20px;
     background-color: #f0f0f0;
     font-weight: bold;
     font-size: 14px;
-    color: #333;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 1px solid #ddd;
 }
 
-/* Loading Indicator */
 .loading {
     padding: 20px;
     text-align: center;
     color: #666;
     display: none;
 }
+.loading.show { display: block; }
 
-.loading.show {
-    display: block;
-}
-
-/* Court List */
 .court-list {
+    
+    font-family: 'AnalogueRed-Base';
     flex: 1;
     overflow-y: auto;
     padding: 15px;
-    -webkit-overflow-scrolling: touch;
 }
 
-/* Court Card */
-.court-card {
-    background-color: white;
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
-    cursor: pointer;
-}
+/* Tambahkan CSS ini ke file find_court.css kamu */
 
-.court-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.court-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 10px;
-}
-
-.court-card-header h3 {
-    font-size: 16px;
-    color: #333;
-    margin-bottom: 5px;
-}
-
-.court-card-header h3 a {
-    color: #333;
-    text-decoration: none;
-}
-
-.court-card-header h3 a:hover {
-    color: #698C6A;
-}
-
-.court-time {
-    font-size: 12px;
-    color: #999;
+.card-header {
+    display: flex; 
+    justify-content: space-between; 
 }
 
 .bookmark-star {
-    font-size: 24px;
+    font-size: 1.8rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 5px;
-    margin: -5px;
+    color: #d1d5db;
+    padding-left: 10px; /* Jarak dari teks */
+    transition: color 0.2s, transform 0.2s;
 }
-
-.bookmark-star.active {
-    color: #FFD700;
-}
-
-.bookmark-star.inactive {
-    color: #ddd;
-}
-
 .bookmark-star:hover {
-    transform: scale(1.2);
+    transform: scale(1.1);
+}
+.bookmark-star.active {
+    color: #facc15;
+}
+
+/* Base card styling */
+.court-card-new {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Jarak antar bagian */
+    position: relative; /* Diperlukan untuk posisi absolut bookmark */
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.info-bar {
+    padding: 8px 0; /* Turunkan dari 12px menjadi 8px */
+}
+.court-card-new:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Bagian-bagian di dalam kartu */
+.card-section {
+    width: 100%;
+}
+
+.card-header > div {
+    text-align: left;
+}
+
+
+/* Kurangi padding vertikal khusus di bar harga/jam */
+.info-bar {
+    padding: 8px 0; /* Turunkan dari 12px menjadi 8px */
+}
+
+/* Judul dan jenis lapangan */
+.court-name-link h2 {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+.court-name-link:hover h2 {
+    color: #547254;
+}
+.court-type {
+    font-size: 0.875rem; /* 14px */
+    color: #6b7281;
+    text-transform: capitalize;
+}
+.info-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f3f4f6;
+    border-bottom: 1px solid #f3f4f6;
+    padding: 12px 0;
+}
+.info-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+.price-tag {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #547254;
+}
+
+/* Alamat */
+.address-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+.address-item .fa-map-marker-alt {
+    color: #9ca3af;
+    margin-top: 3px;
+}
+.address-item p {
+    font-size: 0.875rem;
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+/* Judul kecil (Facilities, dll) */
+.section-title {
+    font-size: 0.7rem; /* 11.2px */
+    font-weight: 700;
+    color: #6b7281;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+/* Kontainer dan bubble untuk fasilitas */
+.facilities-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.facility-bubble {
+    background-color: #F0FDF4; /* Hijau sangat muda */
+    color: #166534; /* Hijau tua */
+    border: 1px solid #BBF7D0; /* Border hijau muda */
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem; /* 12px */
+    font-weight: 500;
 }
 
 .court-details {
@@ -206,27 +379,115 @@ body {
     color: #666;
 }
 
+.court-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px; 
+}
+
 .court-location {
     font-size: 12px;
     color: #999;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
-/* Map Container - Right Panel (Desktop) */
+.province-dropdown {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+
 .map-container {
     flex: 1;
-    position: relative;
-    background-color: #e0e0e0;
+    height: 100%;
 }
-
 #map {
     width: 100%;
     height: 100%;
 }
 
-/* Filter Modal */
+/* ===== MOBILE LAYOUT (max-width: 768px) ===== */
+@media (max-width: 768px) {
+
+    .container {
+        flex-direction: column;
+        /* Tinggi layar - tinggi navbar - tinggi footer */
+        height: calc(100vh - 60px - 50px); 
+        position: relative;
+    }
+
+    /* Hilangkan wrapper di mobile */
+    .sidebar-wrapper {
+        width: 100%;
+        height: 100%;
+        position: static;
+        box-shadow: none;
+    }
+
+    .map-container {
+        position: absolute; /* Peta menjadi background */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+    /* Search menempel di atas, di atas peta */
+    .search-section {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 3;
+        padding: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    
+    /* Sidebar menjadi bottom sheet */
+    .sidebar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 40vh; /* Tinggi awal */
+        max-height: 80vh; /* Batas atas */
+        min-height: 120px; /* Batas bawah */
+        background-color: #fff;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
+        z-index: 2;
+    }
+
+    /* Drag Handle */
+    .sidebar::before {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        background-color: #d0d0d0;
+        border-radius: 2px;
+    }
+
+    .section-header {
+        padding-top: 25px; /* Beri ruang untuk drag handle */
+        cursor: grab;
+        border-radius: 20px 20px 0 0;
+    }
+
+    .section-header:active {
+        cursor: grabbing;
+    }
+}
+
+/* ===== Filter Modal & Lainnya (tidak perlu banyak perubahan) ===== */
+
 .filter-modal {
     display: none;
     position: fixed;
@@ -239,11 +500,7 @@ body {
     align-items: center;
     justify-content: center;
 }
-
-.filter-modal.show {
-    display: flex;
-}
-
+.filter-modal.show { display: flex; }
 .filter-content {
     background-color: white;
     border-radius: 15px;
@@ -252,9 +509,7 @@ body {
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
-
 .filter-header {
     padding: 20px;
     background-color: #698C6A;
@@ -264,74 +519,25 @@ body {
     border-radius: 15px 15px 0 0;
     text-align: center;
 }
-
-.filter-body {
-    padding: 20px;
-    overflow-y: auto;
-    flex: 1;
-}
-
-.filter-group {
-    margin-bottom: 25px;
-}
-
-.filter-group label {
-    display: block;
-    font-weight: bold;
-    font-size: 14px;
-    color: #333;
-    margin-bottom: 10px;
-}
-
-.filter-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
+.filter-body { padding: 20px; overflow-y: auto; flex: 1; }
+.filter-group { margin-bottom: 25px; }
+.filter-group label { display: block; font-weight: bold; margin-bottom: 10px; }
+.filter-tags { display: flex; flex-wrap: wrap; gap: 10px; }
 .filter-tag {
     padding: 8px 16px;
     background-color: #f0f0f0;
-    border: 2px solid #ddd;
+    border: 1px solid #ddd;
     border-radius: 20px;
-    font-size: 13px;
     cursor: pointer;
-    transition: all 0.3s ease;
 }
-
-.filter-tag:hover {
-    background-color: #e0e0e0;
-}
-
 .filter-tag.active {
     background-color: #698C6A;
     color: white;
     border-color: #698C6A;
 }
-
-.price-inputs {
-    display: flex;
-    gap: 10px;
-}
-
-.price-inputs input {
-    flex: 1;
-    padding: 10px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-}
-
-.price-inputs input:focus {
-    outline: none;
-    border-color: #698C6A;
-}
-
-.filter-footer {
-    padding: 20px;
-    border-top: 1px solid #ddd;
-}
-
+.price-inputs { display: flex; gap: 10px; }
+.price-inputs input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+.filter-footer { padding: 20px; border-top: 1px solid #ddd; }
 .btn-apply-filter {
     width: 100%;
     padding: 12px;
@@ -342,428 +548,27 @@ body {
     font-weight: bold;
     font-size: 16px;
     cursor: pointer;
-    transition: all 0.3s ease;
 }
-
-.btn-apply-filter:hover {
-    background-color: #5a7a5b;
-}
-
-/* Message Toast */
 .message {
     position: fixed;
-    top: 80px;
-    right: 20px;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     padding: 15px 25px;
     border-radius: 8px;
-    font-size: 14px;
-    font-weight: bold;
     z-index: 2000;
     opacity: 0;
-    transform: translateY(-20px);
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    text-align: center;
 }
+.message.show { opacity: 1; }
+.message.success { background-color: #4caf50; color: white; }
+.message.error { background-color: #f44336; color: white; }
 
-.message.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.message.success {
-    background-color: #4caf50;
-    color: white;
-}
-
-.message.error {
-    background-color: #f44336;
-    color: white;
-}
-
-/* Scrollbar Styling */
-.court-list::-webkit-scrollbar,
-.filter-body::-webkit-scrollbar {
-    width: 8px;
-}
-
-.court-list::-webkit-scrollbar-track,
-.filter-body::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.court-list::-webkit-scrollbar-thumb,
-.filter-body::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
-}
-
-.court-list::-webkit-scrollbar-thumb:hover,
-.filter-body::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-/* ===== TABLET LAYOUT ===== */
-@media (max-width: 1024px) {
-    .sidebar {
-        width: 350px;
-    }
-}
-
-/* ===== MOBILE LAYOUT - GOOGLE MAPS STYLE ===== */
 @media (max-width: 768px) {
-    body {
-        overflow: hidden;
-        padding-top: 60px; /* Space for navbar from base.html */
-    }
-    
-    .container {
-        flex-direction: column;
-        height: calc(100vh - 60px); /* Account for navbar height */
-        position: relative;
-    }
-    
-    /* Map - Full Screen Background (below navbar) */
-    .map-container {
-        position: fixed;
-        top: 60px; /* Below navbar */
-        left: 0;
-        width: 100%;
-        height: calc(100vh - 60px);
-        z-index: 1;
-    }
-    
-    #map {
-        height: 100%;
-        width: 100%;
-    }
-    
-    /* Search Section - Fixed below navbar */
-    .search-section {
-        position: fixed;
-        top: 60px; /* Below navbar */
-        left: 0;
-        width: 100%;
-        padding: 12px;
-        background-color: #698C6A;
-        z-index: 200;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-    }
-    
-    .search-box {
-        padding: 8px 12px;
-        margin-bottom: 10px;
-        border-radius: 20px;
-    }
-    
-    .search-box input {
-        font-size: 13px;
-    }
-    
-    .search-icon {
-        font-size: 16px;
-    }
-    
-    .action-buttons {
-        gap: 6px;
-    }
-    
-    .action-buttons button {
-        font-size: 11px;
-        padding: 8px 10px;
-        white-space: nowrap;
-        border-radius: 18px;
-    }
-    
-    /* Sidebar - Bottom Sheet that Overlays Map */
-    .sidebar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: auto;
-        max-height: 60vh;
-        background-color: #fff;
-        border-radius: 20px 20px 0 0;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
-        z-index: 150;
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    /* Drag Handle Indicator */
-    .sidebar::before {
-        content: '';
-        display: block;
-        position: absolute;
-        top: 8px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 40px;
-        height: 4px;
-        background-color: #d0d0d0;
-        border-radius: 2px;
-        z-index: 1;
-    }
-    
-    /* Section Header - Part of Bottom Sheet */
-    .section-header {
-        padding: 20px 15px 12px;
-        font-size: 13px;
-        font-weight: bold;
-        background-color: white;
-        border-radius: 20px 20px 0 0;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        cursor: grab;
-        user-select: none;
-        border-bottom: 1px solid #f0f0f0;
-    }
-    
-    .section-header:active {
-        cursor: grabbing;
-    }
-    
-    /* Court List - Scrollable Bottom Sheet Content */
-    .court-list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px 12px 20px;
-        background-color: white;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .court-card {
-        padding: 12px;
-        margin-bottom: 10px;
-        border-radius: 10px;
-    }
-    
-    .court-card-header h3 {
-        font-size: 14px;
-    }
-    
-    .court-time {
-        font-size: 11px;
-    }
-    
-    .court-details {
-        font-size: 12px;
-        gap: 12px;
-    }
-    
-    .court-location {
-        font-size: 11px;
-    }
-    
-    .bookmark-star {
-        font-size: 20px;
-    }
-    
-    /* Message Toast - Adjusted for Mobile (below navbar and search) */
     .message {
-        top: 180px; /* Below navbar (60px) + search section (~120px) */
-        right: 12px;
-        left: 12px;
-        padding: 12px 16px;
-        font-size: 13px;
-    }
-    
-    /* Filter Modal - Mobile Adjustments */
-    .filter-content {
-        width: 95%;
-        max-height: 85vh;
-        border-radius: 12px;
-    }
-    
-    .filter-header {
-        padding: 16px;
-        font-size: 16px;
-        border-radius: 12px 12px 0 0;
-    }
-    
-    .filter-body {
-        padding: 16px;
-    }
-    
-    .filter-group {
-        margin-bottom: 20px;
-    }
-    
-    .filter-group label {
-        font-size: 13px;
-        margin-bottom: 8px;
-    }
-    
-    .filter-tags {
-        gap: 8px;
-    }
-    
-    .filter-tag {
-        padding: 6px 14px;
-        font-size: 12px;
-        border-radius: 18px;
-    }
-    
-    .price-inputs input {
-        padding: 8px;
-        font-size: 13px;
-    }
-    
-    .filter-footer {
-        padding: 16px;
-    }
-    
-    .btn-apply-filter {
-        padding: 11px;
-        font-size: 15px;
-    }
-}
-
-/* Small Mobile Devices */
-@media (max-width: 480px) {
-    body {
-        padding-top: 56px; /* Smaller navbar on mobile */
-    }
-    
-    .container {
-        height: calc(100vh - 56px);
-    }
-    
-    .map-container {
-        top: 56px;
-        height: calc(100vh - 56px);
-    }
-    
-    .search-section {
-        top: 56px;
-        padding: 10px;
-    }
-    
-    .search-box {
-        padding: 6px 10px;
-        margin-bottom: 8px;
-    }
-    
-    .search-box input {
-        font-size: 12px;
-    }
-    
-    .action-buttons {
-        gap: 5px;
-    }
-    
-    .action-buttons button {
-        font-size: 10px;
-        padding: 7px 8px;
-        border-radius: 15px;
-    }
-    
-    .sidebar {
-        max-height: 55vh;
-    }
-    
-    .section-header {
-        padding: 18px 12px 10px;
-        font-size: 12px;
-    }
-    
-    .court-list {
-        padding: 8px 10px 16px;
-    }
-    
-    .court-card {
-        padding: 10px;
-        margin-bottom: 8px;
-    }
-    
-    .court-card-header h3 {
-        font-size: 13px;
-    }
-    
-    .court-time {
-        font-size: 10px;
-    }
-    
-    .court-details {
-        font-size: 11px;
-        gap: 10px;
-    }
-    
-    .court-location {
-        font-size: 10px;
-    }
-    
-    .bookmark-star {
-        font-size: 18px;
-    }
-    
-    .message {
-        top: 160px; /* Adjusted for smaller navbar + search */
-        padding: 10px 14px;
-        font-size: 12px;
-    }
-}
-
-/* Landscape Mode on Mobile - Side by Side Layout */
-@media (max-width: 768px) and (orientation: landscape) {
-    .container {
-        flex-direction: row;
-    }
-    
-    .search-section {
-        position: relative;
-        width: 100%;
-        z-index: 10;
-    }
-    
-    .sidebar {
-        position: relative;
-        width: 45%;
-        max-height: 100vh;
-        height: 100vh;
-        border-radius: 0;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        z-index: 10;
-    }
-    
-    .sidebar::before {
-        display: none;
-    }
-    
-    .section-header {
-        cursor: default;
-        border-radius: 0;
-    }
-    
-    .map-container {
-        position: relative;
-        width: 55%;
-        height: 100vh;
-        z-index: 1;
-    }
-    
-    .court-list {
-        padding: 12px;
-    }
-}
-
-/* Touch Device Improvements */
-@media (hover: none) and (pointer: coarse) {
-    .court-card:active {
-        transform: scale(0.98);
-    }
-    
-    .bookmark-star:active {
-        transform: scale(1.3);
-    }
-    
-    .action-buttons button:active {
-        transform: scale(0.95);
-    }
-    
-    .filter-tag:active {
-        transform: scale(0.95);
+        width: 90%;
+        bottom: 10px;
     }
 }

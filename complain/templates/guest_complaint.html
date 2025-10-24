@@ -1,22 +1,16 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="flex flex-col min-h-screen bg-gray-50">
 
-    <main class="flex-grow flex items-center justify-center p-6">
-        <div class="bg-white p-8 md:p-12 rounded-xl shadow-lg text-center max-w-lg w-full" style="color: #3F5940;">
-            <h1 class="text-2xl font-bold mb-4">
-                YOU CAN'T MAKE A REPORT
-            </h1>
-            <p class="text-lg mb-10">
-                You have to log in to create a report.
-            </p>
-            <a href="{% url 'autentikasi:login' %}"
-            class="inline-block bg-[#547254] hover:bg-[#5b8ca0] text-white text-lg font-medium px-8 py-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg">
-                Login Here
+    <div class="col-span-full text-center py-20">
+        <i class="fas fa-lock text-gray-400 text-5xl mb-4"></i>
+        <h2 class="text-2xl font-bold text-gray-600 mb-2">You can't make a report.</h2>
+        <p class="text-gray-500 text-lg">You have to log in to create a report.</p>
+        <div class="mt-6">
+            <a href="{% url 'autentikasi:login' %}" 
+               class="px-5 py-3 bg-[#698C6A] text-white font-semibold rounded-lg shadow-md hover:bg-[#5a7a5b] transition">
+                Login Now
             </a>
         </div>
-    </main>
-
-</div>
+    </div>
 {% endblock %}

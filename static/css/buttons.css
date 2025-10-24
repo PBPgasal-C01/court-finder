@@ -1,0 +1,93 @@
+#button-medium {
+    font-family: 'Galderglynn-Light';
+    font-size: 64;
+    letter-spacing: 1px;
+}
+
+#btn-favs {
+    padding-top: 10px;
+    font-family: 'AnalogueRed-Bold';
+}
+
+#btn-favs:hover {
+    background: #FFCFE9;
+}
+
+#btn-favs:active {
+    color: #FFFFFF;
+    background: #883663;
+}
+
+#btn-all {
+    padding-top: 10px;
+    font-family: 'AnalogueRed-Bold';
+}
+
+#btn-all:hover {
+    background: #F1F7FB;
+}
+
+#btn-all:active {
+    color: #FFFFFF;
+    background: #5D8190;
+}
+
+#btn-refresh {
+    padding-top: 10px;
+    font-family: 'AnalogueRed-Bold';
+}
+
+#btn-refresh:hover {
+    background: #F6FAF6;
+}
+
+#btn-refresh:active {
+    color: #FFFFFF;
+    background: #547254;
+}
+
+#search-event-button {
+    padding-top: 10px;
+    font-family: 'AnalogueRed-Bold';
+}
+
+#search-event-button:hover {
+    background: #F6FAF6;
+}
+
+#search-event-button:active {
+    color: #FFFFFF;
+    background: #547254;
+}
+
+#submit-complain {
+    font-family: 'AnalogueRed-Bold';
+    background-color: #FFFFFF;
+    border-color: #547254;
+    color: #547254;
+}
+
+#submit-complain:hover {
+    background: #F6FAF6;
+}
+
+#submit-complain:active {
+    color: #FFFFFF;
+    background: #547254;
+}
+
+#reset-complain {
+    font-family: 'AnalogueRed-Bold';
+    background-color: #FFFFFF;
+    border-color: #6E362A;
+    color: #6E362A;
+}
+
+#reset-complain:hover {
+    background: #FFD9D1;
+}
+
+#reset-complain:active {
+    color: #FFFFFF;
+    background: #6E362A;
+}

@@ -6,74 +6,63 @@
 <title>Find Court</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <link rel="stylesheet" href="{% static 'css/find_court.css' %}">
-<style>
-    /* Override base.html styling if needed */
-    body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-    }
-</style>
 {% endblock meta %}
 
 {% block content %}
-<!-- Main Container - NO NAVBAR HERE -->
-<div class="container">
-    <!-- Sidebar - Left Panel -->
-    <div class="sidebar">
-        <!-- Search Section -->
+<div class="container container-full-width">
+    <div class="sidebar-wrapper">
         <div class="search-section">
-            <div class="search-box">
-                <input type="text" id="addressInput" placeholder="Search location..." onkeypress="handleEnterKey(event)">
-                <span class="search-icon" onclick="geocodeAddress()" style="cursor: pointer;">🔍</span>
+            <div class="flex search-box">
+                <span class="search-icon" onclick="geocodeAddress()">
+                    <svg class="text-gray-400" xmlns="http://www.w3.org/2000/svg" style="width: 18px; height: 18px; position: relative; bottom: 2px;" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" /></svg>
+                </span>
+                <input type="text" class="text-black" id="addressInput" placeholder="Search location..." onkeypress="handleEnterKey(event)">
             </div>
             <div class="action-buttons">
-                    <button class="btn-gps" onclick="getUserLocation()">Nearby</button>
-                    <button class="btn-bookmark" onclick="toggleBookmarkFilter()">Bookmark</button>
-                    <button class="btn-filter" onclick="openFilterModal()">FILTER</button>
+                <button id="btn-gps" onclick="getUserLocation()">Nearby</button>
+                <button id="btn-filter" onclick="openFilterModal()">Filter</button>
+                <button id="btn-bookmark" onclick="toggleBookmarkFilter()">Bookmark</button>
             </div>
         </div>
-        
-        <!-- Section Header (Dynamic) -->
-        <div class="section-header" id="sectionHeader">NEAREST FROM YOU</div>
-        <div class="loading" id="loading">⏳ Loading courts...</div>
-        <div class="court-list" id="courtResults">
-            <!-- Court cards will be populated here -->
+
+        <div class="sidebar">
+            <div class="section-header" id="sectionHeader">NEAREST FROM YOU</div>
+            <div class="loading" id="loading">⏳ Loading courts...</div>
+            <div class="court-list" id="courtResults">
+                </div>
         </div>
     </div>
-    
-    <!-- Map - Right Panel -->
+
     <div class="map-container">
         <div id="map"></div>
     </div>
 </div>
 
-<!-- Filter Modal -->
 <div class="filter-modal" id="filterModal">
     <div class="filter-content">
         <div class="filter-header">FILTER</div>
         <div class="filter-body">
-            <!-- Type Filter -->
             <div class="filter-group">
                 <label>TYPE</label>
                 <div class="filter-tags" id="typeFilters">
-                    <div class="filter-tag" data-type="basketball">Basketball</div>
-                    <div class="filter-tag" data-type="badminton">Badminton</div>
-                    <div class="filter-tag" data-type="tennis">Tennis</div>
-                    <div class="filter-tag" data-type="volleyball">Volleyball</div>
-                    <div class="filter-tag" data-type="futsal">Futsal</div>
+                    <div id="sport-filter" class="filter-tag" data-type="basketball">Basketball</div>
+                    <div id="sport-filter" class="filter-tag" data-type="soccer">Soccer</div>
+                    <div id="sport-filter" class="filter-tag" data-type="badminton">Badminton</div>
+                    <div id="sport-filter" class="filter-tag" data-type="tennis">Tennis</div>
+                    <div id="sport-filter" class="filter-tag" data-type="baseball">Baseball</div>
+                    <div id="sport-filter" class="filter-tag" data-type="volleyball">Volleyball</div>
+                    <div id="sport-filter" class="filter-tag" data-type="padel">Padel</div>
+                    <div id="sport-filter" class="filter-tag" data-type="golf">Golf</div>
+                    <div id="sport-filter" class="filter-tag" data-type="football">Football</div>
+                    <div id="sport-filter" class="filter-tag" data-type="softball">Softball</div>
+                    <div id="sport-filter" class="filter-tag" data-type="other">Other</div>
                 </div>
             </div>
-            
-            <!-- Province Filter -->
             <div class="filter-group">
                 <label>PROVINCE</label>
                 <div class="filter-tags" id="provinceFilters">
-                    <!-- Will be populated dynamically -->
-                </div>
+                    </div>
             </div>
-            
-            <!-- Price Filter -->
             <div class="filter-group">
                 <label>PRICE</label>
                 <div class="price-inputs">
@@ -88,13 +77,11 @@
     </div>
 </div>
 
-<!-- Messages -->
 <div class="message" id="message"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
     const CSRFTOKEN = '{{ csrf_token }}';
-    console.log(CSRFTOKEN);
     const IS_AUTHENTICATED = {{ is_authenticated|yesno:"true,false" }};
 
     let map;
@@ -102,104 +89,96 @@
     let currentCoords = { lat: {{ default_lat }}, lng: {{ default_lon }} };
     let courtMarkers = [];
     let selectedTypes = [];
-    let selectedProvinces = [];
+    // --- PERUBAHAN 1: Ganti selectedProvinces menjadi satu variabel saja karena menggunakan dropdown ---
+    let selectedProvince = ''; 
     let bookmarkFilterActive = false;
-    
-    // Initialize map
+
     function initMap() {
-        // Check if mobile device
         const isMobile = window.innerWidth <= 768;
-        
         map = L.map('map', {
-            tap: true,
-            tapTolerance: 15,
-            touchZoom: true,
-            dragging: true,
-            zoomControl: !isMobile // Hide zoom control on mobile to save space
+            tap: true, tapTolerance: 15, touchZoom: true, dragging: true, zoomControl: !isMobile
         }).setView([currentCoords.lat, currentCoords.lng], 12);
-        
-        // Add zoom control to bottom right on mobile
+
         if (isMobile) {
-            L.control.zoom({
-                position: 'bottomright'
-            }).addTo(map);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
         }
-        
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors', maxZoom: 19,
         }).addTo(map);
-        
-        marker = L.marker([currentCoords.lat, currentCoords.lng], {
-            draggable: true,
-        }).addTo(map);
-        
-        marker.bindPopup('📍 Your Location').openPopup();
-        
+
+        marker = L.marker([currentCoords.lat, currentCoords.lng], { draggable: true }).addTo(map);
+        marker.bindPopup('Your Location').openPopup();
+
         marker.on('dragend', function() {
             const pos = marker.getLatLng();
             currentCoords = { lat: pos.lat, lng: pos.lng };
-            searchCourts();
+            // --- PERUBAHAN 2: Tentukan tipe pencarian ---
+            searchCourts('radius'); 
         });
-        
+
         map.on('click', function(e) {
             currentCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
             marker.setLatLng(e.latlng);
-            searchCourts();
+            // --- PERUBAHAN 3: Tentukan tipe pencarian ---
+            searchCourts('radius');
         });
-        
-        // Force map to resize
-        setTimeout(() => {
-            map.invalidateSize();
-        }, 100);
-        
+
+        setTimeout(() => map.invalidateSize(), 100);
         getUserLocation();
     }
-    
-    // Get user location
+
     function getUserLocation() {
         if (navigator.geolocation) {
             showLoading(true);
             navigator.geolocation.getCurrentPosition(
                 function(position) {
-                    currentCoords = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
+                    currentCoords = { lat: position.coords.latitude, lng: position.coords.longitude };
                     marker.setLatLng([currentCoords.lat, currentCoords.lng]);
                     map.setView([currentCoords.lat, currentCoords.lng], 13);
                     document.getElementById('sectionHeader').textContent = 'NEAREST FROM YOU';
                     showMessage('Location found! Searching nearby courts...', 'success');
-                    setTimeout(() => searchCourts(), 500);
+                    // --- PERUBAHAN 4: Tentukan tipe pencarian ---
+                    setTimeout(() => searchCourts('radius'), 500);
                 },
                 function(error) {
-                    showMessage('GPS not available. Showing default location.', 'error');
+                    showMessage('GPS not available. Searching from default location.', 'error');
                     showLoading(false);
                     document.getElementById('sectionHeader').textContent = 'NEAREST FROM YOU';
-                    searchCourts();
+                    // --- PERUBAHAN 5: Tentukan tipe pencarian ---
+                    searchCourts('radius');
                 }
             );
         } else {
             showMessage('Browser does not support GPS', 'error');
             document.getElementById('sectionHeader').textContent = 'NEAREST FROM YOU';
-            searchCourts();
+            // --- PERUBAHAN 6: Tentukan tipe pencarian ---
+            searchCourts('radius');
         }
     }
-    
-    // Search courts
-    function searchCourts() {
+
+    // --- PERUBAHAN 7: Fungsi searchCourts sekarang menerima parameter 'searchType' ---
+    function searchCourts(searchType = 'radius') {
         const formData = new FormData();
-        formData.append('latitude', currentCoords.lat);
-        formData.append('longitude', currentCoords.lng);
+
+        // Hanya kirim koordinat jika ini adalah pencarian berbasis radius
+        if (searchType === 'radius') {
+            formData.append('latitude', currentCoords.lat);
+            formData.append('longitude', currentCoords.lng);
+        }
+
+        // Filter lain akan selalu dikirim
         selectedTypes.forEach(t => formData.append('court_types[]', t));
-        selectedProvinces.forEach(p => formData.append('provinces[]', p));
-        
+        if (selectedProvince) { // Kirim province jika ada yang dipilih
+            formData.append('province', selectedProvince);
+        }
+
         const priceMin = document.getElementById('priceMin').value;
         const priceMax = document.getElementById('priceMax').value;
         if (priceMin) formData.append('price_min', priceMin);
         if (priceMax) formData.append('price_max', priceMax);
         if (bookmarkFilterActive) formData.append('bookmarked_only', 'true');
-        
+
         showLoading(true);
         fetch('/courts/api/search/', {
             method: 'POST',
@@ -212,9 +191,10 @@
             if (data.courts && data.courts.length > 0) {
                 displayResults(data.courts);
                 plotCourtMarkers(data.courts);
-                showMessage(`Found ${data.count} courts nearby`, 'success');
+                const message = searchType === 'radius' ? `Found ${data.count} courts within 10km` : `Found ${data.count} courts based on your filter`;
+                showMessage(message, 'success');
             } else {
-                document.getElementById('courtResults').innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No courts found within 10km</div>';
+                document.getElementById('courtResults').innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No courts found</div>';
                 clearCourtMarkers();
             }
         })
@@ -224,141 +204,148 @@
         });
     }
     
-    // Display results
+    // Fungsi displayResults tidak berubah
     function displayResults(courts) {
         const resultsDiv = document.getElementById('courtResults');
-        resultsDiv.innerHTML = '';
-        
+        resultsDiv.innerHTML = ''; 
+
+        if (!courts || courts.length === 0) {
+            resultsDiv.innerHTML = '<div class="no-courts-found">No courts found.</div>';
+            return;
+        }
+
         courts.forEach(court => {
-            const distance = court.distance ? court.distance.toFixed(2) : 'N/A';
-            const starClass = court.is_bookmarked ? 'active' : 'inactive';
-            
             const card = document.createElement('div');
-            card.className = 'court-card';
+            card.className = 'court-card-new'; 
+
+            // Fungsi untuk membuat HTML fasilitas
+            const createFacilitiesHtml = (facilities) => {
+                if (!facilities || facilities.length === 0) {
+                    return '<span class="no-facilities">No facilities listed.</span>';
+                }
+                return facilities.map(facility => 
+                    `<span class="facility-bubble">${facility.name}</span>`
+                ).join('');
+            };
+
             card.innerHTML = `
-                <div class="court-card-header">
+                <div class="card-header">
                     <div>
-                        <h3><a href="/courts/detail/${encodeURIComponent(court.name)}/">${court.name}</a></h3>
+                        <a href="/courts/detail/${encodeURIComponent(court.name)}/" class="court-name-link">
+                            <h2>${court.name}</h2>
+                        </a>
+                        <p class="court-type">${court.court_type || 'N/A'} Court</p>
                     </div>
-                    <span class="bookmark-star ${starClass}" onclick="toggleBookmark('${court.id}', this)">★</span>
+                    <span 
+                        class="bookmark-star ${court.is_bookmarked ? 'active' : ''}" 
+                        onclick="toggleBookmark('${court.id}', this)" 
+                        title="Toggle Bookmark">
+                        ★
+                    </span>
                 </div>
-                <div class="court-details">
-                    <span>🚶 ${distance} km</span>
-                    <span>⚽ ${court.court_type}</span>
+                <hr>
+                <span class="price-tag">Rp ${parseInt(court.price_per_hour || 0).toLocaleString('id-ID')}/Jam</span>
+
+            
+                <div class="card-section">
+                    <div class="address-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <p>${court.address || 'Alamat tidak tersedia'}</p>
+                    </div>
                 </div>
-                <div class="court-location">${court.address}</div>
             `;
+
             resultsDiv.appendChild(card);
         });
     }
-    
-    // Plot court markers
+
+    // Fungsi plotCourtMarkers tidak berubah
     function plotCourtMarkers(courts) {
         clearCourtMarkers();
-        
         courts.forEach(court => {
+            const distancePopup = court.distance ? `🚶 ${court.distance.toFixed(2)} km` : '';
             const courtMarker = L.circleMarker([court.latitude, court.longitude], {
-                radius: 8,
-                fillColor: court.is_bookmarked ? '#FFD700' : '#ff7800',
-                color: '#fff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
+                radius: 8, fillColor: court.is_bookmarked ? '#FFD700' : '#ff7800',
+                color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.8
             }).addTo(map);
-            
             courtMarker.bindPopup(`
                 <strong>${court.name}</strong><br>
                 💰 Rp ${parseInt(court.price_per_hour).toLocaleString('id-ID')}/hour<br>
-                🚶 ${court.distance ? court.distance.toFixed(2) : 'N/A'} km
+                ${distancePopup}
             `);
-            
             courtMarkers.push(courtMarker);
         });
-        
         if (courts.length > 0) {
-            const group = L.featureGroup([marker, ...courtMarkers]);
-            map.fitBounds(group.getBounds().pad(0.1));
+            // Jangan auto-zoom jika yang berubah hanya hasil di sidebar dari filter
+            if (courts.some(c => c.distance !== undefined)) {
+                const group = L.featureGroup([marker, ...courtMarkers]);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
         }
     }
     
-    // Clear markers
+    // Fungsi clearCourtMarkers tidak berubah
     function clearCourtMarkers() {
         courtMarkers.forEach(m => map.removeLayer(m));
         courtMarkers = [];
     }
-    
-// Toggle bookmark
+
+    // Fungsi toggleBookmark tidak berubah
     function toggleBookmark(courtId, element) {
         if (!IS_AUTHENTICATED) {
             showMessage('Please login to bookmark', 'error');
             return;
         }
-        
         const isBookmarked = element.classList.contains('active');
         const method = isBookmarked ? 'DELETE' : 'POST';
-        
         fetch(`/courts/api/bookmark/${courtId}/`, {
             method: method,
-            headers: {
-                'X-CSRFToken': CSRFTOKEN,
-                'Content-Type': 'application/json'
-            }
+            headers: { 'X-CSRFToken': CSRFTOKEN, 'Content-Type': 'application/json' }
         })
         .then(res => res.json())
         .then(data => {
             if (data.bookmarked) {
-                element.classList.add('active');
-                element.classList.remove('inactive');
+                element.classList.add('active'); element.classList.remove('inactive');
                 showMessage('Court bookmarked!', 'success');
             } else {
-                element.classList.remove('active');
-                element.classList.add('inactive');
+                element.classList.remove('active'); element.classList.add('inactive');
                 showMessage('Bookmark removed', 'success');
             }
-            searchCourts();
+            // Refresh list setelah bookmark, tapi jangan ubah tipe search
+            const currentSearchType = document.getElementById('priceMin').value || selectedProvince || selectedTypes.length > 0 ? 'filter' : 'radius';
+            searchCourts(currentSearchType);
         })
-        .catch(err => {
-            showMessage('Error: ' + err.message, 'error');
-        });
-    } 
+        .catch(err => showMessage('Error: ' + err.message, 'error'));
+    }
 
-    // Toggle bookmark filter
+    // Fungsi toggleBookmarkFilter tidak berubah
     function toggleBookmarkFilter() {
         if (!IS_AUTHENTICATED) {
             showMessage('Please login to use bookmark filter', 'error');
             return;
         }
         bookmarkFilterActive = !bookmarkFilterActive;
-        const btn = document.querySelector('.btn-bookmark');
-        if (bookmarkFilterActive) {
-            btn.style.background = '#FFA500';
-        } else {
-            btn.style.background = '#FFD700';
-        }
-        searchCourts();
+        const btn = document.querySelector('#btn-bookmark');
+        btn.classList.toggle('active', bookmarkFilterActive);
+        searchCourts('filter'); // Filter bookmark selalu mengabaikan radius
     }
     
-    // Open filter modal
+    // Fungsi openFilterModal dan listener-nya tidak berubah
     function openFilterModal() {
         document.getElementById('filterModal').classList.add('show');
     }
-    
-    // Close filter modal on outside click
     document.getElementById('filterModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.classList.remove('show');
-        }
+        if (e.target === this) { this.classList.remove('show'); }
     });
-    
-    // Apply filters
+
+    // --- PERUBAHAN 8: applyFilters sekarang memanggil search dengan tipe 'filter' ---
     function applyFilters() {
         document.getElementById('filterModal').classList.remove('show');
-        searchCourts();
+        document.getElementById('sectionHeader').textContent = 'FILTER RESULTS';
+        searchCourts('filter'); // Ini adalah pencarian filter, jadi radius diabaikan
     }
-    
-    // Setup filter tags
+
     function setupFilters() {
-        // Type filters
         document.querySelectorAll('#typeFilters .filter-tag').forEach(tag => {
             tag.addEventListener('click', function() {
                 const type = this.dataset.type;
@@ -370,67 +357,63 @@
                 }
             });
         });
-        
-        // Load provinces
         loadProvinces();
     }
     
-    // Load provinces
     async function loadProvinces() {
         try {
             const response = await fetch('/courts/api/provinces/');
             const provinces = await response.json();
-            
             const container = document.getElementById('provinceFilters');
-            provinces.slice(0, 6).forEach(province => {
-                const tag = document.createElement('div');
-                tag.className = 'filter-tag';
-                tag.textContent = province.name;
-                tag.dataset.provinceId = province.id;
-                tag.addEventListener('click', function() {
-                    const id = this.dataset.provinceId;
-                    this.classList.toggle('active');
-                    if (selectedProvinces.includes(id)) {
-                        selectedProvinces = selectedProvinces.filter(p => p !== id);
-                    } else {
-                        selectedProvinces.push(id);
-                    }
-                });
-                container.appendChild(tag);
+            container.innerHTML = '';
+            
+            const select = document.createElement('select');
+            select.id = 'provinceSelect';
+            select.className = 'province-dropdown';
+            
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '-- All Provinces --';
+            select.appendChild(defaultOption);
+            
+            provinces.forEach(province => {
+                const option = document.createElement('option');
+                option.value = province.name; // Kirim nama provinsinya, lebih mudah dihandle di backend
+                option.textContent = province.name;
+                select.appendChild(option);
             });
+            
+            // --- PERUBAHAN 9: Simpan provinsi yang dipilih ke variabel global ---
+            select.addEventListener('change', function() {
+                selectedProvince = this.value;
+            });
+            
+            container.appendChild(select);
         } catch (err) {
             console.error('Error loading provinces:', err);
         }
     }
-    
-    // Show message
+
+    // Fungsi showMessage & showLoading tidak berubah
     function showMessage(text, type) {
         const msgEl = document.getElementById('message');
         msgEl.textContent = text;
         msgEl.className = `message ${type} show`;
         setTimeout(() => msgEl.classList.remove('show'), 3000);
     }
-    
-    // Show loading
     function showLoading(show) {
         document.getElementById('loading').classList.toggle('show', show);
     }
-    
-    // Geocode address
+
     function geocodeAddress() {
         const address = document.getElementById('addressInput').value.trim();
         if (!address) {
-            showMessage('Please enter an address', 'error');
-            return;
+            showMessage('Please enter an address', 'error'); return;
         }
-        
         showLoading(true);
         fetch('/courts/api/geocode/', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': CSRFTOKEN
-            },
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRFTOKEN },
             body: JSON.stringify({ address: address })
         })
         .then(res => res.json())
@@ -439,9 +422,10 @@
                 currentCoords = { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude) };
                 marker.setLatLng([currentCoords.lat, currentCoords.lng]);
                 map.setView([currentCoords.lat, currentCoords.lng], 13);
-                document.getElementById('sectionHeader').textContent = 'NEAREST COURT';
+                document.getElementById('sectionHeader').textContent = 'NEAREST FROM SEARCH';
                 showMessage('Address found! Searching nearby courts...', 'success');
-                setTimeout(() => searchCourts(), 500);
+                // --- PERUBAHAN 10: Tentukan tipe pencarian ---
+                setTimeout(() => searchCourts('radius'), 500);
             } else {
                 showMessage(data.error || 'Address not found', 'error');
                 showLoading(false);
@@ -452,30 +436,53 @@
             showLoading(false);
         });
     }
-    
-    // Handle Enter key on search input
+
+    // Fungsi handleEnterKey tidak berubah
     function handleEnterKey(event) {
-        if (event.key === 'Enter') {
-            geocodeAddress();
-        }
+        if (event.key === 'Enter') { geocodeAddress(); }
     }
-    
-    // Initialize
+
     window.addEventListener('DOMContentLoaded', function() {
         initMap();
         setupFilters();
+        setInitialSidebarHeight();
     });
-    
-    // Handle window resize for map
+
+    // Kode untuk resize dan drag di mobile tidak perlu diubah
     let resizeTimer;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
-            if (map) {
-                map.invalidateSize();
-            }
+            if (map) { map.invalidateSize(); }
         }, 250);
+        setInitialSidebarHeight();
     });
 
+    const sidebar = document.querySelector('.sidebar');
+    const sectionHeader = document.querySelector('.section-header');
+    let isDragging = false, startY, startHeight;
+    const dragStart = (e) => {
+        if (window.innerWidth > 768 || e.target !== sectionHeader) return;
+        isDragging = true; startY = e.pageY || e.touches[0].pageY; startHeight = sidebar.offsetHeight;
+        sidebar.style.transition = 'none';
+    };
+    const dragging = (e) => {
+        if (!isDragging) return; e.preventDefault();
+        const currentY = e.pageY || e.touches[0].pageY; const deltaY = currentY - startY;
+        let newHeight = startHeight - deltaY;
+        const maxHeight = window.innerHeight * 0.8; const minHeight = 120;
+        if (newHeight > maxHeight) newHeight = maxHeight; if (newHeight < minHeight) newHeight = minHeight;
+        sidebar.style.height = `${newHeight}px`;
+    };
+    const dragEnd = () => {
+        if (!isDragging) return; isDragging = false; sidebar.style.transition = 'height 0.3s ease';
+        const currentHeight = sidebar.offsetHeight; const midHeight = window.innerHeight * 0.4;
+        if (currentHeight > midHeight * 1.2) { sidebar.style.height = `80vh`; } else { sidebar.style.height = `40vh`; }
+    };
+    sectionHeader.addEventListener('mousedown', dragStart); window.addEventListener('mousemove', dragging); window.addEventListener('mouseup', dragEnd);
+    sectionHeader.addEventListener('touchstart', dragStart, { passive: false }); window.addEventListener('touchmove', dragging, { passive: false }); window.addEventListener('touchend', dragEnd, { passive: false });
+    function setInitialSidebarHeight() {
+        if (window.innerWidth <= 768) { sidebar.style.height = '40vh'; } else { sidebar.style.height = ''; }
+    }
 </script>
 {% endblock content %}

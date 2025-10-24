@@ -48,91 +48,96 @@ def geocode_api(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
-
 @api_view(['POST'])
 def search_courts(request):
-    """Search courts with filters and location-based radius"""
-    latitude = request.data.get('latitude')
-    longitude = request.data.get('longitude')
+    """
+    Search courts with dynamic logic:
+    - If lat/lon are provided: search by 10km radius.
+    - If lat/lon are NOT provided: search by filters across the entire database.
+    """
+    # Ambil semua parameter filter dari request
     provinces = request.data.getlist('provinces[]') or request.data.getlist('provinces')
+    province_name = request.data.get('province') # Untuk dropdown
     price_min = request.data.get('price_min')
     price_max = request.data.get('price_max')
-    court_types = request.data.getlist('court_types[]') or request.data.getlist('court_types')
+    court_types = request.data.getlist('court_types[]')
     bookmarked_only = request.data.get('bookmarked_only') == 'true'
-    radius = 10  # km
     
-    if not latitude or not longitude:
-        return Response(
-            {'error': 'Latitude dan longitude diperlukan'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Validate coordinates are in Indonesia
-    if not is_in_indonesia(latitude, longitude):
-        return Response(
-            {'error': 'Lokasi harus berada di Indonesia'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Start with active courts
+    # Mulai dengan queryset dasar
     queryset = Court.objects.filter(is_active=True)
     
-    # Apply province filter if specified
-    if provinces:
-        queryset = queryset.filter(provinces__id__in=provinces).distinct()
+    # --- Terapkan SEMUA filter non-lokasi terlebih dahulu ---
+    # Ini penting untuk memperkecil jumlah data yang akan di-loop nanti
     
-    # Apply price filter
+    if province_name: # Untuk dropdown baru
+        queryset = queryset.filter(provinces__name=province_name)
+    
     if price_min:
         queryset = queryset.filter(price_per_hour__gte=Decimal(price_min))
     if price_max:
         queryset = queryset.filter(price_per_hour__lte=Decimal(price_max))
     
-    # Apply court type filter
     if court_types:
-        queryset = queryset.filter(court_type__in=court_types)
-    
-    # Apply bookmark filter (only if user is authenticated)
-    if bookmarked_only and request.user.is_authenticated:
-        bookmarked_court_ids = Bookmark.objects.filter(
-            user=request.user
-        ).values_list('court_id', flat=True)
-        queryset = queryset.filter(id__in=bookmarked_court_ids)
-    
-    # Calculate distances and filter by radius
-    courts_with_distance = []
-    latitude = float(latitude)
-    longitude = float(longitude)
-    
-    for court in queryset:
-        distance = haversine_distance(
-            latitude, longitude,
-            court.latitude, court.longitude
-        )
+        types_to_search = list(court_types)
         
-        if distance <= radius:
-            courts_with_distance.append((court, distance))
+        if 'sutsal' in types_to_search:
+            types_to_search.append('futsal')
+        
+        if 'other' not in types_to_search:
+            queryset = queryset.filter(court_type__in=types_to_search)
     
-    # Sort by distance
-    courts_with_distance.sort(key=lambda x: x[1])
-    courts = [court for court, _ in courts_with_distance]
+    if bookmarked_only and request.user.is_authenticated:
+        bookmarked_court_ids = Bookmark.objects.filter(user=request.user).values_list('court_id', flat=True)
+        queryset = queryset.filter(id__in=bookmarked_court_ids)
+        
+    # --- LOGIKA UTAMA: Cek apakah ini pencarian RADIUS atau FILTER ---
     
-    if not courts:
-        return Response(
-            {'error': 'Tidak ada lapangan dalam jarak 10km dari lokasi Anda', 'courts': []},
-            status=status.HTTP_200_OK
-        )
+    final_courts_data = []
     
-    # Add distance to context for serializer
-    distance_map = {court.id: distance for court, distance in courts_with_distance}
-    
-    serializer = CourtSerializer(
-        courts,
-        many=True,
-        context={'request': request, 'distance': distance_map}
-    )
-    
-    return Response({'courts': serializer.data, 'count': len(courts)}, status=status.HTTP_200_OK)
+    if 'latitude' in request.data and 'longitude' in request.data:
+        # TIPE 1: PENCARIAN RADIUS (menggunakan loop Python dan haversine)
+        latitude = float(request.data.get('latitude'))
+        longitude = float(request.data.get('longitude'))
+        radius_km = 10
+        
+        courts_with_distance = []
+        for court in queryset:
+            distance = haversine_distance(latitude, longitude, court.latitude, court.longitude)
+            if distance <= radius_km:
+                courts_with_distance.append((court, distance))
+        
+        # Urutkan berdasarkan jarak terdekat
+        courts_with_distance.sort(key=lambda x: x[1])
+        
+        # Siapkan data untuk response
+        for court, distance in courts_with_distance:
+            is_bookmarked = request.user.is_authenticated and Bookmark.objects.filter(user=request.user, court=court).exists()
+            final_courts_data.append({
+                'id': court.id, 'name': court.name, 'address': court.address,
+                'court_type': court.court_type, 'latitude': court.latitude, 'longitude': court.longitude,
+                'price_per_hour': court.price_per_hour, 'is_bookmarked': is_bookmarked,
+                'distance': round(distance, 2)
+            })
+            
+    else:
+        # TIPE 2: PENCARIAN FILTER (tanpa menghitung jarak)
+        # Queryset sudah difilter di atas, tinggal diurutkan
+        queryset = queryset.order_by('name')
+        
+        # Siapkan data untuk response
+        for court in queryset:
+            is_bookmarked = request.user.is_authenticated and Bookmark.objects.filter(user=request.user, court=court).exists()
+            final_courts_data.append({
+                'id': court.id, 'name': court.name, 'address': court.address,
+                'court_type': court.court_type, 'latitude': court.latitude, 'longitude': court.longitude,
+                'price_per_hour': court.price_per_hour, 'is_bookmarked': is_bookmarked,
+                'distance': None # Jarak tidak relevan di sini
+            })
 
+    return Response({
+        'courts': final_courts_data,
+        'count': len(final_courts_data)
+    }, status=status.HTTP_200_OK)
 
 @api_view(['POST', 'DELETE'])
 @permission_classes([IsAuthenticated])

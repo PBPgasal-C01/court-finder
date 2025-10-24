@@ -1,0 +1,86 @@
+@font-face {
+  font-family: 'AnalogueRed-Bold';
+  src: url('../fonts/AnalogueRed-65Medium.ttf') format('truetype');
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'AnalogueRed-Base';
+  src: url('../fonts/AnalogueRed-55Regular.ttf') format('truetype');
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Galderglynn-Bold';
+  /* Ganti ke .otf dan format('opentype') */
+  src: url('../fonts/Galderglynn Titling Bd.otf') format('opentype');
+  font-style: normal;
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'Galderglynn-Base';
+  src: url('../fonts/Galderglynn Titling Rg.otf') format('opentype');
+  font-style: normal;
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Galderglynn-Light';
+  src: url('../fonts/Galderglynn Titling Lt.otf') format('opentype');
+  font-style: normal;
+  font-weight: normal;
+}
+
+.navbar {
+    font-family: 'AnalogueRed-Bold';
+}
+
+#navbar-links {
+    font-family: 'AnalogueRed-Base';
+}
+
+footer h3 {
+    font-family: 'AnalogueRed-Bold';
+}
+
+footer p, a {
+    font-family: 'AnalogueRed-Base';
+}
+
+#main-title {
+    font-family: 'Galderglynn-Bold';
+}
+
+#main-description {
+    font-family: 'AnalogueRed-Base';
+}
+
+#addressInput {
+    font-family: 'AnalogueRed-Base';
+}
+
+#q {
+    font-family: 'AnalogueRed-Base';
+}
+
+#form-message-container {
+    font-family: 'AnalogueRed-Base';
+}
+
+#complain-title {
+    font-family: 'Galderglynn-Bold';
+    letter-spacing: 0.5px;
+}
+
+#complain-list {
+    font-family: 'AnalogueRed-Base';
+}
+
+#complain-form {
+    font-family: 'AnalogueRed-Base';
+}
+
+#complain-form-label {
+    font-family: 'AnalogueRed-Bold';
+}
