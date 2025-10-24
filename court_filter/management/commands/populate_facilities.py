@@ -15,7 +15,7 @@ class Command(BaseCommand):
             'WiFi',
             'Canteen',
             'Drinking water station',
-            'Parking area'
+            'Parking area',
             'Air conditioning',
             'CCTV',
             'Sports equipment rental',
