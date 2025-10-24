@@ -19,7 +19,6 @@ class Command(BaseCommand):
             'Air conditioning',
             'CCTV',
             'Sports equipment rental',
-            
         ]
         
         for facility_name in facilities_data:

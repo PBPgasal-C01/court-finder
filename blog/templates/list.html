@@ -12,10 +12,10 @@
         <div class="relative">
           <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
             <!-- search icon -->
-              <i class="fa-solid fa-magnifying-glass w-5 h-5"></i>
+              <i class="fa-solid fa-magnifying-glass w-5 h-5" style="position: relative; top: 2px;"></i>
           </span>
           <input id="q" name="q" type="search" autocomplete="off" value="{{ q }}" placeholder="Search blog by title..." aria-label="Search blog by title"
-                 class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#79A6B9]" />
+                 class="w-full pl-12 pr-4 py-2 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
         </div>
       </form>
 
@@ -25,7 +25,7 @@
         <div class="relative w-[150px] h-10 shrink-0">
           <button id="btn-favs" type="button"
                   class="absolute inset-0 inline-flex items-center justify-center gap-2 px-4 py-2 w-full h-full rounded-md border border-gray-300 shadow-sm bg-white hover:bg-gray-50 text-sm">
-            <i class="fa-regular fa-heart"></i>
+            <i class="fa-regular fa-heart" style="position: relative; bottom: 2px;" ></i>
             <span>My Favorites</span>
           </button>
           <button id="btn-all" type="button"

@@ -1,64 +1,93 @@
 {% load static %}
+<link rel="stylesheet" href="{% static 'css/fonts.css' %}">
 <nav class="w-full bg-[#698C6A] text-white relative z-50">
-  <div class="max-w-7xl mx-auto grid grid-cols-12 items-center px-6 py-2 gap-3">
-    <!-- Left: Logo + Brand -->
-    <a href="{% url 'main:show_main' %}" class="col-span-6 md:col-span-3 flex items-center gap-3">
-      <img src="{% static 'images/cflogo.png' %}" alt="CourtFinder logo" class="h-10 w-auto" />
-      <span class="hidden sm:inline text-xl font-semibold tracking-widest">
-        <span class="text-[#3F5940]">COURT</span><span class="text-white">FINDER</span>
-      </span>
-    </a>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="flex items-center justify-between h-16">
+      <!-- Left: Logo + Brand -->
+      <a href="{% url 'main:show_main' %}" class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        <img src="{% static 'images/COURTFINDER LOGO.png' %}" alt="CourtFinder logo" class="h-6 sm:h-7 w-auto" />
+        <span class="hidden xs:inline text-base sm:text-xl font-semibold tracking-widest whitespace-nowrap">
+          <span class="text-[#3F5940]">COURT</span><span class="text-white">FINDER</span>
+        </span>
+      </a>
 
-    <!-- Center: Desktop Menu -->
-    <div class="col-span-12 md:col-span-6 hidden md:flex justify-center items-center gap-4 text-sm font-semibold">
-    
-      <a href="{% url 'main:show_main' %}" class="hover:text-gray-200 transition">Home</a>
-      <a href="{% url 'court_filter:court_finder' %}" class="hover:text-gray-200 transition">Finder</a>
-      <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
-
-      <a href="{% url 'game_scheduler:event_list' %}" class="hover:text-gray-200 transition">Game Scheduler</a>
-      <a href="{% url 'manage_court:show_manage_court' %}" class="hover:text-gray-200 transition">Manage Court</a>
-      {% if user.is_authenticated %}
-        {% if user.is_superuser or user.is_staff %}
-          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Complaint</a>
+      <!-- Center: Desktop Menu -->
+      <div id="navbar-links" class="hidden lg:flex items-center gap-6 xl:gap-10 text-m font-semibold">
+        <a href="{% url 'main:show_main' %}" 
+           class="{% if request.resolver_match.url_name == 'show_main' %}text-[#3F5940] font-bold{% else %}text-white hover:text-[#DFDFDF]{% endif %} transition whitespace-nowrap">
+           Home
+        </a>
+        <a href="{% url 'court_filter:court_finder' %}" 
+           class="{% if request.resolver_match.url_name == 'court_finder' %}text-[#3F5940] font-bold{% else %}text-white hover:text-[#DFDFDF]{% endif %} transition whitespace-nowrap">
+           Finder
+        </a>
+        <a href="{% url 'blog:list' %}" 
+           class="{% if request.resolver_match.url_name == 'list' %}text-[#3F5940] font-bold{% else %}text-white hover:text-[#DFDFDF]{% endif %} transition whitespace-nowrap">
+           Blog
+        </a>
+        <a href="{% url 'game_scheduler:event_list' %}" 
+           class="{% if request.resolver_match.url_name == 'event_list' %}text-[#3F5940] font-bold{% else %}text-white hover:text-[#DFDFDF]{% endif %} transition whitespace-nowrap">
+           Game Scheduler
+        </a>
+        <a href="{% url 'manage_court:show_manage_court' %}" 
+           class="{% if request.resolver_match.url_name == 'show_manage_court' %}text-[#3F5940] font-bold{% else %}text-white hover:text-[#DFDFDF]{% endif %} transition whitespace-nowrap">
+           Manage Court
+        </a>
+        {% if user.is_authenticated %}
+          {% if user.is_superuser or user.is_staff %}
+            <a href="{% url 'complain:admin_dashboard' %}" 
+               class="{% if request.resolver_match.url_name == 'admin_dashboard' %}text-[#3F5940] font-bold{% else %}text-white hover:text-[#DFDFDF]{% endif %} transition whitespace-nowrap">
+               Complaint
+            </a>
+          {% else %}
+            <a href="{% url 'complain:show_complain' %}" 
+               class="{% if request.resolver_match.url_name == 'show_complain' %}text-[#3F5940] font-bold{% else %}text-white hover:text-[#DFDFDF]{% endif %} transition whitespace-nowrap">
+               Complaint
+            </a>
+          {% endif %}
         {% else %}
-          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
+          <a href="{% url 'complain:guest_complain' %}" 
+             class="{% if request.resolver_match.url_name == 'guest_complain' %}text-[#3F5940] font-bold{% else %}text-white hover:text-[#DFDFDF]{% endif %} transition whitespace-nowrap">
+             Complaint
+          </a>
         {% endif %}
-      {% else %}
-        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
-      {% endif %}
       </div>
 
-
-    <!-- Right: Auth -->
-    <div class="col-span-6 md:col-span-3 flex justify-end items-center gap-3 relative">
-      {% if user.is_authenticated %}
-        <!-- Avatar + Dropdown -->
-        <div class="relative">
-          <button id="avatar-btn" class="focus:outline-none">
+      <!-- Right: Auth + Mobile Menu Button -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        {% if user.is_authenticated %}
+          <!-- Avatar + Dropdown (Desktop & Mobile) -->
+          <div class="relative">
+            <div class="flex">
+              <a href="{% url 'autentikasi:profile_view' %}" 
+              class="block px-4 py-2 text-m font-semibold text-white hover:text-[#DFDFDF]">
+              {{ user.username }}
+            </a>
+            <button id="avatar-btn" class="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#698C6A] rounded-full">
               {% if user.photo %}
               <img src="{{ user.photo.url }}" alt="avatar"
-                  class="w-10 h-10 rounded-full object-cover border-2 border-white">
+              class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-white hover:border-[#DFDFDF]">
               {% else %}
               <img src="{% static 'images/placeholder.png' %}" alt="avatar"
-                  class="w-10 h-10 rounded-full object-cover border-2 border-white">
+              class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-white hover:border-[#DFDFDF]">
               {% endif %}
-          </button>
+            </button>
+          </div>
 
-          <!-- Dropdown -->
-          <div id="dropdown-menu"
-              class="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl ring-1 ring-black/5
-                      opacity-0 scale-95 pointer-events-none transition-all duration-200 origin-top-right">
+            <!-- Dropdown -->
+            <div id="dropdown-menu"
+                class="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl ring-1 ring-black/5
+                        opacity-0 scale-95 pointer-events-none transition-all duration-200 origin-top-right z-50">
               <div class="py-1">
                 <a href="{% url 'autentikasi:profile_view' %}"
                   class="block px-4 py-2 text-sm font-semibold text-[#2F593F] hover:bg-gray-100 transition">
                   Profile
                 </a>
                 {% if user.is_staff or user.is_superuser %}
-                <a href="{% url 'autentikasi:admin_dashboard' %}"
-                  class="block px-4 py-2 text-sm font-semibold text-[#698C6A] hover:bg-[#F2F6F6] hover:text-[#2F593F] transition">
-                  Manage Users
-                </a>
+                  <a href="{% url 'autentikasi:admin_dashboard' %}"
+                    class="block px-4 py-2 text-sm font-semibold text-[#698C6A] hover:bg-[#F2F6F6] hover:text-[#2F593F] transition">
+                    Manage Users
+                  </a>
                 {% endif %}
                 <div class="my-1 h-px bg-gray-100"></div>
                 <a href="{% url 'autentikasi:logout' %}"
@@ -66,66 +95,86 @@
                   Logout
                 </a>
               </div>
+            </div>
           </div>
-        </div>
-      {% else %}
-        <a href="{% url 'autentikasi:register' %}"
-           class="bg-[#4B6356] hover:bg-[#3e5548] text-white text-sm font-medium px-4 py-2 rounded-md transition">
-          Sign Up
-        </a>
-        <a href="{% url 'autentikasi:login' %}"
-           class="bg-white hover:bg-gray-100 text-[#698C6A] text-sm font-medium px-4 py-2 rounded-md transition">
-          Log in
-        </a>
-      {% endif %}
+        {% else %}
+          <!-- Auth Buttons (Hidden on small mobile) -->
+          <div class="navbar hidden sm:flex items-center gap-2">
+            <a href="{% url 'autentikasi:register' %}"
+               class="bg-[#4B6356] hover:bg-[#3e5548] text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md transition whitespace-nowrap">
+              Sign Up
+            </a>
+            <a href="{% url 'autentikasi:login' %}"
+               class="bg-white hover:bg-gray-100 text-[#698C6A] text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md transition whitespace-nowrap">
+              Log in
+            </a>
+          </div>
+        {% endif %}
 
-      <!-- Hamburger Button (Mobile) -->
-      <button id="menu-btn" class="md:hidden ml-2 focus:outline-none" aria-label="Toggle menu">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
-      </button>
+        <!-- Hamburger Button (Mobile) -->
+        <button id="menu-btn" class="lg:hidden p-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#698C6A] rounded-md" aria-label="Toggle menu">
+          <svg id="menu-icon" class="w-6 h-6 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+          <svg id="close-icon" class="w-6 h-6 hidden transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- Mobile Menu -->
-  <div id="mobile-menu" class="hidden md:hidden border-t border-[#4F6C4F] text-sm bg-[#698C6A]">
-    <div class="flex flex-col items-center py-3 space-y-2">
-      <a href="{% url 'main:show_main' %}" class="hover:text-gray-200 transition">Home</a>
-      <a href="{% url 'court_filter:court_finder' %}" class="hover:text-gray-200 transition">Finder</a>
-      <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
-      <a href="{% url 'game_scheduler:event_list' %}" class="hover:text-gray-200 transition">Game Scheduler</a>
-      <a href="{% url 'manage_court:show_manage_court' %}" class="hover:text-gray-200 transition">Manage Court</a>
+  <div id="mobile-menu" class="hidden lg:hidden border-t border-[#4F6C4F] bg-[#698C6A]">
+    <div id="navbar-links" class="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-1">
+      <a href="{% url 'main:show_main' %}" 
+         class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'show_main' %}bg-[#5a7a5c] text-[#E8F5E9] font-bold{% else %}hover:bg-[#5a7a5c]{% endif %} transition">
+         Home
+      </a>
+      <a href="{% url 'court_filter:court_finder' %}" 
+         class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'court_finder' %}bg-[#5a7a5c] text-[#E8F5E9] font-bold{% else %}hover:bg-[#5a7a5c]{% endif %} transition">
+         Finder
+      </a>
+      <a href="{% url 'blog:list' %}" 
+         class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'list' %}bg-[#5a7a5c] text-[#E8F5E9] font-bold{% else %}hover:bg-[#5a7a5c]{% endif %} transition">
+         Blog
+      </a>
+      <a href="{% url 'game_scheduler:event_list' %}" 
+         class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'event_list' %}bg-[#5a7a5c] text-[#E8F5E9] font-bold{% else %}hover:bg-[#5a7a5c]{% endif %} transition">
+         Game Scheduler
+      </a>
+      <a href="{% url 'manage_court:show_manage_court' %}" 
+         class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'show_manage_court' %}bg-[#5a7a5c] text-[#E8F5E9] font-bold{% else %}hover:bg-[#5a7a5c]{% endif %} transition">
+         Manage Court
+      </a>
       {% if user.is_authenticated %}
         {% if user.is_superuser or user.is_staff %}
-          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Complaint</a>
+          <a href="{% url 'complain:admin_dashboard' %}" 
+             class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-[#5a7a5c] text-[#E8F5E9] font-bold{% else %}hover:bg-[#5a7a5c]{% endif %} transition">
+             Complaint
+          </a>
         {% else %}
-          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
+          <a href="{% url 'complain:show_complain' %}" 
+             class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'show_complain' %}bg-[#5a7a5c] text-[#E8F5E9] font-bold{% else %}hover:bg-[#5a7a5c]{% endif %} transition">
+             Complaint
+          </a>
         {% endif %}
       {% else %}
-        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
+        <a href="{% url 'complain:guest_complain' %}" 
+           class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'guest_complain' %}bg-[#5a7a5c] text-[#E8F5E9] font-bold{% else %}hover:bg-[#5a7a5c]{% endif %} transition">
+           Complaint
+        </a>
       {% endif %}
-      </div>
 
-      {% if user.is_authenticated %}
-        <div class="flex flex-col items-center gap-2 pt-2">
-          <a href="{% url 'autentikasi:profile_view' %}"
-             class="bg-white text-[#698C6A] text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-100 transition">
-            Profile
-          </a>
-          <a href="{% url 'autentikasi:logout' %}"
-             class="bg-[#C1725D] hover:bg-[#a45c4b] text-white text-sm font-medium px-4 py-2 rounded-md transition">
-            Logout
-          </a>
-        </div>
-      {% else %}
-        <div class="flex flex-col items-center gap-2 pt-2">
+      {% if not user.is_authenticated %}
+        <!-- Auth Buttons in Mobile Menu (for small screens) -->
+        <div class="navbar pt-4 pb-2 border-t border-[#4F6C4F] space-y-2 sm:hidden">
           <a href="{% url 'autentikasi:register' %}"
-             class="bg-[#4B6356] hover:bg-[#3e5548] text-white text-sm font-medium px-4 py-2 rounded-md transition">
+             class="block text-center bg-[#4B6356] hover:bg-[#3e5548] text-white text-sm font-medium px-4 py-2.5 rounded-md transition">
             Sign Up
           </a>
           <a href="{% url 'autentikasi:login' %}"
-             class="bg-white hover:bg-gray-100 text-[#698C6A] text-sm font-medium px-4 py-2 rounded-md transition">
+             class="block text-center bg-white hover:bg-gray-100 text-[#698C6A] text-sm font-medium px-4 py-2.5 rounded-md transition">
             Log in
           </a>
         </div>
@@ -135,20 +184,38 @@
 </nav>
 
 <script>
+  // Mobile menu toggle
   const menuBtn = document.getElementById("menu-btn");
   const mobileMenu = document.getElementById("mobile-menu");
+  const menuIcon = document.getElementById("menu-icon");
+  const closeIcon = document.getElementById("close-icon");
+  
   menuBtn.addEventListener("click", () => {
-    mobileMenu.classList.toggle("hidden");
+    const isHidden = mobileMenu.classList.toggle("hidden");
+    menuIcon.classList.toggle("hidden", !isHidden);
+    closeIcon.classList.toggle("hidden", isHidden);
+  });
+
+  // Close mobile menu when clicking a link
+  const mobileLinks = mobileMenu.querySelectorAll("a");
+  mobileLinks.forEach(link => {
+    link.addEventListener("click", () => {
+      mobileMenu.classList.add("hidden");
+      menuIcon.classList.remove("hidden");
+      closeIcon.classList.add("hidden");
+    });
   });
 
   // Avatar dropdown animation
   const avatarBtn = document.getElementById("avatar-btn");
   const dropdown = document.getElementById("dropdown-menu");
+  
   if (avatarBtn && dropdown) {
     const show = () => {
       dropdown.classList.remove("opacity-0", "scale-95", "pointer-events-none");
       dropdown.classList.add("opacity-100", "scale-100");
     };
+    
     const hide = () => {
       dropdown.classList.add("opacity-0", "scale-95", "pointer-events-none");
       dropdown.classList.remove("opacity-100", "scale-100");
@@ -156,11 +223,26 @@
 
     avatarBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (dropdown.classList.contains("pointer-events-none")) show(); else hide();
+      const isHidden = dropdown.classList.contains("pointer-events-none");
+      if (isHidden) {
+        show();
+      } else {
+        hide();
+      }
     });
 
-    globalThis.addEventListener("click", (e) => {
-      if (!dropdown.contains(e.target) && !avatarBtn.contains(e.target)) hide();
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!dropdown.contains(e.target) && !avatarBtn.contains(e.target)) {
+        hide();
+      }
+    });
+
+    // Close dropdown when pressing Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        hide();
+      }
     });
   }
 </script>
