@@ -36,7 +36,7 @@
                         CREATE NEW REPORT
                     </h4>
 
-                    <form id="complain-form" action="{% url 'complain:show_complain' %}" method="post" enctype="multipart/form-data" class="space-y-4">
+                    <form id="complain-form" action="{% url 'complain:create_complain' %}" method="post" enctype="multipart/form-data" class="space-y-4">
                         {% csrf_token %}
                         <div>
                             <label for="{{ form.court_name.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Court Name</label>
@@ -198,8 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const masalahId = "{{ form.masalah.id_for_label }}";
     const deskripsiId = "{{ form.deskripsi.id_for_label }}";
     
-    const complainListUrl = "{% url 'complain:show_json' %}"; 
-    const deleteUrlTemplate = "{% url 'complain:delete_complain' '00000000-0000-0000-0000-000000000000' %}";
+    const complainListUrl = "{% url 'complain:get_user_complains' %}"; 
+    const deleteUrlTemplate = "{% url 'complain:delete_complain' '00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', '');
     
     const complainForm = document.getElementById('complain-form');
     const complainListContainer = document.getElementById('complain-list');
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
                    <span class="text-gray-500">No Image</span>
                </div>`;
 
-        const deleteButtonUrl = deleteUrlTemplate.replace('0000', complain.id);
+        const deleteButtonUrl = deleteUrlTemplate + complain.id;
         
         const deleteButtonHtml = complain.status === 'IN REVIEW'
             ? `<div class="flex justify-end pt-2">
@@ -292,10 +292,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function refreshComplainList() {
         try {
-            const response = await fetch(complainListUrl, { cache: 'no-store' });
+            const response = await fetch(complainListUrl, { 
+                cache: 'no-store',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.status === 401) {
+                throw new Error('Your session has expired. Please refresh and log in.');
+            }
             if (!response.ok) {
                 throw new Error('Failed to load data.');
             }
+            
             const complains = await response.json();
             
             complainListContainer.innerHTML = '';
@@ -306,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     complainListContainer.insertAdjacentHTML('beforeend', cardHtml);
                 });
             } else {
-                complainListContainer.innerHTML = '<p class="text-gray-600 col-span-2">You havent\'t made any reports yet.</p>';
+                complainListContainer.innerHTML = '<p class="text-gray-600 col-span-2">You haven\'t made any reports yet.</p>';
             }
         } catch (error) {
             showMessage(listMessageContainer, error.message, false);
@@ -317,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault(); 
         formMessageContainer.innerHTML = ''; 
 
+        
         const courtName = document.getElementById(courtNameId).value.trim();
         const masalah = document.getElementById(masalahId).value.trim();
         const deskripsi = document.getElementById(deskripsiId).value.trim();
@@ -340,29 +351,35 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(complainForm.action, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 },
                 body: formData
             });
 
-            if (response.ok) {
-                showMessage(formMessageContainer, 'Your Report is sent successfully!', true);
+            
+            if (response.status === 401) {
+                throw new Error('Your session has expired. Please refresh and log in.');
+            }
+
+            const data = await response.json();
+
+            if (response.ok) { 
+                showMessage(formMessageContainer, data.message, true);
                 complainForm.reset(); 
-                
                 await refreshComplainList(); 
-            } else {
+            } else { 
                 let errorMessage = 'Failed to send your report.';
-                try {
-                    const errors = await response.json();
-                    if (errors && typeof errors === 'object') {
-                        errorMessage = Object.values(errors).flat().join(' ');
-                    }
-                } catch (e) {}
-                
+                if (data.errors && typeof data.errors === 'object') {
+                    errorMessage = Object.values(data.errors).map(e => e[0]).join(' ');
+                } else if (data.message) {
+                    errorMessage = data.message;
+                }
                 showMessage(formMessageContainer, errorMessage, false);
             }
         } catch (error) {
-            showMessage(formMessageContainer, `A network error occurred: ${error.message}`, false);
+            showMessage(formMessageContainer, error.message, false);
         }
     });
 
@@ -378,20 +395,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const deleteUrl = deleteButton.dataset.deleteUrl;
-        const complainId = deleteButton.dataset.complainId;
+        
         try {
             const response = await fetch(deleteUrl, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': csrfToken,
+                    'Accept': 'application/json' 
                 }
             });
 
+            if (response.status === 401) {
+                throw new Error('Your session has expired. Please refresh and log in.');
+            }
+
+            const data = await response.json();
+
             if (response.ok) {
-                showMessage(listMessageContainer, 'Your report is deleted successfully.', true);
+                showMessage(listMessageContainer, data.message, true);
                 await refreshComplainList();
             } else {
-                throw new Error('Failed to delete report.');
+                throw new Error(data.message || 'Failed to delete report.');
             }
         } catch (error) {
             showMessage(listMessageContainer, error.message, false);

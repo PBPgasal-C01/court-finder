@@ -18,12 +18,12 @@
       <a href="{% url 'manage_court:show_manage_court' %}" class="hover:text-gray-200 transition">Manage Court</a>
       {% if user.is_authenticated %}
         {% if user.is_superuser or user.is_staff %}
-          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">complaint</a>
+          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Complaint</a>
         {% else %}
-          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">complaint</a>
+          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
         {% endif %}
       {% else %}
-        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">complaint</a>
+        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
       {% endif %}
       </div>
 
