@@ -65,19 +65,19 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 
 - **CRUD Court:** Memungkinkan user (pemilik lapangan) untuk membuat, melihat, mengedit, dan menghapus (CRUD) daftar lapangan yang mereka miliki.
 
-|                | Guest                                                                                   | Registered User                                                                           | Admin                                                                                             |
-| -------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Peran Pengguna | Tidak dapat membuat/mengelola lapangan. Hanya akan melihat pesan "You have to login..." | Dapat melakukan CRUD (Create, Read, Update, Delete) penuh pada lapangan miliknya sendiri. | Admin adalah Registered User yang memiliki court. Admin hanya bisa mengelola lapangannya sendiri. |
+|                | Guest                                                                                   | Registered User                                                                           | Admin                         |
+| -------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------- |
+| Peran Pengguna | Tidak dapat membuat/mengelola lapangan. Hanya akan melihat pesan "You have to login..." | Dapat melakukan CRUD (Create, Read, Update, Delete) penuh pada lapangan miliknya sendiri. | Sama seperti Registered User. |
 
 ---
 
 ## 4. Modul Blog (Tristan) 📒
 
-- **CRUD Blog:** Pengguna dapat melihat dan menambahkan ke favourite dan juga share link dari artikel, admin dapat membuat, mengedit dan menghapus artikel.
+- **CRUD Blog:** Guest dapat melihat artikel, Pengguna dapat melihat dan menambahkan ke favourite dan juga share link dari artikel, admin dapat melihat, menambahkan ke my favourite juga membuat, mengedit dan menghapus artikel.
 
-|                | Guest                                 | Registered User                                                                                              | Admin                                                                                    |
-| -------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| Peran Pengguna | Dapat melihat artikel dan share link. | Semua fitur Guest + Dapat melihat artikel favourite dan menambahkan ke my favourite artikel juga share link. | Semua fitur Registered User + Dapat membuat, mengedit dan menghapus artikel tanpa batas. |
+|                | Guest                                 | Registered User                                                | Admin                                                                                    |
+| -------------- | ------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Peran Pengguna | Dapat melihat artikel dan share link. | Semua fitur Guest + Dapat menambahkan ke my favourite artikel. | Semua fitur Registered User + Dapat membuat, mengedit dan menghapus artikel tanpa batas. |
 
 ---
 
