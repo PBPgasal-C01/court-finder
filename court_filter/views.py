@@ -23,7 +23,7 @@ def court_finder(request):
         'court_types': court_types,
         'default_lat': -6.2088,  # Jakarta
         'default_lon': 106.8456,
-        'is_authenticated': request.user.is_authenticated, 
+        'is_authenticated': request.user.is_authenticated,  # ← TAMBAH INI
     }
     return render(request, 'court_filter/court_finder.html', context)
 

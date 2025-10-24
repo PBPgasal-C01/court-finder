@@ -1,6 +1,6 @@
 {% load static %}
-<nav class="w-full bg-[#698C6A] text-white">
-  <div class="max-w-7xl mx-auto grid grid-cols-12 items-center px-6 py-3 gap-4">
+<nav class="w-full bg-[#698C6A] text-white relative z-50">
+  <div class="max-w-7xl mx-auto grid grid-cols-12 items-center px-6 py-2 gap-3">
     <!-- Left: Logo + Brand -->
     <a href="{% url 'main:show_main' %}" class="col-span-6 md:col-span-3 flex items-center gap-3">
       <img src="{% static 'images/cflogo.png' %}" alt="CourtFinder logo" class="h-10 w-auto" />
@@ -13,23 +13,22 @@
     <div class="col-span-12 md:col-span-6 hidden md:flex justify-center items-center gap-4 text-sm font-semibold">
     
       <a href="{% url 'main:show_main' %}" class="hover:text-gray-200 transition">Home</a>
-      <a href="#" class="hover:text-gray-200 transition">Finder</a>
+      <a href="{% url 'court_filter:court_finder' %}" class="hover:text-gray-200 transition">Finder</a>
       <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
-      
+
       <a href="{% url 'game_scheduler:event_list' %}" class="hover:text-gray-200 transition">Game Scheduler</a>
       <a href="{% url 'manage_court:show_manage_court' %}" class="hover:text-gray-200 transition">Manage Court</a>
-      
       {% if user.is_authenticated %}
-          {% if user.is_superuser or user.is_staff %}
-          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Report</a>
-          {% else %}
-          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Report</a>
-          {% endif %}
+        {% if user.is_superuser or user.is_staff %}
+          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Complaint</a>
+        {% else %}
+          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
+        {% endif %}
       {% else %}
-          <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Report</a>
+        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
       {% endif %}
+      </div>
 
-  </div>
 
     <!-- Right: Auth -->
     <div class="col-span-6 md:col-span-3 flex justify-end items-center gap-3 relative">
@@ -41,7 +40,7 @@
               <img src="{{ user.photo.url }}" alt="avatar"
                   class="w-10 h-10 rounded-full object-cover border-2 border-white">
               {% else %}
-              <img src="https://via.placeholder.com/40" alt="avatar"
+              <img src="{% static 'images/placeholder.png' %}" alt="avatar"
                   class="w-10 h-10 rounded-full object-cover border-2 border-white">
               {% endif %}
           </button>
@@ -72,7 +71,7 @@
       {% else %}
         <a href="{% url 'autentikasi:register' %}"
            class="bg-[#4B6356] hover:bg-[#3e5548] text-white text-sm font-medium px-4 py-2 rounded-md transition">
-          Sign in
+          Sign Up
         </a>
         <a href="{% url 'autentikasi:login' %}"
            class="bg-white hover:bg-gray-100 text-[#698C6A] text-sm font-medium px-4 py-2 rounded-md transition">
@@ -93,11 +92,20 @@
   <div id="mobile-menu" class="hidden md:hidden border-t border-[#4F6C4F] text-sm bg-[#698C6A]">
     <div class="flex flex-col items-center py-3 space-y-2">
       <a href="{% url 'main:show_main' %}" class="hover:text-gray-200 transition">Home</a>
-      <a href="#" class="hover:text-gray-200 transition">Finder</a>
+      <a href="{% url 'court_filter:court_finder' %}" class="hover:text-gray-200 transition">Finder</a>
       <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
       <a href="{% url 'game_scheduler:event_list' %}" class="hover:text-gray-200 transition">Game Scheduler</a>
       <a href="{% url 'manage_court:show_manage_court' %}" class="hover:text-gray-200 transition">Manage Court</a>
-      <a href="#" class="hover:text-gray-200 transition">Complaint</a>
+      {% if user.is_authenticated %}
+        {% if user.is_superuser or user.is_staff %}
+          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Complaint</a>
+        {% else %}
+          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
+        {% endif %}
+      {% else %}
+        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
+      {% endif %}
+      </div>
 
       {% if user.is_authenticated %}
         <div class="flex flex-col items-center gap-2 pt-2">
@@ -114,7 +122,7 @@
         <div class="flex flex-col items-center gap-2 pt-2">
           <a href="{% url 'autentikasi:register' %}"
              class="bg-[#4B6356] hover:bg-[#3e5548] text-white text-sm font-medium px-4 py-2 rounded-md transition">
-            Sign in
+            Sign Up
           </a>
           <a href="{% url 'autentikasi:login' %}"
              class="bg-white hover:bg-gray-100 text-[#698C6A] text-sm font-medium px-4 py-2 rounded-md transition">

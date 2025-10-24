@@ -79,7 +79,7 @@
       <div class="md:col-span-2">
         <button type="submit"
                 class="w-full bg-[#2F593F] text-white font-semibold py-3 text-lg rounded-xl hover:bg-[#244d36] transition">
-          Register
+          Sign Up
         </button>
       </div>
     </form>
@@ -104,4 +104,58 @@
     </p>
   </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const form = document.querySelector("form");
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+
+    fetch(window.location.href, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Registration success: redirect
+        window.location.href = data.redirect_url;
+      } else {
+        // Registration failed: show form errors
+        const errors = JSON.parse(data.errors);
+        showErrors(errors);
+      }
+    })
+    .catch(err => {
+      console.error("AJAX error:", err);
+      alert("An unexpected error occurred. Please try again.");
+    });
+  });
+
+  function showErrors(errors) {
+    // Clear previous errors
+    document.querySelectorAll(".text-red-600").forEach(el => el.remove());
+
+    // Insert new ones below each field
+    for (const [field, messages] of Object.entries(errors)) {
+      const input = document.querySelector(`[name=${field}]`);
+      if (input) {
+        const errorP = document.createElement("p");
+        errorP.className = "text-sm text-red-600 mt-1";
+        errorP.textContent = messages[0].message;
+        input.insertAdjacentElement("afterend", errorP);
+      }
+    }
+  }
+});
+</script>
+
 {% endblock content %}

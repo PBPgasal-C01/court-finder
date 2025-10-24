@@ -7,17 +7,38 @@ from .forms import CustomUserCreationForm, CustomAuthenticationForm, UserProfile
 from .models import CourtUser
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse
 
 def register_user(request):
-    """Registrasi user baru (role default: user)."""
+    """Registrasi user baru (role default: user) dengan dukungan AJAX."""
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save(commit=False)
-            user.role = 'user'  # Default: Registered User
+            user.role = 'user'  # Default role
             user.save()
+
+            # Auto login after registration
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+            # AJAX response
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'redirect_url': reverse('main:show_main'),
+                })
+            # Non-AJAX fallback
             return redirect('main:show_main')
+
+        else:
+            # send JSON error if AJAX
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                errors = form.errors.as_json()
+                return JsonResponse({
+                    'success': False,
+                    'errors': errors,
+                })
+
     else:
         form = CustomUserCreationForm()
 
@@ -26,16 +47,34 @@ def register_user(request):
 
 
 def login_user(request):
-    """Login untuk Registered User & Admin."""
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
+
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('main:show_main')
+
+            # fetch from AJAX
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'redirect_url': reverse('main:show_main'),
+                })
+            # fallback non AJAX
+            else:
+                return redirect('main:show_main')
+
+        else:
+            # send JSON error if AJAX
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Please enter a correct email and password. Note that both fields may be case-sensitive.',
+                })
     else:
         form = CustomAuthenticationForm()
 
+    # Non-AJAX normal render
     context = {'form': form}
     return render(request, 'login.html', context)
 
@@ -116,13 +155,3 @@ def delete_user(request, user_id):
 
     target.delete()
     return JsonResponse({'status': 'success', 'message': 'User deleted'})
-
-
-
-
-
-
-
-
-
-

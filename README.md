@@ -61,11 +61,11 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 
 ## 3. Modul Manage Court (Raida) 📍
 
-- **CRUD Court:** Mengelola informasi detail lapangan (alamat, tipe, status, harga, foto, fasilitas, kontak), serta review dan komentar.
+- **CRUD Court:** Memungkinkan user (pemilik lapangan) untuk membuat, melihat, mengedit, dan menghapus (CRUD) daftar lapangan yang mereka miliki.
 
-|                | Guest                            | Registered User                             | Admin                                                                                            |
-| -------------- | -------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Peran Pengguna | Dapat melihat rating dan review. | Dapat memberi rating, review, dan komentar. | Dapat menambah, mengedit, dan menghapus data lapangan serta memperbarui status/detail/deskripsi. |
+|                | Guest                                                                                   | Registered User                                                                           | Admin                                                                                             |
+| -------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Peran Pengguna | Tidak dapat membuat/mengelola lapangan. Hanya akan melihat pesan "You have to login..." | Dapat melakukan CRUD (Create, Read, Update, Delete) penuh pada lapangan miliknya sendiri. | Admin adalah Registered User yang memiliki court. Admin hanya bisa mengelola lapangannya sendiri. |
 
 ---
 
@@ -73,19 +73,19 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 
 - **CRUD Blog:** Pengguna dapat melihat dan menambahkan ke favourite dan juga menshare link dari artikel, admin dapat membuat, mengedit dan menghapus artikel.
 
-|                | Guest                  | Registered User                                                     | Admin                                                      |
-| -------------- | ---------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Peran Pengguna | Dapat melihat artikel. | Dapat melihat dan menambahkan ke favourite artikel juga share link. | Dapat membuat, mengedit dan menghapus artikel tanpa batas. |
+|                | Guest                                 | Registered User                                                        | Admin                                                      |
+| -------------- | ------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Peran Pengguna | Dapat melihat artikel dan share link. | Dapat melihat dan menambahkan ke my favourite artikel juga share link. | Dapat membuat, mengedit dan menghapus artikel tanpa batas. |
 
 ---
 
 ## 5. Modul Game Scheduler (Cari Teman Main) (Jihan) 🏀
 
-- **Fitur Game Scheduler:** Membuat dan bergabung dengan event main basket, dengan opsi public/private, notifikasi, dan integrasi kalender.
+- **Fitur Game Scheduler:** Membuat dan bergabung dengan event, dengan opsi public/private, notifikasi, dan integrasi kalender.
 
-|                | Guest                           | Registered User                                                                                                                     | Admin                         |
-| -------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| Peran Pengguna | Tidak dapat membuat/join event. | Dapat membuat event, join event, memilih tipe event (public/private) (Pakai forms.py), menerima notifikasi, dan integrasi kalender. | Sama seperti Registered User. |
+|                | Guest                                                 | Registered User                                                                                                                                   | Admin                  |
+| -------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| Peran Pengguna | Cuman bisa Read aja, gabisa Create, Edit, sama Delete | Bisa Create, Edit, Delete (logged user = creator, creator bisa join event bisa gak join event nya \*noted: di models ada partisipan sama creator) | sama kayak logged user |
 
 ---
 
@@ -105,6 +105,8 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 
 - Bisa lihat map dan info dasar court
 - Bisa lihat rating dan review lapangan
+- Bisa lihat game scheduler
+- Bisa baca blog
 
 ### 🏃‍♂️ Registered User (pemain)
 
@@ -114,6 +116,7 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 - Bisa upload foto/video lapangan
 - Bisa report masalah lapangan
 - Bisa update profil dan preferensi
+- Bisa menambahkan blog favorit
 
 ### ⚡ Admin
 
@@ -121,3 +124,4 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 - Kelola data lapangan (buat, edit, hapus)
 - Respon report (ubah status/beri catatan)
 - Kelola user (hapus akun, ban)
+- kelola blog (create,edit dan delete)
