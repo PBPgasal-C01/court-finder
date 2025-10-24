@@ -1,6 +1,9 @@
-from django.test import TestCase, Client, override_settings
+from django.test import TestCase, Client, override_settings, RequestFactory
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from allauth.account.signals import user_signed_up
+from unittest.mock import patch, Mock
+import tempfile
 
 User = get_user_model()
 
@@ -229,3 +232,87 @@ class AuthViewsTest(TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["status"], "success")
         self.assertFalse(User.objects.filter(id=target_id).exists())
+
+
+class AuthSignalsTest(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(
+            username="signals",
+            email="signals@example.com",
+            password="StrongPass123!",
+        )
+
+    def test_user_signed_up_without_sociallogin_sets_default_preference(self):
+        # Pastikan preference kosong agar cabang 'default preference' dieksekusi
+        self.user.preference = ""
+        self.user.save()
+        request = self.factory.get("/dummy")
+
+        user_signed_up.send(sender=User, request=request, user=self.user, sociallogin=None)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.preference, "indoor")
+
+    @override_settings(MEDIA_ROOT=tempfile.gettempdir())
+    def test_user_signed_up_with_sociallogin_sets_name_email_and_photo(self):
+        request = self.factory.get("/dummy")
+        extra_data = {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "picture": "http://example.com/pic.jpg",
+        }
+
+        class DummyAccount:
+            def __init__(self, extra):
+                self.extra_data = extra
+
+        class DummySocialLogin:
+            def __init__(self, extra):
+                self.account = DummyAccount(extra)
+
+        sociallogin = DummySocialLogin(extra_data)
+
+        with patch("autentikasi.signals.requests.get") as mock_get, \
+             patch("autentikasi.signals.ContentFile") as mock_cf:
+            mock_get.return_value = Mock(status_code=200, content=b"imgbytes")
+            user_signed_up.send(sender=User, request=request, user=self.user, sociallogin=sociallogin)
+
+        self.user.refresh_from_db()
+        # Nama dan email terisi
+        self.assertEqual(self.user.first_name, "John")
+        self.assertEqual(self.user.last_name, "Doe")
+        self.assertEqual(self.user.email, "john@example.com")
+        # Foto path mungkin tidak terset tergantung storage, tapi pastikan proses fetch dan ContentFile dipanggil
+        self.assertTrue(mock_get.called)
+        self.assertTrue(mock_cf.called)
+
+    def test_user_signed_up_picture_fetch_exception_does_not_crash(self):
+        request = self.factory.get("/dummy")
+        extra_data = {
+            "name": "Jane Roe",
+            "email": "jane@example.com",
+            "picture": "http://example.com/bad.jpg",
+        }
+
+        class DummyAccount:
+            def __init__(self, extra):
+                self.extra_data = extra
+
+        class DummySocialLogin:
+            def __init__(self, extra):
+                self.account = DummyAccount(extra)
+
+        sociallogin = DummySocialLogin(extra_data)
+
+        with patch("autentikasi.signals.requests.get", side_effect=Exception("boom")):
+            # Tidak boleh melempar exception ke luar
+            user_signed_up.send(sender=User, request=request, user=self.user, sociallogin=sociallogin)
+
+        self.user.refresh_from_db()
+        # Email dan nama tetap ter-update meski foto gagal
+        self.assertEqual(self.user.first_name, "Jane")
+        self.assertEqual(self.user.last_name, "Roe")
+        self.assertEqual(self.user.email, "jane@example.com")
+        # Foto tidak ter-set karena error fetch
+        self.assertFalse(bool(self.user.photo))

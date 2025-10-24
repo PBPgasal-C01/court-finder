@@ -41,7 +41,7 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 
 ## 1. Modul Autentikasi (Alfino) 🔐
 
-- **Fitur Autentikasi:** Registrasi/login (Liat sikon) menggunakan email, Google, atau social login , serta pengaturan profil user (nama, foto, preferensi main indoor/outdoor).
+- **Fitur Autentikasi:** Registrasi/login menggunakan email, Google, atau social login , serta pengaturan profil user (nama, foto, preferensi main indoor/outdoor).
 
 |                | Guest              | Registered User                                                   | Admin                                  |
 | -------------- | ------------------ | ----------------------------------------------------------------- | -------------------------------------- |
