@@ -7,7 +7,7 @@ from django.core.files.base import ContentFile
 from .models import Complain
 
 User = get_user_model()
-
+#testes
 class ComplainViewsTestCase(TestCase):
     """
     Test case untuk semua view yang terkait dengan Complain,
