@@ -37,7 +37,7 @@
               <img src="{{ user.photo.url }}" alt="avatar"
                   class="w-10 h-10 rounded-full object-cover border-2 border-white">
               {% else %}
-              <img src="https://via.placeholder.com/40" alt="avatar"
+              <img src="{% static 'images/placeholder.png' %}" alt="avatar"
                   class="w-10 h-10 rounded-full object-cover border-2 border-white">
               {% endif %}
           </button>
