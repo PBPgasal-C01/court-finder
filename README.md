@@ -29,7 +29,7 @@ https://tristan-rasheed-court-finder.pbp.cs.ui.ac.id/
 
 ## 🎨 Link Design
 
-https://www.figma.com/files/team/1524494717202079809/project/458189772/TK-PBP?fuid=1524494714553143203
+https://www.figma.com/design/PdASDdg1WngWONePYMoFxW/Design-System?node-id=108-727&t=Isu8lalSrYHcemyl-1
 
 ## 📊 Link Sumber Dataset
 
