@@ -1,60 +1,65 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponseForbidden, JsonResponse
-
+from django.http import JsonResponse
 from .models import Complain
 from .forms import ComplainUserForm, ComplainAdminForm
 from autentikasi.decorators import admin_required
+from django.contrib.auth.views import redirect_to_login
+from django.views.decorators.http import require_POST
 
 def show_guest_complaint(request):
     context = {} 
     return render(request, 'guest_complaint.html', context)
 
-@login_required
 def show_complain(request):
-    if request.method == 'POST':
-        form = ComplainUserForm(request.POST, request.FILES)
-        if form.is_valid():
-            complain = form.save(commit=False)
-            complain.user = request.user
-            complain.save()
-            
-            messages.success(request, 'Your report is sent successfully.')
-            return redirect('complain:show_complain')
-    else:
-        form = ComplainUserForm()
-
+    """
+    Hanya merender template HTML. 
+    Data list akan dimuat secara terpisah oleh AJAX.
+    """
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+    
+    form = ComplainUserForm()
     my_complains = Complain.objects.filter(user=request.user).order_by('-created_at')
+    
     context = {
         'form': form,
         'complains': my_complains,
     }
     return render(request, 'complaint.html', context)
 
-@login_required
-def delete_complain(request, id):
-    complain = get_object_or_404(Complain, pk=id)
-    
-    if complain.user != request.user:
-        return HttpResponseForbidden("You are not allowed to delete your report.")
+@require_POST 
+def create_complain(request):
+    """
+    Menerima data form via AJAX (POST) dan membuat laporan baru.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Authentication required.'}, status=401)
 
-    if complain.status != 'IN REVIEW':
-        messages.error(request, 'Your report is in process. You can\'t delete it.')
-        return redirect('complain:show_complain')
+    form = ComplainUserForm(request.POST, request.FILES)
+    if form.is_valid():
+        complain = form.save(commit=False)
+        complain.user = request.user
+        complain.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Your report is sent successfully.'}, status=201) # 201 Created
+    else:
+         return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
 
-    if request.method == 'POST':
-        complain.delete()
-        messages.success(request, 'Your report is deleted successfully.')
-    
-    return redirect('complain:show_complain')
-
-def show_json(request):
-    complains = Complain.objects.all()
+@login_required(login_url=None) 
+def get_user_complains(request):
+    """
+    Mengambil semua data complain milik user via AJAX (GET)
+    (Ini adalah pengganti 'show_json' kamu)
+    """
+    if not request.user.is_authenticated:
+         return JsonResponse({'status': 'error', 'message': 'Authentication required.'}, status=401)
+         
+    complains = Complain.objects.filter(user=request.user).order_by('-created_at')
     data = [
         {
             'id': str(complain.id),
-            'user_id': complain.user_id,  
             'court_name': complain.court_name,
             'masalah': complain.masalah,
             'deskripsi': complain.deskripsi,
@@ -66,6 +71,32 @@ def show_json(request):
         for complain in complains
     ]
     return JsonResponse(data, safe=False)
+
+@require_POST  
+@login_required 
+def delete_complain(request, id):
+    is_ajax = 'application/json' in request.headers.get('Accept', '')
+
+    try:
+        complain = get_object_or_404(Complain, id=id, user=request.user)
+        complain.delete()
+        return JsonResponse({'status': 'success', 'message': 'Laporan berhasil dihapus.'}, status=200)
+
+    except Complain.DoesNotExist:
+        message = 'Laporan tidak ditemukan atau Anda tidak memiliki izin.'
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'message': message}, status=404)
+        else:
+            messages.error(request, message)
+            return redirect('complain:show_complain')
+    
+    except Exception as e:
+        message = f'Terjadi kesalahan: {str(e)}'
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'message': message}, status=500)
+        else:
+            messages.error(request, message)
+            return redirect('complain:show_complain')
 
 @login_required
 @admin_required 
