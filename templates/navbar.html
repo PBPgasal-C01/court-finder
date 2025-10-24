@@ -18,12 +18,12 @@
       <a href="{% url 'manage_court:show_manage_court' %}" class="hover:text-gray-200 transition">Manage Court</a>
       {% if user.is_authenticated %}
         {% if user.is_superuser or user.is_staff %}
-          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">complaint</a>
+          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Complaint</a>
         {% else %}
-          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">complaint</a>
+          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
         {% endif %}
       {% else %}
-        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">complaint</a>
+        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
       {% endif %}
       </div>
 
@@ -89,11 +89,20 @@
   <div id="mobile-menu" class="hidden md:hidden border-t border-[#4F6C4F] text-sm bg-[#698C6A]">
     <div class="flex flex-col items-center py-3 space-y-2">
       <a href="{% url 'main:show_main' %}" class="hover:text-gray-200 transition">Home</a>
-      <a href="#" class="hover:text-gray-200 transition">Finder</a>
+      <a href="{% url 'court_filter:court_finder' %}" class="hover:text-gray-200 transition">Finder</a>
       <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
       <a href="{% url 'game_scheduler:event_list' %}" class="hover:text-gray-200 transition">Game Scheduler</a>
       <a href="{% url 'manage_court:show_manage_court' %}" class="hover:text-gray-200 transition">Manage Court</a>
-      <a href="#" class="hover:text-gray-200 transition">Complaint</a>
+      {% if user.is_authenticated %}
+        {% if user.is_superuser or user.is_staff %}
+          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Complaint</a>
+        {% else %}
+          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
+        {% endif %}
+      {% else %}
+        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Complaint</a>
+      {% endif %}
+      </div>
 
       {% if user.is_authenticated %}
         <div class="flex flex-col items-center gap-2 pt-2">
