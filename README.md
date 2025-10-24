@@ -10,7 +10,7 @@
 
 ## 📝 Deskripsi
 
-**Court Finder** adalah aplikasi yang membantu masyarakat umum menemukan dan memantau ketersediaan fasilitas/lapangan olahraga terdekat secara real-time, menjawab kesulitan pemain kasual maupun komunitas yang sering harus datang langsung atau bergantung pada informasi tercecer di internet maupun grup chat. Selain menampilkan lokasi, aplikasi juga memberikan detail kondisi lapangan (indoor/outdoor, gratis/berbayar, material lantai,dll), status aktivitas (ada orang main atau kosong), serta memungkinkan pengguna menjadwalkan permainan, memberi ulasan, menulis artikel blog, dan melaporkan masalah lapangan jika ada.
+**Court Finder** adalah aplikasi yang membantu masyarakat umum menemukan dan memantau ketersediaan fasilitas/lapangan olahraga terdekat secara real-time, menjawab kesulitan pemain kasual maupun komunitas yang sering harus datang langsung atau bergantung pada informasi tercecer di internet maupun grup chat. Selain menampilkan lokasi, aplikasi juga memberikan detail kondisi lapangan (indoor/outdoor, gratis/berbayar, material lantai,dll), status aktivitas (ada orang main atau kosong), serta memungkinkan pengguna menjadwalkan permainan, melihat artikel blog, dan melaporkan masalah lapangan jika ada.
 
 ## 👥 Data Kelompok
 
@@ -73,9 +73,9 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 
 - **CRUD Blog:** Pengguna dapat melihat dan menambahkan ke favourite dan juga menshare link dari artikel, admin dapat membuat, mengedit dan menghapus artikel.
 
-|                | Guest                                 | Registered User                                                        | Admin                                                      |
-| -------------- | ------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Peran Pengguna | Dapat melihat artikel dan share link. | Dapat melihat dan menambahkan ke my favourite artikel juga share link. | Dapat membuat, mengedit dan menghapus artikel tanpa batas. |
+|                | Guest                                 | Registered User                                                                            | Admin                                                                                    |
+| -------------- | ------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Peran Pengguna | Dapat melihat artikel dan share link. | Semua fitur Guest + Dapat melihat dan menambahkan ke my favourite artikel juga share link. | Semua fitur Registered User + Dapat membuat, mengedit dan menghapus artikel tanpa batas. |
 
 ---
 
