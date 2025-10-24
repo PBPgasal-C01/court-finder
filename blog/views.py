@@ -37,6 +37,7 @@ def post_list(request):
 			'posts': posts,
 			'is_admin': is_admin_flag,
 			'fav_post_ids': fav_post_ids,
+			'show_favs': show_favs,
 		})
 
 	return render(request, 'list.html', {

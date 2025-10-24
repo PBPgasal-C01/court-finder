@@ -45,7 +45,15 @@
   {% empty %}
     <div class="col-span-full flex flex-col items-center justify-center text-center py-12">
       <img src="{% static 'images/cflogo2.png' %}" alt="No posts" class="w-28 h-28 object-contain mb-4 opacity-80" />
-      <p class="text-gray-500 font-medium">No posts found</p>
+      {% if show_favs and not user.is_authenticated %}
+        <p class="text-gray-700 font-semibold mb-4">You have to log in to add to My Favourites</p>
+        <a href="{% url 'autentikasi:login' %}"
+           class="inline-flex items-center justify-center gap-2 bg-[#698C6A] text-white text-sm font-semibold px-4 py-2 rounded-md shadow hover:bg-[#55735a]">
+          Go to Login
+        </a>
+      {% else %}
+        <p class="text-gray-500 font-medium">No posts found</p>
+      {% endif %}
     </div>
   {% endfor %}
 </div>
