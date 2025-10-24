@@ -10,26 +10,26 @@
     </a>
 
     <!-- Center: Desktop Menu -->
-    <div class="col-span-12 md:col-span-6 hidden md:flex justify-center items-center gap-8 text-sm font-semibold">
+    <div class="col-span-12 md:col-span-6 hidden md:flex justify-center items-center gap-4 text-sm font-semibold">
+    
       <a href="{% url 'main:show_main' %}" class="hover:text-gray-200 transition">Home</a>
       <a href="#" class="hover:text-gray-200 transition">Finder</a>
       <a href="{% url 'blog:list' %}" class="hover:text-gray-200 transition">Blog</a>
-      <a href="#" class="hover:text-gray-200 transition">Game Scheduler</a>
-      <a href="#" class="hover:text-gray-200 transition">Manage Court</a>
-      {% if user.is_authenticated %}
-        {% if user.is_superuser or user.is_staff %}
-          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Report</a>
-        {% else %}
-          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Report</a>
-        {% endif %}
-      {% else %}
-        <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Report</a>
-      {% endif %}
-      </div>
+      
       <a href="{% url 'game_scheduler:event_list' %}" class="hover:text-gray-200 transition">Game Scheduler</a>
       <a href="{% url 'manage_court:show_manage_court' %}" class="hover:text-gray-200 transition">Manage Court</a>
-      <a href="#" class="hover:text-gray-200 transition">Complain</a>
-    </div>
+      
+      {% if user.is_authenticated %}
+          {% if user.is_superuser or user.is_staff %}
+          <a href="{% url 'complain:admin_dashboard' %}" class="hover:text-gray-200 transition">Report</a>
+          {% else %}
+          <a href="{% url 'complain:show_complain' %}" class="hover:text-gray-200 transition">Report</a>
+          {% endif %}
+      {% else %}
+          <a href="{% url 'complain:guest_complain' %}" class="hover:text-gray-200 transition">Report</a>
+      {% endif %}
+
+  </div>
 
     <!-- Right: Auth -->
     <div class="col-span-6 md:col-span-3 flex justify-end items-center gap-3 relative">
