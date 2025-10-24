@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from .models import Complain
 
 User = get_user_model()
-
+#testes
 class ComplainViewsTestCase(TestCase):
     """
     Test case untuk semua view yang terkait dengan Complain,
