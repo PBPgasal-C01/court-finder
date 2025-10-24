@@ -9,6 +9,7 @@ from .models import Court, Bookmark, Province
 from django.core.cache import cache
 import requests
 from court_filter.utils import haversine_distance, is_in_indonesia, geocode_address
+import uuid
 
 User = get_user_model()
 
@@ -292,7 +293,9 @@ class CourtFinderViewTests(APITestCase):
     def test_toggle_bookmark_invalid_court(self):
         """Tes bookmark (POST/DELETE) untuk court ID yang tidak ada."""
         self.client.force_login(self.user)
-        url = reverse('court_filter:toggle_bookmark', kwargs={'court_id': 9999})
+        invalid_uuid = uuid.uuid4() 
+
+        url = reverse('court_filter:toggle_bookmark', kwargs={'court_id': invalid_uuid})
         
         response_post = self.client.post(url, format='json')
         response_delete = self.client.delete(url, format='json')

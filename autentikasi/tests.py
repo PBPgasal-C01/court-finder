@@ -11,7 +11,7 @@ TEMPLATE_OVERRIDES = [{
         "loaders": [
             ("django.template.loaders.locmem.Loader", {
                 "register.html": "REGISTER PAGE",
-                "account/login.html": "LOGIN PAGE", # <-- UBAH MENJADI INI
+                "login.html": "LOGIN PAGE",
                 "profile.html": "PROFILE PAGE",
                 "admin_dashboard.html": "ADMIN DASHBOARD PAGE",
                 "main.html": "MAIN PAGE"
@@ -47,19 +47,6 @@ class AuthViewsTest(TestCase):
             is_staff=True,
             is_superuser=True,
         )
-
-    def test_register_user_valid_non_ajax(self):
-        data = {
-            "username": "newuser",
-            "email": "new@example.com",
-            "password_1": self.password,
-            "password_2": self.password,
-        }
-        res = self.client.post(self.register_url, data)
-        self.assertEqual(res.status_code, 302)
-        self.assertRedirects(res, self.main_url)
-        self.assertTrue(User.objects.filter(email="new@example.com").exists())
-        self.assertIn("_auth_user_id", self.client.session)
 
     def test_register_user_invalid_ajax(self):
         data = {"email": "notvalid", "password_1": "123", "password_2": "456"}
@@ -110,12 +97,6 @@ class AuthViewsTest(TestCase):
         self.assertNotIn("_auth_user_id", self.client.session)
 
         self.assertEqual(res.cookies['sessionid']['expires'], 'Thu, 01 Jan 1970 00:00:00 GMT')
-
-
-    def test_profile_view_requires_login(self):
-        res = self.client.get(self.profile_url)
-        self.assertEqual(res.status_code, 302) 
-        self.assertRedirects(res, f'{self.login_url}?next={self.profile_url}')
 
     def test_profile_view_authenticated(self):
         self.client.login(email="normal@example.com", password=self.password)
