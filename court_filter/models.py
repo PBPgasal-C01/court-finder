@@ -5,6 +5,15 @@ import uuid
 
 User = get_user_model()
 
+class Facility(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Facility")
+
+    class Meta:
+        verbose_name_plural = "Facilities" 
+    
+    def __str__(self):
+        return self.name
+
 class Province(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Nama Provinsi")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -20,10 +29,16 @@ class Province(models.Model):
 class Court(models.Model):
     COURT_TYPES = [
         ('basketball', 'Basketball'),
+        ('futsal', 'Futsal'),
         ('badminton', 'Badminton'),
         ('tennis', 'Tennis'),
+        ('baseball', 'Baseball'),
         ('volleyball', 'Volleyball'),
-        ('futsal', 'Futsal'),
+        ('padel', 'Padel'),
+        ('golf', 'Golf'),
+        ('football', 'Football'),
+        ('softball', 'Softball'),
+        ('other', 'Other'),
     ]
     
     LOCATION_TYPES = [
@@ -43,6 +58,7 @@ class Court(models.Model):
                                          verbose_name="Harga per Jam (Rp)")
     phone_number = models.CharField(max_length=20, verbose_name="Nomor Telepon")
     description = models.TextField(blank=True, null=True, verbose_name="Deskripsi")
+    facilities = models.ManyToManyField(Facility, blank=True, verbose_name="Facilities")
     
     provinces = models.ManyToManyField(Province, related_name='courts', verbose_name="Provinsi")
     
