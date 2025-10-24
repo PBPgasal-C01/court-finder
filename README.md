@@ -2,6 +2,8 @@
 
 # Court Finder
 
+<img src="static/images/cflogo2.png" alt="Court Finder Logo" width="140" />
+
 ### _Temukan Lapangan Terdekat dengan Mudah_
 
 </div>
@@ -73,9 +75,9 @@ https://docs.google.com/document/d/1XPr0RdUumJm2YWlrm4AMsrK8ALj-I9bUs48UgpPLh5M/
 
 - **CRUD Blog:** Pengguna dapat melihat dan menambahkan ke favourite dan juga share link dari artikel, admin dapat membuat, mengedit dan menghapus artikel.
 
-|                | Guest                                 | Registered User                                                                            | Admin                                                                                    |
-| -------------- | ------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| Peran Pengguna | Dapat melihat artikel dan share link. | Semua fitur Guest + Dapat melihat dan menambahkan ke my favourite artikel juga share link. | Semua fitur Registered User + Dapat membuat, mengedit dan menghapus artikel tanpa batas. |
+|                | Guest                                 | Registered User                                                                                              | Admin                                                                                    |
+| -------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Peran Pengguna | Dapat melihat artikel dan share link. | Semua fitur Guest + Dapat melihat artikel favourite dan menambahkan ke my favourite artikel juga share link. | Semua fitur Registered User + Dapat membuat, mengedit dan menghapus artikel tanpa batas. |
 
 ---
 
