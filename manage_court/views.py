@@ -123,3 +123,38 @@ def edit_court_ajax(request, pk):
             'status': 'error',
             'errors': form.errors
         }, status=400)
+        
+ 
+@login_required 
+@require_GET
+def get_all_my_courts_json(request):
+    """
+    Mengembalikan daftar semua lapangan milik pengguna yang sedang login dalam format JSON.
+    """
+    try:
+        courts_queryset = Court.objects.filter(owner=request.user).select_related('province')
+        
+        courts_list = []
+        for court in courts_queryset:
+            courts_list.append({
+                'pk': court.pk,
+                'name': court.name,
+                'address': court.address,
+                'description': court.description, 
+                'court_type': court.court_type,
+                'operational_hours': court.operational_hours,
+                'price_per_hour': float(court.price_per_hour), 
+                'phone_number': court.phone_number,
+                'province': court.province.name if court.province else None, 
+                'latitude': float(court.latitude) if court.latitude is not None else None, 
+                'longitude': float(court.longitude) if court.longitude is not None else None, 
+                'photo_url': court.photo.url if court.photo else None,
+                
+                'facilities': list(court.facilities.values_list('pk', flat=True)) 
+            })
+            
+        # 3. JsonResponse: safe=False boleh saja, tapi lebih baik kembalikan dict
+        return JsonResponse({'status': 'success', 'courts': courts_list}) 
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

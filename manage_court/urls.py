@@ -12,4 +12,5 @@ urlpatterns = [
     path('delete/<int:pk>/', views.delete_court, name='delete_court'),
     path('get_court_data/<int:pk>/', views.get_court_data, name='get_court_data'), 
     path('edit_court_ajax/<int:pk>/', views.edit_court_ajax, name='edit_court_ajax'),
+    path('get-all-json/', views.get_all_my_courts_json, name='get_all_my_courts_json'),
 ]
