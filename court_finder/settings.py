@@ -37,12 +37,20 @@ SECRET_KEY = 'django-insecure-!+v8uv($r4p8h&5kn_ra)e%zb_il%24r(u9e*w+@3$o!80h(1_
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1","tristan-rasheed-court-finder.pbp.cs.ui.ac.id"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1","tristan-rasheed-court-finder.pbp.cs.ui.ac.id", "10.0.2.2"]
 CSRF_TRUSTED_ORIGINS = [
     "https://tristan-rasheed-court-finder.pbp.cs.ui.ac.id",
     "http://localhost",
     "http://127.0.0.1",
+    "http://10.0.2.2",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
 
 # Application definition
 
@@ -67,6 +75,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'game_scheduler',
     'django.contrib.humanize',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -80,6 +89,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
