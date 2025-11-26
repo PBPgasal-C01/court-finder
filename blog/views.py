@@ -49,8 +49,35 @@ def post_list(request):
 	})
 
 
+def _serialize_post(post: BlogPost):
+	"""Helper to convert BlogPost instance to dict for JSON."""
+	return {
+		'id': post.pk,
+		'title': post.title,
+		'author': post.author,
+		'content': post.content,
+		'thumbnail_url': post.thumbnail_url,
+		'created_at': post.created_at.isoformat() if getattr(post, 'created_at', None) else None,
+		'reading_time': getattr(post, 'reading_time', None),
+	}
+
+
+def api_post_list(request):
+	"""Return all blog posts as JSON list for Flutter app."""
+	q = request.GET.get('q', '').strip()
+	posts = BlogPost.objects.all()
+	if q:
+		posts = posts.filter(title__icontains=q)
+	data = [_serialize_post(p) for p in posts.order_by('-created_at')]
+	return JsonResponse(data, safe=False)
+
+
 def post_detail(request, pk: int):
 	post = get_object_or_404(BlogPost, pk=pk)
+
+	if 'application/json' in request.META.get('HTTP_ACCEPT', ''):
+		return JsonResponse(_serialize_post(post))
+
 	is_admin_flag = is_admin(request.user)
 	# Base: exclude current post
 	others_qs = BlogPost.objects.exclude(pk=pk)
@@ -70,8 +97,28 @@ def post_detail(request, pk: int):
 	})
 
 
+def api_post_detail(request, pk: int):
+	"""Return single blog post as JSON for Flutter app."""
+	post = get_object_or_404(BlogPost, pk=pk)
+	return JsonResponse(_serialize_post(post))
+
+
 @login_required
 def toggle_favorite(request, pk: int):
+	if request.method != 'POST':
+		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
+	post = get_object_or_404(BlogPost, pk=pk)
+	fav, created = Favorite.objects.get_or_create(user=request.user, post=post)
+	if not created:
+		fav.delete()
+		return JsonResponse({'ok': True, 'favorited': False})
+	else:
+		return JsonResponse({'ok': True, 'favorited': True})
+
+
+@login_required
+def api_toggle_favorite(request, pk: int):
+	"""JSON-only favorite toggle for Flutter app."""
 	if request.method != 'POST':
 		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
 	post = get_object_or_404(BlogPost, pk=pk)
@@ -115,7 +162,7 @@ def post_create(request):
 				return JsonResponse({'ok': True, 'redirect': post.get_absolute_url()})
 			return redirect(post.get_absolute_url())
 		else:
-			# surface errors so user sees what's wrong
+			# surface errors so user sees whats wrong
 			messages.error(request, f"Please fix the errors below: {form.errors.as_text()}")
 			if request.headers.get('x-requested-with') == 'XMLHttpRequest':
 				return JsonResponse({'ok': False, 'errors': form.errors}, status=400)

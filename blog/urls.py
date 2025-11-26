@@ -5,6 +5,10 @@ urlpatterns = [
     path('', views.post_list, name='list'),
     path('post/<int:pk>/', views.post_detail, name='detail'),
     path('post/<int:pk>/toggle-favorite/', views.toggle_favorite, name='toggle_favorite'),
+    # Flutter / API endpoints (JSON)
+    path('api/posts/', views.api_post_list, name='api_post_list'),
+    path('api/posts/<int:pk>/', views.api_post_detail, name='api_post_detail'),
+    path('api/posts/<int:pk>/favorite/', views.api_toggle_favorite, name='api_toggle_favorite'),
     path('admin/new/', views.post_create, name='create'),
     path('admin/<int:pk>/edit/', views.post_update, name='update'),
     path('admin/<int:pk>/delete/', views.post_delete, name='delete'),
