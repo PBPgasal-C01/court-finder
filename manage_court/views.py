@@ -65,6 +65,7 @@ def get_court_data(request, pk):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+@csrf_exempt
 @login_required 
 def add_court_ajax(request):
     if request.method == 'POST':
@@ -81,6 +82,7 @@ def add_court_ajax(request):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
+@csrf_exempt
 @login_required 
 def delete_court(request, pk):
     if request.method == 'POST':
@@ -95,6 +97,7 @@ def delete_court(request, pk):
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request method for deletion.'}, status=405)
 
+@csrf_exempt
 @login_required 
 @require_POST
 def edit_court_ajax(request, pk):
