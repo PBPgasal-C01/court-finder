@@ -6,6 +6,12 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST, require_GET
+from .models import Province, Facility, Court
+import json
+from django.http import JsonResponse
+import base64
+from django.core.files.base import ContentFile
+
 # Create your views here.
 
 def show_manage_court(request):
@@ -161,3 +167,121 @@ def get_all_my_courts_json(request):
         
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+    
+@csrf_exempt # Aman karena cuma GET data umum
+@require_GET
+def get_court_constants(request):
+    """
+    Mengirimkan daftar pilihan untuk Dropdown/Checkbox di Flutter:
+    1. Provinces (untuk Dropdown)
+    2. Facilities (untuk Checkbox)
+    3. Sport Types (untuk Dropdown)
+    """
+    try:
+        # 1. Ambil semua Province (ID dan Nama)
+        provinces = list(Province.objects.values('pk', 'name').order_by('name'))
+        
+        # 2. Ambil semua Facility (ID dan Nama)
+        facilities = list(Facility.objects.values('pk', 'name').order_by('name'))
+        
+        # 3. Ambil Sport Types (dari choices di Model Court)
+        # Format di Django: [('futsal', 'Futsal'), ...] -> Kita ubah jadi list of dict
+        sport_types = [{'value': item[0], 'label': item[1]} for item in Court.SPORT_TYPES]
+
+        return JsonResponse({
+            'status': 'success',
+            'provinces': provinces,
+            'facilities': facilities,
+            'sport_types': sport_types,
+        })
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@csrf_exempt
+def create_court_flutter(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            # Buat object Court baru
+            new_court = Court.objects.create(
+                owner=request.user, # Pastikan user sudah login
+                name=data['name'],
+                address=data['address'],
+                price_per_hour=float(data['price']),
+                court_type=data['sport_type'],
+                province=Province.objects.get(pk=int(data['province'])),
+                operational_hours=data.get('operational_hours', ''), 
+                phone_number=data.get('phone_number', ''),
+                description=data.get('description', ''),
+            )
+            
+            if 'image' in data and data['image']:
+                try:
+                    # Format data dari Flutter biasanya: "data:image/jpeg;base64,/9j/4AAQSk..."
+                    # Kita butuh bagian setelah koma
+                    format, imgstr = data['image'].split(';base64,') 
+                    ext = format.split('/')[-1] # ambil 'jpeg' atau 'png'
+                    
+                    # Decode dan simpan
+                    data_img = ContentFile(base64.b64decode(imgstr), name=f"{new_court.name}_photo.{ext}")
+                    new_court.photo = data_img
+                    new_court.save()
+                except Exception as e:
+                    print(f"Error saving image: {e}")
+
+            # Tambahkan Fasilitas (Many-to-Many)
+            for facility_id in data['facilities']:
+                facility = Facility.objects.get(pk=int(facility_id))
+                new_court.facilities.add(facility)
+
+            new_court.save()
+
+            return JsonResponse({"status": "success", "message": "Court created successfully!"})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+# manage_court/views.py
+
+@csrf_exempt
+def edit_court_flutter(request, id):
+    if request.method == 'POST':
+        try:
+            # 1. Cari court berdasarkan ID
+            court = Court.objects.get(pk=id)
+            
+            # 2. Baca data baru dari JSON
+            data = json.loads(request.body)
+
+            # 3. Update field standar
+            court.name = data['name']
+            court.address = data['address']
+            court.price_per_hour = float(data['price'])
+            court.court_type = data['sport_type']
+            court.province = Province.objects.get(pk=int(data['province']))
+            
+            # Update field tambahan
+            court.operational_hours = data.get('operational_hours', '')
+            court.phone_number = data.get('phone_number', '')
+            court.description = data.get('description', '')
+
+            # 4. Update Fasilitas (Hapus yang lama, masukkan yang baru)
+            court.facilities.clear() # Hapus relasi lama
+            for facility_id in data['facilities']:
+                facility = Facility.objects.get(pk=int(facility_id))
+                court.facilities.add(facility)
+
+            court.save()
+
+            return JsonResponse({"status": "success", "message": "Court updated successfully!"})
+        except Court.DoesNotExist:
+             return JsonResponse({"status": "error", "message": "Court not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
