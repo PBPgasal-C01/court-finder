@@ -9,6 +9,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 import json
+from google.oauth2 import id_token
+from google.auth.transport import requests
+import os
+from django.core.files.base import ContentFile
 
 def register_user(request):
     """Registrasi user baru (role default: user) dengan dukungan AJAX."""
@@ -156,6 +160,11 @@ def delete_user(request, user_id):
 
     target.delete()
     return JsonResponse({'status': 'success', 'message': 'User deleted'})
+
+
+
+
+# ------------------------------------------------- FLUTTER ---------------------------------------------------------
 
 @csrf_exempt
 def login_flutter(request):
@@ -361,3 +370,76 @@ def delete_user_flutter(request):
     target.delete()
     return JsonResponse({'status': 'success', 'message': 'User deleted'})
 
+@csrf_exempt
+def google_mobile_login(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+
+    id_token_str = request.POST.get("id_token")
+    if not id_token_str:
+        return JsonResponse({"error": "Missing token"}, status=400)
+
+    try:
+        decoded = id_token.verify_oauth2_token(
+            id_token_str,
+            requests.Request(),
+            os.getenv("GOOGLE_CLIENT_ID")
+        )
+
+        email = decoded.get("email")
+        name = decoded.get("name", "")
+        picture_url = decoded.get("picture")
+
+        if not email:
+            return JsonResponse({"error": "Google email missing"}, status=400)
+
+        username = email.split("@")[0]
+
+        # Create or get user
+        user, created = CourtUser.objects.get_or_create(
+            email=email,
+            defaults={
+                "username": username,
+                "role": "user",
+                "preference": "Both",
+            }
+        )
+
+        # --- UPDATE USER DETAILS FROM GOOGLE ---
+        if name:
+            parts = name.split(" ")
+            user.first_name = parts[0]
+            user.last_name = " ".join(parts[1:]) if len(parts) > 1 else ""
+
+        # --- DOWNLOAD AND SAVE PROFILE PICTURE ---
+        if picture_url:
+            try:
+                resp = requests.get(picture_url)
+                if resp.status_code == 200:
+                    user.photo.save(
+                        f"{username}_google.jpg",
+                        ContentFile(resp.content),
+                        save=False,
+                    )
+            except Exception as e:
+                print(f"⚠ Failed to download Google photo: {e}")
+
+        # Set default preference if empty
+        if not user.preference:
+            user.preference = "indoor"
+
+        user.save()
+
+        # Log user in
+        login(request, user)
+
+        return JsonResponse({
+            "status": "success",
+            "email": user.email,
+            "username": user.username,
+            "photo_url": user.photo.url if user.photo else None,
+            "created": created,
+        })
+
+    except ValueError:
+        return JsonResponse({"error": "Invalid Google token"}, status=400)
