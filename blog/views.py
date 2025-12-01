@@ -130,6 +130,13 @@ def api_toggle_favorite(request, pk: int):
 		return JsonResponse({'ok': True, 'favorited': True})
 
 
+@login_required
+def api_get_favorites(request):
+	"""Return list of user's favorite post IDs for Flutter app."""
+	fav_ids = list(Favorite.objects.filter(user=request.user).values_list('post_id', flat=True))
+	return JsonResponse({'favorite_ids': fav_ids})
+
+
 class BlogPostForm(forms.ModelForm):
 	class Meta:
 		model = BlogPost
