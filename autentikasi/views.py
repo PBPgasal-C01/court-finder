@@ -9,10 +9,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 import json
+import os, requests as req
+from django.core.files.base import ContentFile
 from google.oauth2 import id_token
 from google.auth.transport import requests
-import os
-from django.core.files.base import ContentFile
 
 def register_user(request):
     """Registrasi user baru (role default: user) dengan dukungan AJAX."""
@@ -258,18 +258,35 @@ def current_user(request):
 @csrf_exempt
 @login_required
 def edit_profile(request):
-    if request.method == "POST":
-        user = request.user
-        data = json.loads(request.body)
+    if request.method != 'POST':
+        return JsonResponse({"error": "Invalid method"}, status=400)
 
-        user.username = data.get("username", user.username)
-        user.email = data.get("email", user.email)
-        user.preference = data.get("preference", user.preference)
-        user.save()
+    user = request.user
 
-        return JsonResponse({"status": "success", "message": "Profile updated"})
-    
-    return JsonResponse({"error": "Invalid method"}, status=400)
+    # FORM-DATA (multipart)
+    username = request.POST.get("username", user.username)
+    email = request.POST.get("email", user.email)
+    preference = request.POST.get("preference", user.preference)
+    photo_file = request.FILES.get("photo")
+
+    user.username = username
+    user.email = email
+    user.preference = preference
+
+    # Jika ada foto baru → replace
+    if photo_file:
+        user.photo = photo_file
+
+    user.save()
+
+    return JsonResponse({
+        "status": "success",
+        "message": "Profile updated",
+        "username": user.username,
+        "email": user.email,
+        "preference": user.preference,
+        "photo_url": user.photo.url if user.photo else None
+    })
 
 @csrf_exempt
 def logout_flutter(request):
@@ -375,27 +392,27 @@ def google_mobile_login(request):
     if request.method != "POST":
         return JsonResponse({"error": "Invalid method"}, status=405)
 
-    id_token_str = request.POST.get("id_token")
-    if not id_token_str:
-        return JsonResponse({"error": "Missing token"}, status=400)
+    token = request.POST.get("id_token")
+    if not token:
+        return JsonResponse({"error": "Missing id_token"}, status=400)
 
     try:
+        # 1) verify google id token
         decoded = id_token.verify_oauth2_token(
-            id_token_str,
+            token,
             requests.Request(),
-            os.getenv("GOOGLE_CLIENT_ID")
+            os.getenv("GOOGLE_CLIENT_ID_FLUTTER")   # MUST match your serverClientId in Flutter
         )
 
         email = decoded.get("email")
         name = decoded.get("name", "")
-        picture_url = decoded.get("picture")
-
-        if not email:
-            return JsonResponse({"error": "Google email missing"}, status=400)
-
+        picture = decoded.get("picture")  # google profile picture URL
         username = email.split("@")[0]
 
-        # Create or get user
+        if not email:
+            return JsonResponse({"error": "Email missing from Google token"}, status=400)
+
+        # 2) create or get user if exist
         user, created = CourtUser.objects.get_or_create(
             email=email,
             defaults={
@@ -405,41 +422,41 @@ def google_mobile_login(request):
             }
         )
 
-        # --- UPDATE USER DETAILS FROM GOOGLE ---
+        # update name 
         if name:
             parts = name.split(" ")
             user.first_name = parts[0]
             user.last_name = " ".join(parts[1:]) if len(parts) > 1 else ""
 
-        # --- DOWNLOAD AND SAVE PROFILE PICTURE ---
-        if picture_url:
+        # update profile pic
+        if picture:
             try:
-                resp = requests.get(picture_url)
-                if resp.status_code == 200:
-                    user.photo.save(
-                        f"{username}_google.jpg",
-                        ContentFile(resp.content),
-                        save=False,
-                    )
+                r = req.get(picture)
+                if r.status_code == 200:
+                    # avoid double saving the same file
+                    user.photo.save(f"{username}_google.jpg", ContentFile(r.content), save=False)
             except Exception as e:
-                print(f"⚠ Failed to download Google photo: {e}")
+                print("⚠ Failed downloading Google photo:", e)
 
-        # Set default preference if empty
+        # defaul court preference
         if not user.preference:
-            user.preference = "indoor"
+            user.preference = "Both"
 
         user.save()
 
-        # Log user in
-        login(request, user)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
         return JsonResponse({
             "status": "success",
+            "created": created,
             "email": user.email,
             "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "preference": user.preference,
             "photo_url": user.photo.url if user.photo else None,
-            "created": created,
         })
 
-    except ValueError:
-        return JsonResponse({"error": "Invalid Google token"}, status=400)
+    except Exception as e:
+        print("🔥 GOOGLE VERIFY ERROR:", e)
+        return JsonResponse({"error": "Invalid Google token", "detail": str(e)}, status=400)
