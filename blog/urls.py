@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/posts/<int:pk>/', views.api_post_detail, name='api_post_detail'),
     path('api/posts/<int:pk>/favorite/', views.api_toggle_favorite, name='api_toggle_favorite'),
     path('api/favorites/', views.api_get_favorites, name='api_get_favorites'),
+    path('api/favorites/posts/', views.api_get_favorites_posts, name='api_get_favorites_posts'),
     path('admin/new/', views.post_create, name='create'),
     path('admin/<int:pk>/edit/', views.post_update, name='update'),
     path('admin/<int:pk>/delete/', views.post_delete, name='delete'),

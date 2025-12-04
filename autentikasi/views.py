@@ -159,18 +159,34 @@ def delete_user(request, user_id):
 
 @csrf_exempt
 def login_flutter(request):
-    username = request.POST['username']
-    password = request.POST['password']
-    user = authenticate(username=username, password=password)
+    # Support both form and JSON payloads; accept either 'email' or 'username'
+    email = request.POST.get('email') or request.POST.get('username')
+    password = request.POST.get('password')
+
+    # Fallback to JSON body if form fields are missing
+    if (email is None or password is None) and request.body:
+        try:
+            data = json.loads(request.body)
+            email = email or data.get('email') or data.get('username')
+            password = password or data.get('password')
+        except Exception:
+            pass
+
+    if not email or not password:
+        return JsonResponse({
+            "status": False,
+            "message": "Missing email/username or password."
+        }, status=400)
+
+    # Since USERNAME_FIELD = 'email', pass email into 'username' param of authenticate
+    user = authenticate(username=email, password=password)
     if user is not None:
         if user.is_active:
             login(request, user)
-            # Login status successful.
             return JsonResponse({
                 "username": user.username,
                 "status": True,
                 "message": "Login successful!"
-                # Add other data if you want to send data to Flutter.
             }, status=200)
         else:
             return JsonResponse({
@@ -178,11 +194,10 @@ def login_flutter(request):
                 "message": "Login failed, account is disabled."
             }, status=401)
 
-    else:
-        return JsonResponse({
-            "status": False,
-            "message": "Login failed, please check your username or password."
-        }, status=401)
+    return JsonResponse({
+        "status": False,
+        "message": "Login failed, please check your email/username or password."
+    }, status=401)
     
 @csrf_exempt
 def register_flutter(request):

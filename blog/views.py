@@ -116,9 +116,12 @@ def toggle_favorite(request, pk: int):
 		return JsonResponse({'ok': True, 'favorited': True})
 
 
-@login_required
 def api_toggle_favorite(request, pk: int):
-	"""JSON-only favorite toggle for Flutter app."""
+	"""JSON-only favorite toggle for Flutter app.
+	Returns 401 JSON instead of HTML redirect when unauthenticated.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated'}, status=401)
 	if request.method != 'POST':
 		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
 	post = get_object_or_404(BlogPost, pk=pk)
@@ -130,11 +133,24 @@ def api_toggle_favorite(request, pk: int):
 		return JsonResponse({'ok': True, 'favorited': True})
 
 
-@login_required
 def api_get_favorites(request):
-	"""Return list of user's favorite post IDs for Flutter app."""
+	"""Return list of user's favorite post IDs for Flutter app.
+	Returns 401 JSON instead of redirect when unauthenticated.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated', 'favorite_ids': []}, status=401)
 	fav_ids = list(Favorite.objects.filter(user=request.user).values_list('post_id', flat=True))
-	return JsonResponse({'favorite_ids': fav_ids})
+	return JsonResponse({'ok': True, 'favorite_ids': fav_ids})
+
+def api_get_favorites_posts(request):
+	"""Return full serialized favorite posts for the current user."""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated', 'posts': []}, status=401)
+	fav_post_qs = BlogPost.objects.filter(
+		pk__in=Favorite.objects.filter(user=request.user).values_list('post_id', flat=True)
+	).order_by('-created_at')
+	data = [_serialize_post(p) for p in fav_post_qs]
+	return JsonResponse({'ok': True, 'posts': data})
 
 
 class BlogPostForm(forms.ModelForm):
