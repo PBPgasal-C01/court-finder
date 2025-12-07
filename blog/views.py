@@ -52,14 +52,16 @@ def post_list(request):
 
 def _serialize_post(post: BlogPost):
 	"""Helper to convert BlogPost instance to dict for JSON."""
+	# Clean thumbnail_url from any whitespace/line breaks
+	thumbnail = post.thumbnail_url.strip().replace('\n', '').replace('\r', '').replace(' ', '') if post.thumbnail_url else ''
 	return {
 		'id': post.pk,
 		'title': post.title,
 		'author': post.author,
 		'content': post.content,
-		'thumbnail_url': post.thumbnail_url,
+		'thumbnail_url': thumbnail,
 		'created_at': post.created_at.isoformat() if getattr(post, 'created_at', None) else None,
-		'reading_time': getattr(post, 'reading_time', None),
+		'reading_time': post.reading_time_minutes,
 	}
 
 
@@ -222,7 +224,8 @@ def api_post_create(request):
 	title = data.get('title', '').strip()
 	content = data.get('content', '').strip()
 	author = data.get('author', '').strip()
-	thumbnail_url = data.get('thumbnail_url', '').strip()
+	# Clean thumbnail URL from whitespace, line breaks
+	thumbnail_url = data.get('thumbnail_url', '').strip().replace('\n', '').replace('\r', '').replace(' ', '')
 	
 	if not title:
 		return JsonResponse({'ok': False, 'error': 'Title is required'}, status=400)
