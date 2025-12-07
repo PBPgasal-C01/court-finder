@@ -13,3 +13,4 @@ django-cors-headers
 djangorestframework
 django-widget-tweaks
 django-cors-headers
+google-auth
