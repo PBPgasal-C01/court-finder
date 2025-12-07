@@ -5,6 +5,7 @@ from django import forms
 from django.db.models import Q
 from django.http import JsonResponse
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import BlogPost, Favorite
 
@@ -116,6 +117,7 @@ def toggle_favorite(request, pk: int):
 		return JsonResponse({'ok': True, 'favorited': True})
 
 
+@csrf_exempt
 def api_toggle_favorite(request, pk: int):
 	"""JSON-only favorite toggle for Flutter app.
 	Returns 401 JSON instead of HTML redirect when unauthenticated.
@@ -133,6 +135,7 @@ def api_toggle_favorite(request, pk: int):
 		return JsonResponse({'ok': True, 'favorited': True})
 
 
+@csrf_exempt
 def api_get_favorites(request):
 	"""Return list of user's favorite post IDs for Flutter app.
 	Returns 401 JSON instead of redirect when unauthenticated.
@@ -142,6 +145,7 @@ def api_get_favorites(request):
 	fav_ids = list(Favorite.objects.filter(user=request.user).values_list('post_id', flat=True))
 	return JsonResponse({'ok': True, 'favorite_ids': fav_ids})
 
+@csrf_exempt
 def api_get_favorites_posts(request):
 	"""Return full serialized favorite posts for the current user."""
 	if not request.user.is_authenticated:
@@ -194,6 +198,52 @@ def post_create(request):
 	return render(request, 'form.html', {'form': form, 'action': 'Create', 'action_url': request.path})
 
 
+@csrf_exempt
+def api_post_create(request):
+	"""API endpoint for creating blog post from Flutter.
+	Returns JSON response. Requires admin authentication.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated'}, status=401)
+	
+	if not is_admin(request.user):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+	
+	if request.method != 'POST':
+		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
+	
+	import json
+	try:
+		data = json.loads(request.body)
+	except json.JSONDecodeError:
+		return JsonResponse({'ok': False, 'error': 'Invalid JSON'}, status=400)
+	
+	# Validate required fields
+	title = data.get('title', '').strip()
+	content = data.get('content', '').strip()
+	author = data.get('author', '').strip()
+	thumbnail_url = data.get('thumbnail_url', '').strip()
+	
+	if not title:
+		return JsonResponse({'ok': False, 'error': 'Title is required'}, status=400)
+	if not content:
+		return JsonResponse({'ok': False, 'error': 'Content is required'}, status=400)
+	
+	# Create post
+	post = BlogPost.objects.create(
+		title=title,
+		content=content,
+		author=author or getattr(request.user, 'username', '') or getattr(request.user, 'email', '') or 'Admin',
+		thumbnail_url=thumbnail_url or '',
+	)
+	
+	return JsonResponse({
+		'ok': True,
+		'message': 'Post created successfully',
+		'post': _serialize_post(post)
+	}, status=201)
+
+
 @login_required
 @user_passes_test(is_admin)
 def post_update(request, pk: int):
@@ -229,3 +279,23 @@ def post_delete(request, pk: int):
 			return JsonResponse({'ok': True, 'redirect': reverse('blog:list')})
 		return redirect('blog:list')
 	return render(request, 'confirm_delete.html', {'post': post, 'action_url': request.path})
+
+
+@csrf_exempt
+def api_post_delete(request, pk: int):
+	"""API endpoint for deleting blog post from Flutter.
+	Returns JSON response. Requires admin authentication.
+	Accepts both DELETE and POST methods for compatibility.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated'}, status=401)
+	
+	if not is_admin(request.user):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+	
+	if request.method not in ['DELETE', 'POST']:
+		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
+	
+	post = get_object_or_404(BlogPost, pk=pk)
+	post.delete()
+	return JsonResponse({'ok': True, 'message': 'Post deleted successfully'}, status=200)
