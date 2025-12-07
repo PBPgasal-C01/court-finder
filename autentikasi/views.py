@@ -361,3 +361,11 @@ def delete_user_flutter(request):
     target.delete()
     return JsonResponse({'status': 'success', 'message': 'User deleted'})
 
+@csrf_exempt
+@login_required
+def get_loggedin_user(request):
+    return JsonResponse({
+        "id": request.user.pk,
+        "name": request.user.username,
+    })
+
