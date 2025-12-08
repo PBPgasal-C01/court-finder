@@ -13,4 +13,8 @@ urlpatterns = [
 
     path('admin/', views.admin_dashboard, name='admin_dashboard'),
     path('admin/update_status/<uuid:id>/', views.admin_update_status, name='admin_update_status'),
+
+    path('admin/json/', views.get_all_complaints_json, name='get_all_complaints_json'),
+    path('create-flutter/', views.create_complain_flutter, name='create_complain_flutter'),
+    path('json-flutter/', views.get_complain_json_flutter, name='get_complain_json_flutter'),
 ]
