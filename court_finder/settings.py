@@ -44,6 +44,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1",
     "http://10.0.2.2",
+    "http://192.168.56.1"
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
