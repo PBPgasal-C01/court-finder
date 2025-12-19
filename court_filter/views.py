@@ -156,6 +156,7 @@ def search_courts(request):
                 'phone_number': court.phone_number,
                 'description': court.description,
                 'provinces': [{'id': p.id, 'name': p.name} for p in court.provinces.all()],
+                'facilities': [f.name for f in court.facilities.all()],
                 'is_bookmarked': is_bookmarked,
                 'distance': round(distance, 2)
             })
@@ -177,6 +178,7 @@ def search_courts(request):
                 'phone_number': court.phone_number,
                 'description': court.description,
                 'provinces': [{'id': p.id, 'name': p.name} for p in court.provinces.all()],
+                'facilities': [f.name for f in court.facilities.all()],
                 'is_bookmarked': is_bookmarked,
                 'distance': None
             })
