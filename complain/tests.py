@@ -7,7 +7,6 @@ from django.core.files.base import ContentFile
 from .models import Complain
 
 User = get_user_model()
-#testes
 class ComplainViewsTestCase(TestCase):
     """
     Test case untuk semua view yang terkait dengan Complain,
@@ -187,7 +186,6 @@ class ComplainViewsTestCase(TestCase):
     def test_user_complains_include_foto_url_when_foto_exists(self):
         """Jika complain memiliki foto, get_user_complains harus menyertakan foto_url."""
         self.client.login(email='testuser@example.com', password='password123')
-        # Buat complain baru lalu tambahkan file foto langsung ke model untuk menghindari validasi ImageField pada form
         c = Complain.objects.create(
             user=self.user,
             court_name='Lapangan Dengan Foto',
@@ -200,7 +198,6 @@ class ComplainViewsTestCase(TestCase):
         get_resp = self.client.get(reverse('complain:get_user_complains'), **self.ajax_headers)
         self.assertEqual(get_resp.status_code, 200)
         data = json.loads(get_resp.content)
-        # Cari entry dengan id complain yang baru dibuat dan pastikan foto_url ada
         created_item = next((item for item in data if item['id'] == str(c.id)), None)
         self.assertIsNotNone(created_item)
         self.assertTrue(created_item.get('foto_url'))
@@ -306,7 +303,6 @@ class ComplainViewsTestCase(TestCase):
         """Test admin update status via form POST (non-AJAX)."""
         self.client.login(email='admin@example.com', password='password123')
 
-        # Form-mu butuh semua data agar valid
         form_data = {
             'court_name': self.complain_user.court_name,
             'masalah': self.complain_user.masalah,

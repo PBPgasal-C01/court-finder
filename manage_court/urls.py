@@ -12,4 +12,8 @@ urlpatterns = [
     path('delete/<int:pk>/', views.delete_court, name='delete_court'),
     path('get_court_data/<int:pk>/', views.get_court_data, name='get_court_data'), 
     path('edit_court_ajax/<int:pk>/', views.edit_court_ajax, name='edit_court_ajax'),
+    path('get-all-json/', views.get_all_my_courts_json, name='get_all_my_courts_json'),
+    path('get-constants/', views.get_court_constants, name='get_court_constants'),
+    path('create-flutter/', views.create_court_flutter, name='create_court_flutter'),
+    path('edit-flutter/<int:id>/', views.edit_court_flutter, name='edit_court_flutter'),
 ]

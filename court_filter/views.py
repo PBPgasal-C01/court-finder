@@ -11,6 +11,11 @@ from .serializers import CourtSerializer, ProvinceSerializer
 from .utils import haversine_distance, geocode_address, is_in_indonesia
 from django.shortcuts import get_object_or_404
 from urllib.parse import unquote
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import authentication_classes
+from rest_framework.permissions import AllowAny
+import json
 
 @require_http_methods(["GET"])
 def court_finder(request):
@@ -48,28 +53,56 @@ def geocode_api(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # Tidak melakukan apa-apa (Bypass CSRF)
+
+@csrf_exempt
 @api_view(['POST'])
+@authentication_classes([CsrfExemptSessionAuthentication]) # Biar User Login gak kena blokir CSRF
+@permission_classes([AllowAny])
 def search_courts(request):
     """
     Search courts with dynamic logic:
     - If lat/lon are provided: search by 10km radius.
     - If lat/lon are NOT provided: search by filters across the entire database.
     """
-    # Ambil semua parameter filter dari request
-    provinces = request.data.getlist('provinces[]') or request.data.getlist('provinces')
-    province_name = request.data.get('province') # Untuk dropdown
-    price_min = request.data.get('price_min')
-    price_max = request.data.get('price_max')
-    court_types = request.data.getlist('court_types[]')
-    bookmarked_only = request.data.get('bookmarked_only') == 'true'
+    # FIX: request.data adalah dict, bukan QueryDict
+    # Ambil data dengan .get() untuk single value atau langsung akses untuk list
+    
+    # Untuk court_types yang bisa multiple
+
+    data = request.data
+
+    # Jika request.data kosong (karena masalah Content-Type), coba parse body manual
+    if not data and request.body:
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            pass
+
+    # 1. Ambil court_types
+    court_types_data = data.get('court_types[]') or data.get('court_types') # Pakai 'data', bukan 'request.data'
+    if court_types_data:
+        if isinstance(court_types_data, list):
+            court_types = court_types_data
+        else:
+            court_types = [court_types_data]
+    else:
+        court_types = []
+    
+    # 2. Ambil parameter lain (Gunakan 'data')
+    province_name = data.get('province')
+    price_min = data.get('price_min')
+    price_max = data.get('price_max')
+    bookmarked_only = str(data.get('bookmarked_only')).lower() == 'true'
     
     # Mulai dengan queryset dasar
     queryset = Court.objects.filter(is_active=True)
     
     # --- Terapkan SEMUA filter non-lokasi terlebih dahulu ---
-    # Ini penting untuk memperkecil jumlah data yang akan di-loop nanti
     
-    if province_name: # Untuk dropdown baru
+    if province_name:
         queryset = queryset.filter(provinces__name=province_name)
     
     if price_min:
@@ -80,7 +113,7 @@ def search_courts(request):
     if court_types:
         types_to_search = list(court_types)
         
-        if 'sutsal' in types_to_search:
+        if 'futsal' in types_to_search:
             types_to_search.append('futsal')
         
         if 'other' not in types_to_search:
@@ -89,20 +122,19 @@ def search_courts(request):
     if bookmarked_only and request.user.is_authenticated:
         bookmarked_court_ids = Bookmark.objects.filter(user=request.user).values_list('court_id', flat=True)
         queryset = queryset.filter(id__in=bookmarked_court_ids)
-        
+    
     # --- LOGIKA UTAMA: Cek apakah ini pencarian RADIUS atau FILTER ---
     
     final_courts_data = []
     
-    if 'latitude' in request.data and 'longitude' in request.data:
-        # TIPE 1: PENCARIAN RADIUS (menggunakan loop Python dan haversine)
-        latitude = float(request.data.get('latitude'))
-        longitude = float(request.data.get('longitude'))
+    if 'latitude' in data and 'longitude' in data: # Pakai 'data'
+        latitude = float(data.get('latitude'))
+        longitude = float(data.get('longitude'))
         radius_km = 10
         
         courts_with_distance = []
         for court in queryset:
-            distance = haversine_distance(latitude, longitude, court.latitude, court.longitude)
+            distance = haversine_distance(latitude, longitude, float(court.latitude), float(court.longitude))
             if distance <= radius_km:
                 courts_with_distance.append((court, distance))
         
@@ -113,25 +145,40 @@ def search_courts(request):
         for court, distance in courts_with_distance:
             is_bookmarked = request.user.is_authenticated and Bookmark.objects.filter(user=request.user, court=court).exists()
             final_courts_data.append({
-                'id': court.id, 'name': court.name, 'address': court.address,
-                'court_type': court.court_type, 'latitude': court.latitude, 'longitude': court.longitude,
-                'price_per_hour': court.price_per_hour, 'is_bookmarked': is_bookmarked,
+                'id': str(court.id),  # Convert UUID to string
+                'name': court.name,
+                'address': court.address,
+                'court_type': court.court_type,
+                'location_type': court.location_type,
+                'latitude': float(court.latitude),
+                'longitude': float(court.longitude),
+                'price_per_hour': float(court.price_per_hour),
+                'phone_number': court.phone_number,
+                'description': court.description,
+                'provinces': [{'id': p.id, 'name': p.name} for p in court.provinces.all()],
+                'is_bookmarked': is_bookmarked,
                 'distance': round(distance, 2)
             })
-            
     else:
-        # TIPE 2: PENCARIAN FILTER (tanpa menghitung jarak)
-        # Queryset sudah difilter di atas, tinggal diurutkan
+        # TIPE 2: PENCARIAN FILTER
         queryset = queryset.order_by('name')
         
-        # Siapkan data untuk response
         for court in queryset:
             is_bookmarked = request.user.is_authenticated and Bookmark.objects.filter(user=request.user, court=court).exists()
             final_courts_data.append({
-                'id': court.id, 'name': court.name, 'address': court.address,
-                'court_type': court.court_type, 'latitude': court.latitude, 'longitude': court.longitude,
-                'price_per_hour': court.price_per_hour, 'is_bookmarked': is_bookmarked,
-                'distance': None # Jarak tidak relevan di sini
+                'id': str(court.id),  # Convert UUID to string
+                'name': court.name,
+                'address': court.address,
+                'court_type': court.court_type,
+                'location_type': court.location_type,
+                'latitude': float(court.latitude),
+                'longitude': float(court.longitude),
+                'price_per_hour': float(court.price_per_hour),
+                'phone_number': court.phone_number,
+                'description': court.description,
+                'provinces': [{'id': p.id, 'name': p.name} for p in court.provinces.all()],
+                'is_bookmarked': is_bookmarked,
+                'distance': None
             })
 
     return Response({
@@ -139,45 +186,36 @@ def search_courts(request):
         'count': len(final_courts_data)
     }, status=status.HTTP_200_OK)
 
-@api_view(['POST', 'DELETE'])
+
+@csrf_exempt
+@api_view(['POST']) # Cukup POST saja
+@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([IsAuthenticated])
 def toggle_bookmark(request, court_id):
-    """Toggle bookmark for a court (POST to add, DELETE to remove)"""
     try:
         court = Court.objects.get(id=court_id, is_active=True)
     except Court.DoesNotExist:
-        return Response(
-            {'error': 'Lapangan tidak ditemukan'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-    if request.method == 'POST':
-        bookmark, created = Bookmark.objects.get_or_create(
-            user=request.user,
-            court=court
-        )
-        return Response(
-            {'message': 'Lapangan berhasil di-bookmark', 'bookmarked': True},
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
-        )
-    
-    elif request.method == 'DELETE':
-        deleted, _ = Bookmark.objects.filter(
-            user=request.user,
-            court=court
-        ).delete()
-        
-        if deleted:
-            return Response(
-                {'message': 'Bookmark dihapus', 'bookmarked': False},
-                status=status.HTTP_200_OK
-            )
-        else:
-            return Response(
-                {'error': 'Bookmark tidak ditemukan'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        return Response({'error': 'Lapangan tidak ditemukan'}, status=404)
 
+    # --- LOGIKA SMART TOGGLE ---
+    
+    # 1. Cari apakah bookmark sudah ada?
+    bookmark = Bookmark.objects.filter(user=request.user, court=court).first()
+
+    if bookmark:
+        # KALO UDAH ADA -> HAPUS
+        bookmark.delete()
+        return Response({
+            'message': 'Bookmark dihapus', 
+            'bookmarked': False # <-- Info penting buat Flutter: "Matiin lampunya!"
+        }, status=200)
+    else:
+        # KALO BELUM ADA -> TAMBAH
+        Bookmark.objects.create(user=request.user, court=court)
+        return Response({
+            'message': 'Bookmark ditambahkan', 
+            'bookmarked': True # <-- Info penting buat Flutter: "Nyalain lampunya!"
+        }, status=200)
 
 @api_view(['GET'])
 def get_provinces(request):

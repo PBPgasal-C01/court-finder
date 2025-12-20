@@ -5,6 +5,7 @@ from django import forms
 from django.db.models import Q
 from django.http import JsonResponse
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import BlogPost, Favorite
 
@@ -49,8 +50,37 @@ def post_list(request):
 	})
 
 
+def _serialize_post(post: BlogPost):
+	"""Helper to convert BlogPost instance to dict for JSON."""
+	# Clean thumbnail_url from any whitespace/line breaks
+	thumbnail = post.thumbnail_url.strip().replace('\n', '').replace('\r', '').replace(' ', '') if post.thumbnail_url else ''
+	return {
+		'id': post.pk,
+		'title': post.title,
+		'author': post.author,
+		'content': post.content,
+		'thumbnail_url': thumbnail,
+		'created_at': post.created_at.isoformat() if getattr(post, 'created_at', None) else None,
+		'reading_time': post.reading_time_minutes,
+	}
+
+
+def api_post_list(request):
+	"""Return all blog posts as JSON list for Flutter app."""
+	q = request.GET.get('q', '').strip()
+	posts = BlogPost.objects.all()
+	if q:
+		posts = posts.filter(title__icontains=q)
+	data = [_serialize_post(p) for p in posts.order_by('-created_at')]
+	return JsonResponse(data, safe=False)
+
+
 def post_detail(request, pk: int):
 	post = get_object_or_404(BlogPost, pk=pk)
+
+	if 'application/json' in request.META.get('HTTP_ACCEPT', ''):
+		return JsonResponse(_serialize_post(post))
+
 	is_admin_flag = is_admin(request.user)
 	# Base: exclude current post
 	others_qs = BlogPost.objects.exclude(pk=pk)
@@ -70,6 +100,12 @@ def post_detail(request, pk: int):
 	})
 
 
+def api_post_detail(request, pk: int):
+	"""Return single blog post as JSON for Flutter app."""
+	post = get_object_or_404(BlogPost, pk=pk)
+	return JsonResponse(_serialize_post(post))
+
+
 @login_required
 def toggle_favorite(request, pk: int):
 	if request.method != 'POST':
@@ -81,6 +117,46 @@ def toggle_favorite(request, pk: int):
 		return JsonResponse({'ok': True, 'favorited': False})
 	else:
 		return JsonResponse({'ok': True, 'favorited': True})
+
+
+@csrf_exempt
+def api_toggle_favorite(request, pk: int):
+	"""JSON-only favorite toggle for Flutter app.
+	Returns 401 JSON instead of HTML redirect when unauthenticated.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated'}, status=401)
+	if request.method != 'POST':
+		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
+	post = get_object_or_404(BlogPost, pk=pk)
+	fav, created = Favorite.objects.get_or_create(user=request.user, post=post)
+	if not created:
+		fav.delete()
+		return JsonResponse({'ok': True, 'favorited': False})
+	else:
+		return JsonResponse({'ok': True, 'favorited': True})
+
+
+@csrf_exempt
+def api_get_favorites(request):
+	"""Return list of user's favorite post IDs for Flutter app.
+	Returns 401 JSON instead of redirect when unauthenticated.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated', 'favorite_ids': []}, status=401)
+	fav_ids = list(Favorite.objects.filter(user=request.user).values_list('post_id', flat=True))
+	return JsonResponse({'ok': True, 'favorite_ids': fav_ids})
+
+@csrf_exempt
+def api_get_favorites_posts(request):
+	"""Return full serialized favorite posts for the current user."""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated', 'posts': []}, status=401)
+	fav_post_qs = BlogPost.objects.filter(
+		pk__in=Favorite.objects.filter(user=request.user).values_list('post_id', flat=True)
+	).order_by('-created_at')
+	data = [_serialize_post(p) for p in fav_post_qs]
+	return JsonResponse({'ok': True, 'posts': data})
 
 
 class BlogPostForm(forms.ModelForm):
@@ -115,13 +191,60 @@ def post_create(request):
 				return JsonResponse({'ok': True, 'redirect': post.get_absolute_url()})
 			return redirect(post.get_absolute_url())
 		else:
-			# surface errors so user sees what's wrong
+			# surface errors so user sees whats wrong
 			messages.error(request, f"Please fix the errors below: {form.errors.as_text()}")
 			if request.headers.get('x-requested-with') == 'XMLHttpRequest':
 				return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 	else:
 		form = BlogPostForm(initial={"author": "Admin"})
 	return render(request, 'form.html', {'form': form, 'action': 'Create', 'action_url': request.path})
+
+
+@csrf_exempt
+def api_post_create(request):
+	"""API endpoint for creating blog post from Flutter.
+	Returns JSON response. Requires admin authentication.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated'}, status=401)
+	
+	if not is_admin(request.user):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+	
+	if request.method != 'POST':
+		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
+	
+	import json
+	try:
+		data = json.loads(request.body)
+	except json.JSONDecodeError:
+		return JsonResponse({'ok': False, 'error': 'Invalid JSON'}, status=400)
+	
+	# Validate required fields
+	title = data.get('title', '').strip()
+	content = data.get('content', '').strip()
+	author = data.get('author', '').strip()
+	# Clean thumbnail URL from whitespace, line breaks
+	thumbnail_url = data.get('thumbnail_url', '').strip().replace('\n', '').replace('\r', '').replace(' ', '')
+	
+	if not title:
+		return JsonResponse({'ok': False, 'error': 'Title is required'}, status=400)
+	if not content:
+		return JsonResponse({'ok': False, 'error': 'Content is required'}, status=400)
+	
+	# Create post
+	post = BlogPost.objects.create(
+		title=title,
+		content=content,
+		author=author or getattr(request.user, 'username', '') or getattr(request.user, 'email', '') or 'Admin',
+		thumbnail_url=thumbnail_url or '',
+	)
+	
+	return JsonResponse({
+		'ok': True,
+		'message': 'Post created successfully',
+		'post': _serialize_post(post)
+	}, status=201)
 
 
 @login_required
@@ -159,3 +282,69 @@ def post_delete(request, pk: int):
 			return JsonResponse({'ok': True, 'redirect': reverse('blog:list')})
 		return redirect('blog:list')
 	return render(request, 'confirm_delete.html', {'post': post, 'action_url': request.path})
+
+
+@csrf_exempt
+def api_post_delete(request, pk: int):
+	"""API endpoint for deleting blog post from Flutter.
+	Returns JSON response. Requires admin authentication.
+	Accepts both DELETE and POST methods for compatibility.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated'}, status=401)
+	
+	if not is_admin(request.user):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+	
+	if request.method not in ['DELETE', 'POST']:
+		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
+	
+	post = get_object_or_404(BlogPost, pk=pk)
+	post.delete()
+	return JsonResponse({'ok': True, 'message': 'Post deleted successfully'}, status=200)
+
+
+@csrf_exempt
+def api_post_update(request, pk: int):
+	"""API endpoint for updating blog post from Flutter.
+	Returns JSON response. Requires admin authentication.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated'}, status=401)
+	
+	if not is_admin(request.user):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+	
+	if request.method not in ['POST', 'PUT', 'PATCH']:
+		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
+	
+	post = get_object_or_404(BlogPost, pk=pk)
+	
+	import json
+	try:
+		data = json.loads(request.body)
+	except json.JSONDecodeError:
+		return JsonResponse({'ok': False, 'error': 'Invalid JSON'}, status=400)
+	
+	# Update fields if provided
+	title = data.get('title', '').strip()
+	content = data.get('content', '').strip()
+	author = data.get('author', '').strip()
+	thumbnail_url = data.get('thumbnail_url', '').strip().replace('\n', '').replace('\r', '').replace(' ', '')
+	
+	if title:
+		post.title = title
+	if content:
+		post.content = content
+	if author:
+		post.author = author
+	if 'thumbnail_url' in data:  # Allow empty string to clear thumbnail
+		post.thumbnail_url = thumbnail_url
+	
+	post.save()
+	
+	return JsonResponse({
+		'ok': True,
+		'message': 'Post updated successfully',
+		'post': _serialize_post(post)
+	}, status=200)

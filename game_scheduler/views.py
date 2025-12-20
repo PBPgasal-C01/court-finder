@@ -2,8 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import GameScheduler
 from .forms import GameSchedulerForm
-from django.http import JsonResponse 
 from django.urls import reverse
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse 
+from django.core import serializers
+from datetime import datetime
+from django.core.serializers.json import DjangoJSONEncoder
 
 # Create your views here.
 def event_list(request, is_admin_view=False): #view buat nampilin list event (public/private)
@@ -129,3 +135,164 @@ def delete_event(request, event_id):
             'redirect_url': reverse('game_scheduler:event_list')
         })
     return redirect('game_scheduler:event_list')
+
+@csrf_exempt
+def create_event_flutter(request):
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return JsonResponse({"status": "error", "message": "Anda belum login!"}, status=401)
+        
+        try:
+            data = json.loads(request.body)
+
+            new_event = GameScheduler.objects.create(
+                creator=request.user, 
+                title=data["title"],
+                description=data["description"],
+                scheduled_date=data["scheduled_date"],
+                start_time=data["start_time"],
+                end_time=data["end_time"],
+                location=data["location"],
+                event_type=data["event_type"],
+                sport_type=data["sport_type"],
+            )
+
+            new_event.participants.add(request.user) 
+            new_event.save()
+
+            return JsonResponse({
+                "status": "success", 
+                "message": "Event berhasil dibuat!" 
+            }, status=200)
+
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Method not allowed"}, status=401)
+
+def show_json(request):
+    data = GameScheduler.objects.all()
+    if request.GET.get('only_me') == 'true' and request.user.is_authenticated:
+        data = data.filter(creator=request.user)
+    
+    list_data = []
+    for event in data:
+        photo_url = event.creator.photo.url if hasattr(event.creator, 'photo') and event.creator.photo else ""
+        
+        item = {
+            "model": "game_scheduler.gamescheduler",
+            "pk": event.pk,
+            "fields": {
+                "title": event.title,
+                "description": event.description,
+                "creator": event.creator.id,
+                "creator_username": event.creator.username,
+                "creator_photo": photo_url,
+                
+                "scheduled_date": event.scheduled_date,
+                "start_time": event.start_time,
+                "end_time": event.end_time,
+                "location": event.location,
+                "event_type": event.event_type,
+                "sport_type": event.sport_type,
+                "participants": list(event.participants.values_list('id', flat=True)),
+            }
+        }
+        list_data.append(item)
+
+    return JsonResponse(list_data, safe=False, encoder=DjangoJSONEncoder)
+
+@csrf_exempt
+def join_event_flutter(request, event_id):
+    if request.method == 'POST':
+        event = get_object_or_404(GameScheduler, id=event_id)
+        user = request.user
+        
+        if user in event.participants.all():
+            return JsonResponse({'status': 'failed', 'message': 'You already joined this event'}, status=400)
+            
+        if event.is_full:
+             return JsonResponse({'status': 'failed', 'message': 'Event is full'}, status=400)
+
+        event.participants.add(user)
+        return JsonResponse({'status': 'success', 'message': 'Successfully joined'})
+    
+    return JsonResponse({'status': 'failed', 'message': 'Invalid method'}, status=405)
+
+@csrf_exempt
+def leave_event_flutter(request, event_id):
+    if request.method == 'POST':
+        event = get_object_or_404(GameScheduler, id=event_id)
+        user = request.user
+        
+        if user not in event.participants.all():
+            return JsonResponse({'status': 'failed', 'message': 'You are not in this event'}, status=400)
+
+        event.participants.remove(user)
+        return JsonResponse({'status': 'success', 'message': 'Successfully left'})
+        
+    return JsonResponse({'status': 'failed', 'message': 'Invalid method'}, status=405)
+
+@csrf_exempt
+def edit_event_flutter(request, event_id):
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return JsonResponse({"status": "error", "message": "Login required"}, status=401)
+
+        event = get_object_or_404(GameScheduler, id=event_id)
+
+        # Cek apakah user adalah pembuat event
+        if event.creator != request.user:
+            return JsonResponse({"status": "error", "message": "Anda tidak memiliki izin untuk mengedit event ini."}, status=403)
+
+        try:
+            data = json.loads(request.body)
+            
+            # Update data
+            event.title = data.get('title', event.title)
+            event.description = data.get('description', event.description)
+            event.location = data.get('location', event.location)
+            event.event_type = data.get('event_type', event.event_type)
+            event.sport_type = data.get('sport_type', event.sport_type)
+            
+            # Parsing Tanggal & Waktu
+            if 'scheduled_date' in data:
+                event.scheduled_date = datetime.strptime(data['scheduled_date'], "%Y-%m-%d").date()
+            if 'start_time' in data:
+                # Handle format HH:MM atau HH:MM:SS
+                time_str = data['start_time']
+                if len(time_str) == 5: # HH:MM
+                    event.start_time = datetime.strptime(time_str, "%H:%M").time()
+                elif len(time_str) == 8: # HH:MM:SS
+                    event.start_time = datetime.strptime(time_str, "%H:%M:%S").time()
+            
+            if 'end_time' in data:
+                time_str = data['end_time']
+                if len(time_str) == 5:
+                    event.end_time = datetime.strptime(time_str, "%H:%M").time()
+                elif len(time_str) == 8:
+                    event.end_time = datetime.strptime(time_str, "%H:%M:%S").time()
+
+            event.save()
+            return JsonResponse({"status": "success", "message": "Event berhasil diperbarui!"})
+
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+
+@csrf_exempt
+def delete_event_flutter(request, event_id):
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return JsonResponse({"status": "error", "message": "Login required"}, status=401)
+            
+        event = get_object_or_404(GameScheduler, id=event_id)
+
+        if event.creator != request.user:
+             return JsonResponse({"status": "error", "message": "Anda tidak memiliki izin menghapus event ini."}, status=403)
+
+        event.delete()
+        return JsonResponse({"status": "success", "message": "Event berhasil dihapus!"})
+    
+    return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
