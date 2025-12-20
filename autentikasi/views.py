@@ -9,6 +9,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 import json
+import os, requests as req
+from django.core.files.base import ContentFile
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 def register_user(request):
     """Registrasi user baru (role default: user) dengan dukungan AJAX."""
@@ -157,6 +161,11 @@ def delete_user(request, user_id):
     target.delete()
     return JsonResponse({'status': 'success', 'message': 'User deleted'})
 
+
+
+
+# ------------------------------------------------- FLUTTER ---------------------------------------------------------
+
 @csrf_exempt
 def login_flutter(request):
     # Support both form and JSON payloads; accept either 'email' or 'username'
@@ -264,18 +273,35 @@ def current_user(request):
 @csrf_exempt
 @login_required
 def edit_profile(request):
-    if request.method == "POST":
-        user = request.user
-        data = json.loads(request.body)
+    if request.method != 'POST':
+        return JsonResponse({"error": "Invalid method"}, status=400)
 
-        user.username = data.get("username", user.username)
-        user.email = data.get("email", user.email)
-        user.preference = data.get("preference", user.preference)
-        user.save()
+    user = request.user
 
-        return JsonResponse({"status": "success", "message": "Profile updated"})
-    
-    return JsonResponse({"error": "Invalid method"}, status=400)
+    # FORM-DATA (multipart)
+    username = request.POST.get("username", user.username)
+    email = request.POST.get("email", user.email)
+    preference = request.POST.get("preference", user.preference)
+    photo_file = request.FILES.get("photo")
+
+    user.username = username
+    user.email = email
+    user.preference = preference
+
+    # Jika ada foto baru → replace
+    if photo_file:
+        user.photo = photo_file
+
+    user.save()
+
+    return JsonResponse({
+        "status": "success",
+        "message": "Profile updated",
+        "username": user.username,
+        "email": user.email,
+        "preference": user.preference,
+        "photo_url": user.photo.url if user.photo else None
+    })
 
 @csrf_exempt
 def logout_flutter(request):
@@ -377,6 +403,78 @@ def delete_user_flutter(request):
     return JsonResponse({'status': 'success', 'message': 'User deleted'})
 
 @csrf_exempt
+def google_mobile_login(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+
+    token = request.POST.get("id_token")
+    if not token:
+        return JsonResponse({"error": "Missing id_token"}, status=400)
+
+    try:
+        # 1) verify google id token
+        decoded = id_token.verify_oauth2_token(
+            token,
+            requests.Request(),
+            os.getenv("GOOGLE_CLIENT_ID_FLUTTER")   # MUST match your serverClientId in Flutter
+        )
+
+        email = decoded.get("email")
+        name = decoded.get("name", "")
+        picture = decoded.get("picture")  # google profile picture URL
+        username = email.split("@")[0]
+
+        if not email:
+            return JsonResponse({"error": "Email missing from Google token"}, status=400)
+
+        # 2) create or get user if exist
+        user, created = CourtUser.objects.get_or_create(
+            email=email,
+            defaults={
+                "username": username,
+                "role": "user",
+                "preference": "Both",
+            }
+        )
+
+        # update name 
+        if name:
+            parts = name.split(" ")
+            user.first_name = parts[0]
+            user.last_name = " ".join(parts[1:]) if len(parts) > 1 else ""
+
+        # update profile pic
+        if picture:
+            try:
+                r = req.get(picture)
+                if r.status_code == 200:
+                    # avoid double saving the same file
+                    user.photo.save(f"{username}_google.jpg", ContentFile(r.content), save=False)
+            except Exception as e:
+                print("⚠ Failed downloading Google photo:", e)
+
+        # defaul court preference
+        if not user.preference:
+            user.preference = "Both"
+
+        user.save()
+
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+        return JsonResponse({
+            "status": "success",
+            "created": created,
+            "email": user.email,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "preference": user.preference,
+            "photo_url": user.photo.url if user.photo else None,
+        })
+
+    except Exception as e:
+        print("🔥 GOOGLE VERIFY ERROR:", e)
+        return JsonResponse({"error": "Invalid Google token", "detail": str(e)}, status=400)
 @login_required
 def get_loggedin_user(request):
     return JsonResponse({

@@ -20,5 +20,7 @@ urlpatterns = [
     path('all-users', show_json, name='show_json'),
     path('delete-user', delete_user_flutter),
     path('ban-user', ban_unban_user_flutter),
+    path("google-mobile-login/", google_mobile_login),
+
     path('get-user', get_loggedin_user, name='get_loggedin_user'),
 ]
