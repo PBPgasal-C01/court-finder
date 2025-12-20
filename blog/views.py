@@ -302,3 +302,49 @@ def api_post_delete(request, pk: int):
 	post = get_object_or_404(BlogPost, pk=pk)
 	post.delete()
 	return JsonResponse({'ok': True, 'message': 'Post deleted successfully'}, status=200)
+
+
+@csrf_exempt
+def api_post_update(request, pk: int):
+	"""API endpoint for updating blog post from Flutter.
+	Returns JSON response. Requires admin authentication.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'unauthenticated'}, status=401)
+	
+	if not is_admin(request.user):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+	
+	if request.method not in ['POST', 'PUT', 'PATCH']:
+		return JsonResponse({'ok': False, 'error': 'Invalid method'}, status=405)
+	
+	post = get_object_or_404(BlogPost, pk=pk)
+	
+	import json
+	try:
+		data = json.loads(request.body)
+	except json.JSONDecodeError:
+		return JsonResponse({'ok': False, 'error': 'Invalid JSON'}, status=400)
+	
+	# Update fields if provided
+	title = data.get('title', '').strip()
+	content = data.get('content', '').strip()
+	author = data.get('author', '').strip()
+	thumbnail_url = data.get('thumbnail_url', '').strip().replace('\n', '').replace('\r', '').replace(' ', '')
+	
+	if title:
+		post.title = title
+	if content:
+		post.content = content
+	if author:
+		post.author = author
+	if 'thumbnail_url' in data:  # Allow empty string to clear thumbnail
+		post.thumbnail_url = thumbnail_url
+	
+	post.save()
+	
+	return JsonResponse({
+		'ok': True,
+		'message': 'Post updated successfully',
+		'post': _serialize_post(post)
+	}, status=200)
