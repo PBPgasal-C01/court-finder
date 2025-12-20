@@ -8,6 +8,9 @@ from autentikasi.decorators import admin_required
 from django.contrib.auth.views import redirect_to_login
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+import json
+import base64
+from django.core.files.base import ContentFile
 
 def show_guest_complaint(request):
     context = {} 
@@ -44,7 +47,7 @@ def create_complain(request):
         complain.user = request.user
         complain.save()
         
-        return JsonResponse({'status': 'success', 'message': 'Your report is sent successfully.'}, status=201) # 201 Created
+        return JsonResponse({'status': 'success', 'message': 'Your report is sent successfully.'}, status=201) 
     else:
          return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
 
@@ -60,7 +63,6 @@ def get_user_complains(request):
             'court_name': complain.court_name,
             'masalah': complain.masalah,
             'deskripsi': complain.deskripsi,
-            # PERBAIKAN DISINI: Gunakan request.build_absolute_uri agar URL lengkap
             'foto_url': request.build_absolute_uri(complain.foto.url) if complain.foto else None,
             'status': complain.status,
             'komentar': complain.komentar,
@@ -116,7 +118,6 @@ def admin_update_status(request, id):
 
     if request.method == 'POST':
         complain = get_object_or_404(Complain, pk=id)
-        # PERBAIKAN DISINI: Tambahkan request.FILES agar gambar bisa diupdate admin
         form = ComplainAdminForm(request.POST, request.FILES, instance=complain)
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
@@ -173,90 +174,245 @@ def get_all_complaints_json(request):
             'status': complain.status,
             'komentar': complain.komentar,
             'created_at': complain.created_at.isoformat(),
-            'user': complain.user.username, # Opsional: jika admin butuh tahu siapa pelapornya
+            'user': complain.user.username,
         }
         for complain in complains
     ]
     return JsonResponse(data, safe=False)
-@csrf_exempt # Agar Flutter bisa akses tanpa token CSRF (untuk development)
+
+@csrf_exempt
 def create_complain_flutter(request):
     if request.method == 'POST':
-        try:
-            # 1. Pastikan user sudah login (Authentication Check)
-            if not request.user.is_authenticated:
-                return JsonResponse({
-                    "status": "error",
-                    "message": "Authentication required. Please login first."
-                }, status=401)
+        # Cek Login
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                "status": "error",
+                "message": "Authentication required. Please login first."
+            }, status=401)
 
-            # 2. Ambil data dari request.POST (FormData)
-            court_name = request.POST.get('court_name')
-            masalah = request.POST.get('masalah')
-            deskripsi = request.POST.get('deskripsi')
-            
-            # 3. Validasi input dasar
+        try:
+            # Baca data dari body request (karena sekarang dikirim sebagai JSON)
+            data = json.loads(request.body)
+
+            court_name = data.get('court_name')
+            masalah = data.get('masalah')
+            deskripsi = data.get('deskripsi')
+            foto_base64 = data.get('foto')  # String Base64 gambar
+
             if not all([court_name, masalah, deskripsi]):
                 return JsonResponse({
                     "status": "error",
                     "message": "All fields are required!"
                 }, status=400)
 
-            # 4. Buat object Complain baru
             new_complain = Complain(
                 user=request.user,
                 court_name=court_name,
                 masalah=masalah,
                 deskripsi=deskripsi,
-                status='IN REVIEW' # Default status
+                status='IN REVIEW'
             )
 
-            # 5. Handle File Upload (Foto)
-            if 'foto' in request.FILES:
-                new_complain.foto = request.FILES['foto']
-
-            # 6. Simpan ke Database
+            # Proses Decoding Gambar (Jika ada)
+            if foto_base64:
+                try:
+                    # Format Base64 biasanya: "data:image/jpeg;base64,/9j/4AAQSki..."
+                    # Kita butuh bagian setelah koma
+                    if "," in foto_base64:
+                        format_data, img_str = foto_base64.split(';base64,') 
+                        ext = format_data.split('/')[-1] # ambil ekstensi (jpg/png)
+                    else:
+                        # Jika dikirim raw base64 tanpa header data
+                        img_str = foto_base64
+                        ext = "jpg" # default extension
+                    
+                    data_file = ContentFile(base64.b64decode(img_str), name=f"upload.{ext}")
+                    new_complain.foto = data_file
+                except Exception as e:
+                     print(f"Error decoding image: {e}")
+                     # Lanjut simpan tanpa gambar atau return error, terserah kebijakan
+            
             new_complain.save()
 
             return JsonResponse({
                 "status": "success",
-                "message": "Report created successfully!"
+                "message": "Report created successfully!",
+                "complaint_id": str(new_complain.id)
             }, status=200)
 
+        except json.JSONDecodeError:
+            return JsonResponse({"status": "error", "message": "Invalid JSON data"}, status=400)
         except Exception as e:
-            return JsonResponse({
-                "status": "error",
-                "message": str(e)
-            }, status=500)
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
     return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
 
+@csrf_exempt
 def get_complain_json_flutter(request):
-    # 1. Cek apakah user sudah login
+    """
+    Endpoint untuk Flutter - Menampilkan HANYA complaint milik user yang login
+    Format JSON FLAT (sesuai model Flutter)
+    """
     if not request.user.is_authenticated:
         return JsonResponse({
             "status": "error",
             "message": "Login required"
         }, status=401)
 
-    # 2. Ambil data HANYA milik user yang sedang login
-    # 'user=request.user' adalah kuncinya
-    data_complain = Complain.objects.filter(user=request.user).order_by('-created_at') # urutkan dari yang terbaru
+    data_complain = Complain.objects.filter(user=request.user).order_by('-created_at')
 
-    # 3. Ubah data QuerySet menjadi List of Dictionaries (JSON)
     list_data = []
     for item in data_complain:
         list_data.append({
-            "pk": item.pk,
-            "fields": {
-                "court_name": item.court_name,
-                "masalah": item.masalah,
-                "deskripsi": item.deskripsi,
-                "status": item.status,
-                # Handle jika foto kosong agar tidak error
-                "foto": item.foto.url if item.foto else "", 
-                "created_at": item.created_at.strftime("%Y-%m-%d %H:%M"),
-            }
+            "id": str(item.id),  
+            "court_name": item.court_name,
+            "masalah": item.masalah,
+            "deskripsi": item.deskripsi,
+            "foto_url": request.build_absolute_uri(item.foto.url) if item.foto else "",
+            "status": item.status,
+            "komentar": item.komentar if item.komentar else None,
+            "created_at": item.created_at.isoformat(), 
         })
 
-    # 4. Return sebagai JSON
     return JsonResponse(list_data, safe=False)
+
+@csrf_exempt
+@require_POST
+def delete_complain_flutter(request, id):
+    """
+    Menghapus laporan via Flutter.
+    Syarat: User Login, Milik Sendiri, dan Status 'IN REVIEW'.
+    """
+    # 1. Cek Autentikasi
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'Authentication required. Please login first.'
+        }, status=401)
+
+    try:
+        # 2. Ambil object berdasarkan UUID (id)
+        complain = Complain.objects.get(id=id)
+
+        # 3. Validasi Kepemilikan (Hanya pembuat yang boleh hapus)
+        if complain.user != request.user:
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Anda tidak memiliki izin untuk menghapus laporan ini.'
+            }, status=403)
+
+        # 4. Validasi Status (Hanya 'IN REVIEW' yang boleh dihapus)
+        # Pastikan string 'IN REVIEW' sesuai persis dengan yang ada di models.py
+        if complain.status != 'IN REVIEW':
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Laporan yang sedang diproses atau selesai tidak dapat dihapus.'
+            }, status=400)
+
+        # 5. Lakukan Penghapusan
+        complain.delete()
+
+        return JsonResponse({
+            'status': 'success', 
+            'message': 'Laporan berhasil dihapus.'
+        }, status=200)
+
+    except Complain.DoesNotExist:
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'Laporan tidak ditemukan.'
+        }, status=404)
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error', 
+            'message': str(e)
+        }, status=500)
+    
+@csrf_exempt
+def get_all_complaints_json_flutter(request):
+    """
+    Endpoint KHUSUS Flutter Admin.
+    Mengambil semua laporan dari semua user tanpa validasi session cookie admin.
+    """
+    # Ambil semua data, urutkan dari yang terbaru
+    complains = Complain.objects.all().order_by('-created_at')
+    
+    data = []
+    for complain in complains:
+        data.append({
+            'id': str(complain.id),
+            'court_name': complain.court_name,
+            'masalah': complain.masalah,
+            'deskripsi': complain.deskripsi,
+            # Penting: Gunakan build_absolute_uri agar gambar muncul di HP
+            'foto_url': request.build_absolute_uri(complain.foto.url) if complain.foto else None,
+            'status': complain.status,
+            'komentar': complain.komentar,
+            'created_at': complain.created_at.isoformat(),
+            'user': complain.user.username, # Agar admin tahu siapa pelapornya
+        })
+        
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+@require_POST
+def admin_update_status_flutter(request, id):
+    """
+    Endpoint untuk update status & komentar komplain dari Flutter.
+    Menerima JSON: { "status": "...", "komentar": "..." }
+    """
+    # 1. Cek Authentication (Opsional: sesuaikan kebutuhan apakah harus admin)
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Authentication required. Please login first.'
+        }, status=401)
+        
+    # Jika ingin membatasi hanya admin yang bisa edit:
+    # if not request.user.is_staff:
+    #     return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    try:
+        # 2. Ambil objek complain
+        complaint = Complain.objects.get(pk=id)
+
+        # 3. Parse data JSON dari body request
+        data = json.loads(request.body)
+        
+        new_status = data.get('status')
+        new_komentar = data.get('komentar')
+
+        # 4. Update data
+        # Note: Pastikan string status dari Flutter sesuai dengan choices di models.py
+        if new_status:
+            complaint.status = new_status
+        
+        # Update komentar (boleh kosong/string kosong)
+        if new_komentar is not None:
+            complaint.komentar = new_komentar
+
+        complaint.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Complaint updated successfully.'
+        }, status=200)
+
+    except Complain.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Complaint not found.'
+        }, status=404)
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid JSON format.'
+        }, status=400)
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
