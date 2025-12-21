@@ -319,6 +319,8 @@ def logout_flutter(request):
             "message": "Logout failed."
         }, status=401)
 
+@login_required
+@admin_required
 def show_json(request):
     user_list = CourtUser.objects.all().order_by('date_joined')
     data = [
