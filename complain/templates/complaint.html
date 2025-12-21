@@ -42,39 +42,39 @@
                             <label id="complain-form-label" for="{{ form.court_name.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Court Name</label>
                             {{ form.court_name.errors }}
                             <input type="text" 
-                                    name="{{ form.court_name.name }}" 
-                                    id="{{ form.court_name.id_for_label }}"
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                                   name="{{ form.court_name.name }}" 
+                                   id="{{ form.court_name.id_for_label }}"
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-2 focus:ring-gray-400">
                         </div>
                         <div>
                             <label id="complain-form-label" for="{{ form.masalah.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Main Problem</label>
                             {{ form.masalah.errors }}
                             <input type="text" 
-                                    name="{{ form.masalah.name }}" 
-                                    id="{{ form.masalah.id_for_label }}"
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                                   name="{{ form.masalah.name }}" 
+                                   id="{{ form.masalah.id_for_label }}"
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-2 focus:ring-gray-400">
                         </div>
                         <div>
                             <label id="complain-form-label" for="{{ form.deskripsi.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Description</label>
                             {{ form.deskripsi.errors }}
                             <textarea name="{{ form.deskripsi.name }}" 
-                                        id="{{ form.deskripsi.id_for_label }}"
-                                        rows="4"
-                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-2 focus:ring-gray-400"></textarea>
+                                      id="{{ form.deskripsi.id_for_label }}"
+                                      rows="4"
+                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-2 focus:ring-gray-400"></textarea>
                         </div>
                         <div>
                             <label id="complain-form-label" for="{{ form.foto.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Upload Image</label>
                             {{ form.foto.errors }}
                             <input type="file" 
-                                    name="{{ form.foto.name }}" 
-                                    id="{{ form.foto.id_for_label }}"
-                                    accept="image/*"
-                                    class="mt-1 block w-full text-sm text-gray-500 border border-gray-300 rounded-md
-                                            file:mr-4 file:py-2 file:px-4
-                                            file:rounded-l-md file:border-0
-                                            file:text-sm file:font-semibold
-                                            file:bg-gray-100 file:text-gray-700
-                                            hover:file:bg-gray-200">
+                                   name="{{ form.foto.name }}" 
+                                   id="{{ form.foto.id_for_label }}"
+                                   accept="image/*"
+                                   class="mt-1 block w-full text-sm text-gray-500 border border-gray-300 rounded-md
+                                          file:mr-4 file:py-2 file:px-4
+                                          file:rounded-l-md file:border-0
+                                          file:text-sm file:font-semibold
+                                          file:bg-gray-100 file:text-gray-700
+                                          hover:file:bg-gray-200">
                         </div>
 
                         <div class="flex justify-end gap-3 pt-4">
@@ -114,16 +114,13 @@
                 <div id="complain-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {% if complains %}
                         {% for complain in complains %}
-                            
                             <article id="complain-card-{{ complain.id }}" class="w-full max-w-xs mx-auto rounded-lg border border-gray-200 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-
                                 <div class="p-2 bg-gray-50">
                                     <h3 class="text-lg font-bold text-brand-green text-center uppercase tracking-wide truncate" title="{{ complain.court_name }} - {{ complain.masalah }}">
                                         {{ complain.court_name }} - {{ complain.masalah }}
                                     </h3>
                                 </div>
                                 <hr class="border-gray-200">
-                            
                                 <div class="relative">
                                     {% if complain.foto %}
                                         <img src="{{ complain.foto.url }}" alt="Foto Laporan: {{ complain.masalah }}" class="w-full h-32 object-cover">
@@ -148,7 +145,6 @@
                                     <div class="flex items-center">
                                         <span class="w-28 flex-shrink-0 font-semibold text-brand-green">Status</span>
                                         <span class="text-gray-900 mr-2">:</span>
-                                        
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold
                                             {% if complain.status == 'DONE' %}
                                                 border border-green-500 bg-green-100 text-green-700
@@ -179,9 +175,7 @@
                                     </div>
                                     {% endif %}
                                 </div>
-                            
                             </article>
-                            
                         {% endfor %}
                     {% else %}
                         <p class="text-gray-600 col-span-2">You haven't made any reports yet.</p>
@@ -247,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
                            class="delete-complain-btn text-red-600 hover:text-red-700 text-sm font-medium transition-colors"
                            data-delete-url="${deleteButtonUrl}"
                            data-complain-id="${complain.id}">
-                       Hapus Laporan
+                       Delete Report
                    </button>
                </div>`
             : '';
@@ -319,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 complainListContainer.innerHTML = '<p class="text-gray-600 col-span-2">You haven\'t made any reports yet.</p>';
             }
         } catch (error) {
-            showMessage(listMessageContainer, error.message, false);
+            console.error(error);
         }
     }
 
@@ -327,7 +321,6 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault(); 
         formMessageContainer.innerHTML = ''; 
 
-        
         const courtName = document.getElementById(courtNameId).value.trim();
         const masalah = document.getElementById(masalahId).value.trim();
         const deskripsi = document.getElementById(deskripsiId).value.trim();
@@ -358,7 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData
             });
 
-            
             if (response.status === 401) {
                 throw new Error('Your session has expired. Please refresh and log in.');
             }
@@ -385,14 +377,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     complainListContainer.addEventListener('click', async (event) => {
         const deleteButton = event.target.closest('.delete-complain-btn');
-        
-        if (!deleteButton) {
-            return;
-        }
-
-        if (!confirm('Are you sure you want to delete this report?')) {
-            return;
-        }
+        if (!deleteButton) return;
+        if (!confirm('Are you sure you want to delete this report?')) return;
 
         const deleteUrl = deleteButton.dataset.deleteUrl;
         
@@ -422,6 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    setInterval(refreshComplainList, 3000);
 });
 </script>
 {% endblock content %}

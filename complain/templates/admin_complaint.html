@@ -7,11 +7,8 @@
 
 {% block content %}
 <div class="flex flex-col min-h-screen">
-
     <main class="flex-1 w-full bg-white py-10 px-4 sm-px-6 lg:px-8">
-        
         <div class="max-w-6xl mx-auto">
-
             <h2 class="text-2xl font-bold tracking-tight text-brand-green mb-8 uppercase text-center font-title">
                 REPORTs MANAGEMENT
             </h2>
@@ -30,7 +27,6 @@
 
             <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
                 <table class="w-full min-w-max">
-                    
                     <thead>
                         <tr class="border-b-2 border-[#3F5940]">
                             <th class="py-4 px-3 text-left font-title text-brand-green uppercase tracking-wider">Photo</th>
@@ -40,12 +36,10 @@
                             <th class="py-4 px-3 text-left font-title text-brand-green uppercase tracking-wider">Detail</th>
                         </tr>
                     </thead>
-                    
                     <tbody>
                         {% if complain_data %}
                             {% for complain, form in complain_data %}
                                 <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                    
                                     <td class="py-2 px-3 align-middle">
                                         {% if complain.foto %}
                                             <img src="{{ complain.foto.url }}" alt="Foto Laporan" class="w-20 h-10 object-cover rounded-md border border-gray-200">
@@ -89,7 +83,6 @@
 
                                 <div id="modal-{{ complain.id }}" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
                                     <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
-                                        
                                         <div class="p-4 border-b flex justify-between items-center">
                                             <h3 class="text-lg font-title text-brand-green">REPORT DETAIL</h3>
                                             <button type="button" class="modal-close-btn text-gray-500 hover:text-gray-800">&times;</button>
@@ -116,7 +109,6 @@
 
                                             <form method="POST" action="{% url 'complain:admin_update_status' complain.id %}" class="space-y-4">
                                                 {% csrf_token %}
-
                                                 <div>
                                                     <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-brand-green mb-1">Status:</label>
                                                     {{ form.status.errors }}
@@ -141,14 +133,16 @@
                                                     PROCESS
                                                 </button>
                                             </form>
-                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                {% endfor %}
+                            {% endfor %}
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
-            {% else %}
+            
+            {% if not complain_data %}
                 <p class="text-center text-gray-500 mt-6 text-lg">
                     there's no any reports yet.
                 </p>
@@ -168,6 +162,7 @@
                 if (modal) modal.classList.remove('hidden');
             });
         });
+
         const closeButtons = document.querySelectorAll('.modal-close-btn');
         closeButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -175,13 +170,26 @@
                 if (modal) modal.classList.add('hidden');
             });
         });
+
         const modals = document.querySelectorAll('.modal');
         modals.forEach(modal => {
             modal.addEventListener('click', (event) => {
                 if (event.target === modal) modal.classList.add('hidden');
             });
         });
+
+        setInterval(() => {
+            let isModalOpen = false;
+            modals.forEach(modal => {
+                if (!modal.classList.contains('hidden')) {
+                    isModalOpen = true;
+                }
+            });
+
+            if (!isModalOpen) {
+                window.location.reload();
+            }
+        }, 3000);
     });
 </script>
-
 {% endblock content %}
