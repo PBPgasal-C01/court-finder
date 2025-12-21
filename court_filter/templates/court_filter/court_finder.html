@@ -290,35 +290,38 @@
         courtMarkers = [];
     }
 
-    // Fungsi toggleBookmark tidak berubah
     function toggleBookmark(courtId, element) {
         if (!IS_AUTHENTICATED) {
             showMessage('Please login to bookmark', 'error');
             return;
         }
-        const isBookmarked = element.classList.contains('active');
-        const method = isBookmarked ? 'DELETE' : 'POST';
+ 
         fetch(`/courts/api/bookmark/${courtId}/`, {
-            method: method,
+            method: 'POST',
             headers: { 'X-CSRFToken': CSRFTOKEN, 'Content-Type': 'application/json' }
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error("Request failed");
+            return res.json();
+        })
         .then(data => {
+            // Update UI berdasarkan balikan dari server
             if (data.bookmarked) {
-                element.classList.add('active'); element.classList.remove('inactive');
+                element.classList.add('active'); 
+                element.classList.remove('inactive');
                 showMessage('Court bookmarked!', 'success');
             } else {
-                element.classList.remove('active'); element.classList.add('inactive');
+                element.classList.remove('active'); 
+                element.classList.add('inactive');
                 showMessage('Bookmark removed', 'success');
             }
-            // Refresh list setelah bookmark, tapi jangan ubah tipe search
+            
             const currentSearchType = document.getElementById('priceMin').value || selectedProvince || selectedTypes.length > 0 ? 'filter' : 'radius';
             searchCourts(currentSearchType);
         })
         .catch(err => showMessage('Error: ' + err.message, 'error'));
     }
 
-    // Fungsi toggleBookmarkFilter tidak berubah
     function toggleBookmarkFilter() {
         if (!IS_AUTHENTICATED) {
             showMessage('Please login to use bookmark filter', 'error');
